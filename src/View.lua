@@ -2,20 +2,18 @@
  -- @once
 
  -- @ifndef __INCLUDE_sheets
-	-- @error 'sheets' must be included before including 'sheets.Sheet'
+	-- @error 'sheets' must be included before including 'sheets.View'
  -- @endif
 
- -- @print Including sheets.Sheet
+ -- @print Including sheets.View
 
 local function childDrawSort( a, b )
 	return a.z < b.z
 end
 
-class "Sheet" implements (IChildContainer) implements (IPositionContainer) implements (IAnimationContainer) implements (IParentContainer)
+class "View" implements (IChildContainer) implements (IPositionContainer) implements (IAnimationContainer) implements (IParentContainer)
 {
 	id = "default";
-
-	z = 0;
 
 	parent = nil;
 
@@ -23,12 +21,9 @@ class "Sheet" implements (IChildContainer) implements (IPositionContainer) imple
 
 	canvas = nil;
 	theme = nil;
-
-	handlesKeyboard = true;
-	handlesText = true;
 }
 
-function Sheet:Sheet( x, y, width, height )
+function View:View( x, y, width, height )
 	-- @if SHEETS_TYPE_CHECK
 		if type( x ) ~= "number" then return error( "element attribute #1 'x' not a number (" .. class.type( x ) .. ")", 2 ) end
 		if type( y ) ~= "number" then return error( "element attribute #2 'y' not a number (" .. class.type( y ) .. ")", 2 ) end
@@ -45,25 +40,16 @@ function Sheet:Sheet( x, y, width, height )
 	self.meta.__add = self.addChild
 end
 
-function Sheet:tostring()
-	return "[Instance] Sheet " .. tostring( self.id )
+function View:tostring()
+	return "[Instance] View " .. tostring( self.id )
 end
 
-function Sheet:setID( id )
+function View:setID( id )
 	self.id = tostring( id )
 	return self
 end
 
-function Sheet:setZ( z )
-	-- @if SHEETS_TYPE_CHECK
-		if type( z ) ~= "number" then return error( "expected number z, got " .. class.type( z ) ) end
-	-- @endif
-	self.z = z
-	if self.parent then self.parent:setChanged( true ) end
-	return self
-end
-
-function Sheet:setChanged( state )
+function View:setChanged( state )
 	self.changed = state
 	if state and self.parent then
 		self.parent:setChanged( true )
@@ -71,7 +57,7 @@ function Sheet:setChanged( state )
 	return self
 end
 
-function Sheet:setTheme( theme )
+function View:setTheme( theme )
 	theme = theme or Theme()
 	-- @if SHEETS_TYPE_CHECK
 		if not class.typeOf( theme, Theme ) then return error( "expected Theme theme, got " .. type( theme ) ) end
@@ -81,19 +67,11 @@ function Sheet:setTheme( theme )
 	return self
 end
 
-function Sheet:onPreDraw() end
-function Sheet:onPostDraw() end
-function Sheet:onUpdate( dt ) end
-function Sheet:onMouseEvent( event ) end
-function Sheet:onKeyboardEvent( event ) end
-function Sheet:onTextEvent( event ) end
-function Sheet:onParentResized() end
-
-function Sheet:draw()
+function View:draw()
 	if self.changed then
 		local canvas = self.canvas
 
-		self:onPreDraw()
+		canvas:clear( self.theme:getField( self.class, "colour", "default" ) )
 
 		local children = {}
 		for i = 1, #self.children do
@@ -107,14 +85,11 @@ function Sheet:draw()
 			child.canvas:drawTo( canvas, child.x, child.y )
 		end
 
-		self:onPostDraw()
-
 		self.changed = false
 	end
 end
 
-function Sheet:update( dt )
-	self:onUpdate( dt )
+function View:update( dt )
 	self:updateAnimations( dt )
 
 	local c = {}
@@ -127,7 +102,7 @@ function Sheet:update( dt )
 	end
 end
 
-function Sheet:handle( event )
+function View:handle( event )
 
 	local c = {}
 	for i = 1, #self.children do
@@ -146,14 +121,17 @@ function Sheet:handle( event )
 		end
 	end
 
-	if event:typeOf( MouseEvent ) and self.handlesMouse then
-		if event.name == EVENT_MOUSE_PING and event:isWithinArea( 0, 0, self.width, self.height ) and event.within then
-			event.button[#event.button + 1] = self
-		end
+	if event:typeOf( MouseEvent ) then
 		self:onMouseEvent( event )
-	elseif event:typeOf( KeyboardEvent ) and self.handlesKeyboard then
+	elseif event:typeOf( KeyboardEvent ) then
 		self:onKeyboardEvent( event )
-	elseif event:typeOf( TextEvent ) and self.handlesText then
-		self:onTextEvent( event )
 	end
+end
+
+function View:onMouseEvent( event )
+
+end
+
+function View:onKeyboardEvent( event )
+
 end

@@ -2,10 +2,10 @@
  -- @once
 
  -- @ifndef __INCLUDE_sheets
-	-- @error 'sheets' must be included before including 'sheets.KeyFrame'
+	-- @error 'sheets' must be included before including 'sheets.animation.KeyFrame'
  -- @endif
 
- -- @print Including sheets.KeyFrame
+ -- @print Including sheets.animation.KeyFrame
 
  -- @define SHEETS_EASING_EXIT 0
  -- @define SHEETS_EASING_ENTRANCE 1
@@ -37,24 +37,11 @@ class "KeyFrame" {
 }
 
 function KeyFrame:KeyFrame( initial, final, duration, easing )
-	if easing == SHEETS_EASING_TRANSITION then
-		easing = easing_transition
-	elseif easing == SHEETS_EASING_EXIT then
-		easing = easing_exit
-	elseif easing == SHEETS_EASING_ENTRANCE then
-		easing = easing_entrance
-	end
-	 -- @if SHEETS_TYPE_CHECK
-		if type( initial ) ~= "number" then return error( "expected number initial, got " .. type( initial ) ) end
-		if type( final ) ~= "number" then return error( "expected number final, got " .. type( final ) ) end
-		if type( duration ) ~= "number" then return error( "expected number duration, got " .. type( duration ) ) end
-		if easing and type( easing ) ~= "function" then return error( "expected function easing, got " .. type( easing ) ) end
-	 -- @endif
-	 self.duration = duration
-	 self.initial = initial
-	 self.difference = final - initial
-	 self.easing = easing
-	 self.value = initial
+	self.duration = duration
+	self.initial = initial
+	self.difference = final - initial
+	self.easing = easing
+	self.value = initial
 end
 
 function KeyFrame:update( dt )

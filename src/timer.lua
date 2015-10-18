@@ -5,6 +5,17 @@ local timers = {}
 local timerID = 0
 local t, lt = os.clock()
 
+function timer.new( n )
+	local finish, ID = t + n, false -- avoids duplicating timer events
+	for i = 1, #timers do
+		if timers[i].time == finish then
+			ID = timers[i].ID
+			break
+		end
+	end
+	return ID or os.startTimer( n )
+end
+
 function timer.queue( n, response )
 	-- @if SHEETS_TYPE_CHECK
 		if type( n ) ~= "number" then return error( "expected number time, got " .. class.type( n ) ) end

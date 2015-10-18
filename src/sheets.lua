@@ -1,5 +1,5 @@
 
- -- @defineifndef SHEETS_TYPE_CHECK false
+ -- @defineifndef SHEETS_TYPE_CHECK true
  -- @defineifndef SHEETS_LOWRES true
  -- @defineifndef SHEETS_ANIMATION_FRAMERATE .05
  -- @defineifndef SHEETS_WRAP false
@@ -31,8 +31,7 @@
  -- @define SHEETS_EVENT_KEY_UP 7
  -- @define SHEETS_EVENT_TEXT 8
  -- @define SHEETS_EVENT_VOICE 9
- -- @define SHEETS_EVENT_RESOLUTION_CHANGE 10
- -- @define SHEETS_EVENT_TIMER 11
+ -- @define SHEETS_EVENT_TIMER 10
 
  -- @define SML_TOKEN_STRING 0
  -- @define SML_TOKEN_EQUAL 1
@@ -45,28 +44,33 @@
  -- @define SML_TOKEN_UNKNOWN 8
  -- @define SML_TOKEN_EOF 9
 
- -- @define SML_EMPTY_BODY nil
-
- -- @define SML_ERROR_STRING 0
- -- @define SML_ERROR_NUMBER 1
-
  -- @include graphics
+
+ -- @require sheets.timer
+
+ -- @require sheets.interfaces.IAnimationContainer
+ -- @require sheets.interfaces.IChildContainer
+ -- @require sheets.interfaces.IPositionContainer
+ -- @require sheets.interfaces.IEvent
+ -- @require sheets.interfaces.IParentContainer
 
  -- @require sheets.sml.SMLNode
  -- @require sheets.sml.SMLParser
 
- -- @require sheets.KeyFrame
- -- @require sheets.Animation
+ -- @require sheets.animation.KeyFrame
+ -- @require sheets.animation.Pause
+ -- @require sheets.animation.Animation
 
- -- @include sheets.timer
- -- @require sheets.Application
  -- @require sheets.Theme
+
+ -- @require sheets.Application
+ -- @require sheets.View
  -- @require sheets.Sheet
 
- -- @if SHEET_WRAP
+ -- @if SHEETS_WRAP
 	end
 	f()
  -- @endif
- -- @if SHEET_EXTERNAL
+ -- @if SHEETS_EXTERNAL
  	return sheets
  -- @endif

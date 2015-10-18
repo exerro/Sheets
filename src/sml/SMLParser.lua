@@ -92,7 +92,7 @@ function SMLParser:consume()
 	elseif self.text:find( "^%.?%d", self.char ) then
 		return self:consumeNumber( line, char )
 
-	elseif c:find "%w" then
+	elseif c:find "[%w_]" then
 		return self:consumeWord( line, char )
 
 	elseif c == "\n" then
@@ -109,30 +109,6 @@ function SMLParser:consume()
 	self.char = self.char + 1
 	return Token( SML_TOKEN_UNKNOWN, c, line, char )
 
-end
-
-function SMLParser:next()
-	local t = self.token
-	self.token = table.remove( self.peeking, 1 ) or self:consume()
-	return t
-end
-
-function SMLParser:peek( n )
-	if ( n or 0 ) == 0 then
-		return self.token
-	end
-	for i = #self.peeking + 1, n do
-		self.peeking[i] = self:consume()
-	end
-	return self.peeking[n]
-end
-
-function SMLParser:test( type, value, n )
-	return self:peek( n ):matches( type, value ) and self:peek( n ) or nil
-end
-
-function SMLParser:skip( type, value )
-	return self.token:matches( type, value ) and self:next() or nil
 end
 
 function SMLParser:consumeWord( line, char )
@@ -205,6 +181,30 @@ end
 function SMLParser:consumeWhitespace()
 	self.char = self.char + 1
 	self.character = self.character + 1
+end
+
+function SMLParser:next()
+	local t = self.token
+	self.token = table.remove( self.peeking, 1 ) or self:consume()
+	return t
+end
+
+function SMLParser:peek( n )
+	if ( n or 0 ) == 0 then
+		return self.token
+	end
+	for i = #self.peeking + 1, n do
+		self.peeking[i] = self:consume()
+	end
+	return self.peeking[n]
+end
+
+function SMLParser:test( type, value, n )
+	return self:peek( n ):matches( type, value ) and self:peek( n ) or nil
+end
+
+function SMLParser:skip( type, value )
+	return self.token:matches( type, value ) and self:next() or nil
 end
 
 function SMLParser:parseAttribute()
