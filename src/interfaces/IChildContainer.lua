@@ -17,7 +17,7 @@ end
 
 function IChildContainer:addChild( child )
 	-- @if SHEETS_TYPE_CHECK
-		if not class.typeOf( child, Sheet ) and not class.typeOf( child, View ) then return error( "expected Sheet child, got " .. class.type( child ) ) end
+		if not class.typeOf( child, Sheet ) then return error( "expected Sheet child, got " .. class.type( child ) ) end
 	-- @endif
 
 	if child.parent then
@@ -43,6 +43,9 @@ function IChildContainer:removeChild( child )
 end
 
 function IChildContainer:getChildById( id )
+	 -- @if SHEETS_TYPE_CHECK
+	 	if type( id ) ~= "string" then return error( "expected string id, got " .. class.type( id ) ) end
+	 -- @endif
 	for i = #self.children, 1, -1 do
 		local c = self.children[i]:getChildById( id )
 		if c then
@@ -54,6 +57,9 @@ function IChildContainer:getChildById( id )
 end
 
 function IChildContainer:getChildrenById( id )
+	 -- @if SHEETS_TYPE_CHECK
+	 	if type( id ) ~= "string" then return error( "expected string id, got " .. class.type( id ) ) end
+	 -- @endif
 	local t = {}
 	for i = #self.children, 1, -1 do
 		local subt = self.children[i]:getChildById( id )
@@ -68,8 +74,24 @@ function IChildContainer:getChildrenById( id )
 end
 
 function IChildContainer:setChildrenTheme( theme )
+	 -- @if SHEETS_TYPE_CHECK
+	 	if type( id ) ~= "string" then return error( "expected string id, got " .. class.type( id ) ) end
+	 -- @endif
 	for i = 1, #self.children do
 		self.children[i]:setTheme( theme )
 		self.children[i]:setChildrenTheme( theme )
 	end
+end
+
+function IChildContainer:setTheme( theme )
+	theme = theme or Theme()
+	-- @if SHEETS_TYPE_CHECK
+		if not class.typeOf( theme, Theme ) then return error( "expected Theme theme, got " .. type( theme ) ) end
+	-- @endif
+	self.theme = theme
+	for i = 1, #self.children do
+		self.children[i]:setTheme( theme )
+	end
+	self:setChanged( true )
+	return self
 end

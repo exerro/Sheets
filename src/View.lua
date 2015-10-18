@@ -11,7 +11,7 @@ local function childDrawSort( a, b )
 	return a.z < b.z
 end
 
-class "View" implements (IChildContainer) implements (IPosition) implements (IAnimation) implements (IParentContainer)
+class "View" implements (IChildContainer) implements (IPosition) implements (IAnimation) implements (IParentContainer) implements (IPositionAnimator)
 {
 	id = "default";
 
@@ -51,19 +51,9 @@ end
 
 function View:setChanged( state )
 	self.changed = state
-	if state and self.parent then
+	if state and self.parent and not self.parent.changed then
 		self.parent:setChanged( true )
 	end
-	return self
-end
-
-function View:setTheme( theme )
-	theme = theme or Theme()
-	-- @if SHEETS_TYPE_CHECK
-		if not class.typeOf( theme, Theme ) then return error( "expected Theme theme, got " .. type( theme ) ) end
-	-- @endif
-	self.theme = theme
-	self:setChanged( true )
 	return self
 end
 

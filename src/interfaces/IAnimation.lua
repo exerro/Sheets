@@ -14,6 +14,11 @@ function IAnimation:IAnimation()
 end
 
 function IAnimation:addAnimation( label, setter, animation )
+	 -- @if SHEETS_TYPE_CHECK then
+	 	if type( label ) ~= "string" then return error( "expected string label, got " .. class.type( label ) ) end
+	 	if type( setter ) ~= "function" then return error( "expected function setter, got " .. class.type( setter ) ) end
+	 	if not class.typeOf( animation, Animation ) then return error( "expected Animation animation, got " .. class.type( animation ) ) end
+	 -- @endif
 	self.animations[label] = {
 		setter = setter;
 		animation = animation;
@@ -24,6 +29,9 @@ function IAnimation:addAnimation( label, setter, animation )
 end
 
 function IAnimation:updateAnimations( dt )
+	 -- @if SHEETS_TYPE_CHECK then
+	 	if type( dt ) ~= "number" then return error( "expected number dt, got " .. class.type( dt ) ) end
+	 -- @endif
 	local finished = {}
 	local animations = self.animations
 	local k, v = next( animations )

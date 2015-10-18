@@ -58,6 +58,7 @@
  -- @require sheets.interfaces.IPosition
  -- @require sheets.interfaces.IEvent
  -- @require sheets.interfaces.IParentContainer
+ -- @require sheets.interfaces.IPositionAnimator
 
  -- @require sheets.sml.SMLNode
  -- @require sheets.sml.SMLParser

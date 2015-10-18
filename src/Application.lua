@@ -7,10 +7,6 @@
 
  -- @print Including sheets.Application
 
-local function childDrawSort( a, b )
-	return a.z < b.z
-end
-
 class "Application" implements (IChildContainer) implements (IAnimation)
 {
 	name = "UnNamed Application";
@@ -54,6 +50,22 @@ function Application:setChanged( state )
 	self.changed = state
 end
 
+function Application:addChild( child )
+	-- @if SHEETS_TYPE_CHECK
+		if not class.typeOf( child, View ) then return error( "expected View child, got " .. class.type( child ) ) end
+	-- @endif
+
+	if child.parent then
+		child.parent:removeChild( child )
+	end
+
+	self:setChanged( true )
+	child.parent = self
+	child:setTheme( self.theme )
+	self.children[#self.children + 1] = child
+	return child
+end
+
 function Application:stop()
 	self.running = false
 end
@@ -68,14 +80,19 @@ function Application:event( event, ... )
 		return
 	end
 
+	local children = {}
+	for i = 1, #self.children do
+		children[i] = self.children[i]
+	end
+
 	local function handle( e )
 		if e:typeOf( MouseEvent ) then
-			for i = #self.children, 1, -1 do
-				self.children[i]:handle( e:clone( self.children[i].x, self.children[i].y, true ) )
+			for i = #children, 1, -1 do
+				children[i]:handle( e:clone( children[i].x, children[i].y, true ) )
 			end
 		else
-			for i = #self.children, 1, -1 do
-				self.children[i]:handle( e )
+			for i = #children, 1, -1 do
+				children[i]:handle( e )
 			end
 		end
 	end
@@ -181,7 +198,6 @@ function Application:draw()
 		for i = 1, #self.children do
 			children[i] = self.children[i]
 		end
-		table.sort( children, childDrawSort )
 
 		for i = 1, #children do
 			local child = children[i]

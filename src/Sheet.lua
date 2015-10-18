@@ -11,9 +11,9 @@ local function childDrawSort( a, b )
 	return a.z < b.z
 end
 
-class "Sheet" implements (IChildContainer) implements (IPosition) implements (IAnimation) implements (IParentContainer)
+class "Sheet" implements (IChildContainer) implements (IPosition) implements (IAnimation) implements (IParentContainer) implements (IPositionAnimator)
 {
-	id = "default";
+	id = "ID";
 
 	z = 0;
 
@@ -65,19 +65,9 @@ end
 
 function Sheet:setChanged( state )
 	self.changed = state ~= false
-	if state ~= false and self.parent then
+	if state ~= false and self.parent and not self.parent.changed then
 		self.parent:setChanged( true )
 	end
-	return self
-end
-
-function Sheet:setTheme( theme )
-	theme = theme or Theme()
-	-- @if SHEETS_TYPE_CHECK
-		if not class.typeOf( theme, Theme ) then return error( "expected Theme theme, got " .. type( theme ) ) end
-	-- @endif
-	self.theme = theme
-	self:setChanged( true )
 	return self
 end
 
@@ -152,5 +142,11 @@ function Sheet:handle( event )
 		self:onKeyboardEvent( event )
 	elseif event:typeOf( TextEvent ) and self.handlesText then
 		self:onTextEvent( event )
+	end
+end
+
+function Sheet:onMouseEvent( event )
+	if not event.handled and event:isWithinArea( 0, 0, self.width, self.height ) and event.within then
+		event:handle()
 	end
 end
