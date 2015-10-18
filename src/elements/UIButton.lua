@@ -43,3 +43,14 @@ function UIButton:onMouseEvent( event )
 		self:onHold()
 	end
 end
+
+Theme.addToTemplate( UIButton, "colour", {
+	default = CYAN;
+	pressed = LIGHTBLUE;
+} )
+Theme.addToTemplate( UIButton, "textColour", {
+	default = WHITE;
+	pressed = BLUE;
+} )
+
+SMLEnvironment:addElement( "button", UIButton, buttonDecoder )

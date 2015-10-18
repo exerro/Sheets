@@ -14,7 +14,7 @@ class "Theme" {
 }
 
 function Theme.addToTemplate( class, field, states )
-	if not class.isClass( class ) ~= "string" then return error( "expected Class class, got " .. class.type( class ) ) end
+	if not class.isClass( class ) then return error( "expected Class class, got " .. class.type( class ) ) end
 	if type( field ) ~= "string" then return error( "expected string field, got " .. class.type( field ) ) end
 	if type( states ) ~= "table" then return error( "expected table states, got " .. class.type( states ) ) end
 	template[class] = template[class] or {}
