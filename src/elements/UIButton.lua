@@ -53,4 +53,16 @@ Theme.addToTemplate( UIButton, "textColour", {
 	pressed = BLUE;
 } )
 
-SMLEnvironment:addElement( "button", UIButton, buttonDecoder )
+local decoder = SMLNodeDecoder()
+
+decoder:implement( IPositionAttributes )
+
+function decoder:init()
+	return UIButton( 0, 0, 10, 3 )
+end
+
+function decoder:attribute_text( text )
+	self:setText( text )
+end
+
+SMLEnvironment:addElement( "button", UIButton, decoder )

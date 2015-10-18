@@ -88,6 +88,7 @@ alignment = {
  -- @require sheets.sml.SMLNode
  -- @require sheets.sml.SMLParser
  -- @require sheets.sml.SMLEnvironment
+ -- @require sheets.sml.SMLNodeDecoder
  -- @require sheets.sml.SML
 
  -- @require sheets.interfaces.IChildContainer
@@ -113,6 +114,8 @@ alignment = {
  -- @require sheets.Application
  -- @require sheets.View
  -- @require sheets.Sheet
+
+ -- @require sheets.sml.interfaces.IPositionAttributes
 
  -- @if SHEETS_WRAP
 	end

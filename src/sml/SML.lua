@@ -15,11 +15,7 @@ function SML.loadNode( node )
 	 -- @endif
 	local env = SMLEnvironment.current()
 	if env:getDecoder( node.nodetype ) then
-		local ok, data = pcall( env:getDecoder( node.nodetype ), node )
-		if not ok then
-			return false, data
-		end
-		return data, "decoder for " .. node.nodetype .. " returned nothing" -- data should be a true value, in which case the error is not needed
+		return env:getDecoder( node.nodetype ):decode( node )
 	end
 end
 
@@ -39,11 +35,11 @@ function SML.load( script, name )
 	if ok then
 		local t = {}
 		for i = 1, #data do
-			local node, err = SML.loadNode( data[i] )
-			if not node then
+			local object, err = SML.loadNode( data[i] )
+			if not object then
 				return false, name .. " " .. tostring( err )
 			end
-			t[i] = node
+			t[#t + 1] = object
 		end
 		return t
 	else

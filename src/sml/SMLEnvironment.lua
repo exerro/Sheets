@@ -76,13 +76,13 @@ function SMLEnvironment:getScript( name )
 	return self.scripts[name]
 end
 
-function SMLEnvironment:addElement( name, class, decoder )
+function SMLEnvironment:addElement( name, cls, decoder )
 	 -- @if SHEETS_TYPE_CHECK
 		if type( name ) ~= "string" then return error( "expected string name, got " .. class.type( name ) ) end
-		if not class.isClass( class ) then return error( "expected Class class, got " .. class.type( name ) ) end
-		if type( decoder ) ~= "function" then return error( "expected function decoder, got " .. class.type( decoder ) ) end
+		if not class.isClass( cls ) then return error( "expected Class class, got " .. class.type( cls ) ) end
+		if not class.typeOf( decoder, SMLNodeDecoder ) then return error( "expected SMLNodeDecoder decoder, got " .. class.type( decoder ) ) end
 	 -- @endif
-	self.elements[name] = class
+	self.elements[name] = cls
 	self.decoders[name] = decoder
 end
 
@@ -96,7 +96,7 @@ end
 function SMLEnvironment:setDecoder( name, decoder )
 	 -- @if SHEETS_TYPE_CHECK
 		if type( name ) ~= "string" then return error( "expected string name, got " .. class.type( name ) ) end
-		if type( decoder ) ~= "function" then return error( "expected function decoder, got " .. class.type( decoder ) ) end
+		if not class.typeOf( decoder, SMLNodeDecoder ) then return error( "expected SMLNodeDecoder decoder, got " .. class.type( decoder ) ) end
 	 -- @endif
 	self.decoders[name] = decoder
 end

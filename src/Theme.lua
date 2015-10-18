@@ -65,19 +65,25 @@ function Theme:getField( cls, field, state )
 	end
 end
 
-SMLEnvironment:setDecoder( "theme", function( node )
+local decoder = SMLNodeDecoder()
+
+decoder.isBodyAllowed = true
+decoder.isBodyNecessary = true
+
+function decoder:init()
+	return Theme()
+end
+
+function decoder:attribute_name( name )
+	SMLEnvironment.current():setTheme( name, self )
+end
+
+function decoder:decodeBody( body )
 	local env = SMLEnvironment.current()
-	local theme = Theme()
-	if not node.body then
-		error( "[" .. node.position.line .. ", " .. node.position.character .. "] : theme has no body", 0 )
-	end
-	if type( node:get "name" ) == "string" then
-		env:setTheme( node:get "name", theme )
-	end
-	for i = 1, #node.body do
-		local element = env:getElement( node.body[i].nodetype )
+	for i = 1, #body do
+		local element = env:getElement( body[i].nodetype )
 		if element then
-			local fields = node.body[i].body
+			local fields = body[i].body
 			if fields then
 				for i = 1, #fields do
 					if fields[i].body then
@@ -87,15 +93,16 @@ SMLEnvironment:setDecoder( "theme", function( node )
 						if env:getVariable( v ) ~= nil then
 							v = env:getVariable( v )
 						end
-						theme:setField( element, fields[i].nodetype, k, v )
+						self:setField( element, fields[i].nodetype, k, v )
 					end
 				end
 			else
-				error( "[" .. node.body[i].position.line .. ", " .. node.body[i].position.character .. "] : element has no body for fields", 0 )
+				error( "[" .. body[i].position.line .. ", " .. body[i].position.character .. "] : element has no body for fields", 0 )
 			end
 		else
-			error( "[" .. node.body[i].position.line .. ", " .. node.body[i].position.character .. "] : unknown element '" .. node.body[i].nodetype .. "'", 0 )
+			error( "[" .. body[i].position.line .. ", " .. body[i].position.character .. "] : unknown element '" .. body[i].nodetype .. "'", 0 )
 		end
 	end
-	return theme
-end )
+end
+
+SMLEnvironment:setDecoder( "theme", decoder )
