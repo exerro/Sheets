@@ -8,9 +8,10 @@
  -- @print Including sheets.events.TextEvent
 
 class "TextEvent" implements (IEvent) {
-	
+	text = "";
 }
 
-function TextEvent:TextEvent()
-	self:IEvent()
+function TextEvent:TextEvent( event, text )
+	self:IEvent( event )
+	self.text = text
 end

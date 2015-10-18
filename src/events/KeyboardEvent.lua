@@ -8,9 +8,12 @@
  -- @print Including sheets.events.KeyboardEvent
 
 class "KeyboardEvent" implements (IEvent) {
-	
+	key = 0;
+	meta = {};
 }
 
-function KeyboardEvent:KeyboardEvent()
-	self:IEvent()
+function KeyboardEvent:KeyboardEvent( event, key, meta )
+	self:IEvent( event )
+	self.key = key
+	self.meta = meta
 end

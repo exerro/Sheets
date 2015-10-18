@@ -7,12 +7,19 @@
 
  -- @print Including sheets.interfaces.IEvent
 
-IEvent = {}
+IEvent = {
+	event = nil;
+	handled = false;
+}
 
-function IEvent:IEvent( type )
-	self.event_type = type
+function IEvent:IEvent( event )
+	self.event = event
 end
 
-function IEvent:is( type )
-	return self.event_type == type
+function IEvent:is( event )
+	return self.event == event
+end
+
+function IEvent:handle()
+	self.handled = true
 end

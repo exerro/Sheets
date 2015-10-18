@@ -11,7 +11,7 @@ local function childDrawSort( a, b )
 	return a.z < b.z
 end
 
-class "Sheet" implements (IChildContainer) implements (IPositionContainer) implements (IAnimationContainer) implements (IParentContainer)
+class "Sheet" implements (IChildContainer) implements (IPosition) implements (IAnimation) implements (IParentContainer)
 {
 	id = "default";
 
@@ -35,9 +35,9 @@ function Sheet:Sheet( x, y, width, height )
 		if type( width ) ~= "number" then return error( "element attribute #3 'width' not a number (" .. class.type( width ) .. ")", 2 ) end
 		if type( height ) ~= "number" then return error( "element attribute #4 'height' not a number (" .. class.type( height ) .. ")", 2 ) end
 	-- @endif
-	self:IPositionContainer( x, y, width, height )
+	self:IPosition( x, y, width, height )
 	self:IChildContainer()
-	self:IAnimationContainer()
+	self:IAnimation()
 
 	self.canvas = DrawingCanvas( width, height )
 	self.theme = Theme()
@@ -64,8 +64,8 @@ function Sheet:setZ( z )
 end
 
 function Sheet:setChanged( state )
-	self.changed = state
-	if state and self.parent then
+	self.changed = state ~= false
+	if state ~= false and self.parent then
 		self.parent:setChanged( true )
 	end
 	return self
@@ -91,8 +91,6 @@ function Sheet:onParentResized() end
 
 function Sheet:draw()
 	if self.changed then
-		local canvas = self.canvas
-
 		self:onPreDraw()
 
 		local children = {}
@@ -104,11 +102,10 @@ function Sheet:draw()
 		for i = 1, #children do
 			local child = children[i]
 			child:draw()
-			child.canvas:drawTo( canvas, child.x, child.y )
+			child.canvas:drawTo( self.canvas, child.x, child.y )
 		end
 
 		self:onPostDraw()
-
 		self.changed = false
 	end
 end
@@ -136,7 +133,7 @@ function Sheet:handle( event )
 	table.sort( c, childDrawSort )
 
 	if event:typeOf( MouseEvent ) then
-		local within = event.within and event:isWithinArea( 0, 0, self.width, self.height )
+		local within = event:isWithinArea( 0, 0, self.width, self.height )
 		for i = #c, 1, -1 do
 			c[i]:handle( event:clone( c[i].x, c[i].y, within ) )
 		end
@@ -146,8 +143,8 @@ function Sheet:handle( event )
 		end
 	end
 
-	if event:typeOf( MouseEvent ) and self.handlesMouse then
-		if event.name == EVENT_MOUSE_PING and event:isWithinArea( 0, 0, self.width, self.height ) and event.within then
+	if event:typeOf( MouseEvent ) then
+		if event:is( EVENT_MOUSE_PING ) and event:isWithinArea( 0, 0, self.width, self.height ) and event.within then
 			event.button[#event.button + 1] = self
 		end
 		self:onMouseEvent( event )

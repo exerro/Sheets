@@ -11,20 +11,6 @@
  -- @define SHEETS_EASING_ENTRANCE 1
  -- @define SHEETS_EASING_TRANSITION 2
 
-local function easing_transition( u, d, t )
-	return u + d * ( 3 * t * t - 2 * t * t * t )
-end
-
-local function easing_exit( u, d, t )
-	local t2 = t - 2
-	return u + d * ( t * t * t * t * t2 * t2 * t2 * t2 )
-end
-
-local function easing_entrance( u, d, t )
-	local t2 = t - 2
-	return u + d * ( t * t * t2 * t2 )
-end
-
 class "KeyFrame" {
 	easing = easing_transition;
 	duration = 0;

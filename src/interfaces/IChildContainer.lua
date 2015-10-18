@@ -55,14 +55,21 @@ end
 
 function IChildContainer:getChildrenById( id )
 	local t = {}
-	for i = #children, 1, -1 do
-		local subt = children[i]:getChildById( id )
+	for i = #self.children, 1, -1 do
+		local subt = self.children[i]:getChildById( id )
 		for i = 1, #subt do
 			t[#t + 1] = subt[i]
 		end
-		if children[i].id == id then
-			t[#t + 1] = children[i]
+		if self.children[i].id == id then
+			t[#t + 1] = self.children[i]
 		end
 	end
 	return t
+end
+
+function IChildContainer:setChildrenTheme( theme )
+	for i = 1, #self.children do
+		self.children[i]:setTheme( theme )
+		self.children[i]:setChildrenTheme( theme )
+	end
 end

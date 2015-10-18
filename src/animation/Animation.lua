@@ -7,17 +7,30 @@
 
  -- @print Including sheets.animation.Animation
 
+-- if you try to update the value being animated using an onFinish method, nothing will happen unless you set self.value to nil
+
+local function easing_transition( u, d, t )
+	return u + d * ( 3 * t * t - 2 * t * t * t )
+end
+
+local function easing_exit( u, d, t )
+	local t2 = t - 2
+	return u + d * ( t * t * t * t * t2 * t2 * t2 * t2 )
+end
+
+local function easing_entrance( u, d, t )
+	local t2 = t - 2
+	return u + d * ( t * t * t2 * t2 )
+end
+
 class "Animation" {
 	frames = {};
-	value = 0;
+	value = nil;
 	rounded = false;
 }
 
-function Animation:Animation( ... )
-	local frames = { ... }
-	-- do some type checking
-	self.frames = frames
-	self.value = frames[1] and frames[1].value
+function Animation:Animation()
+	self.frames = {}
 end
 
 function Animation:setRounded( value )
@@ -70,12 +83,12 @@ end
 function Animation:update( dt )
 	if self.frames[1] then
 		self.frames[1]:update( dt )
-		self.value = self.frames[1].value or self.value
+		self.value = self.frames[1].value or self.value -- the or self.value is because pauses don't have a value
 		if self.frames[1]:finished() then
-			table.remove( self.frames, 1 )
-			if #self.frames == 0 and self.onFinish then
-				self:onFinish()
+			if type( self.frames[1].onFinish ) == "function" then
+				self.frames[1].onFinish( self )
 			end
+			table.remove( self.frames, 1 )
 		end
 	end
 end

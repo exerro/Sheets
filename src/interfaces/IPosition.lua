@@ -2,26 +2,26 @@
  -- @once
 
  -- @ifndef __INCLUDE_sheets
-	-- @error 'sheets' must be included before including 'sheets.interfaces.IPositionContainer'
+	-- @error 'sheets' must be included before including 'sheets.interfaces.IPosition'
  -- @endif
 
- -- @print Including sheets.interfaces.IPositionContainer
+ -- @print Including sheets.interfaces.IPosition
 
-IPositionContainer = {}
+IPosition = {}
 
-IPositionContainer.x = 0
-IPositionContainer.y = 0
-IPositionContainer.width = 0
-IPositionContainer.height = 0
+IPosition.x = 0
+IPosition.y = 0
+IPosition.width = 0
+IPosition.height = 0
 
-function IPositionContainer:IPositionContainer( x, y, width, height )
+function IPosition:IPosition( x, y, width, height )
 	self.x = x
 	self.y = y
 	self.width = width
 	self.height = height
 end
 
-function IPositionContainer:setX( x )
+function IPosition:setX( x )
 	-- @if SHEETS_TYPE_CHECK
 		if type( x ) ~= "number" then return error( "expected number x, got " .. class.type( x ) ) end
 	-- @endif
@@ -30,7 +30,7 @@ function IPositionContainer:setX( x )
 	return self
 end
 
-function IPositionContainer:setY( y )
+function IPosition:setY( y )
 	-- @if SHEETS_TYPE_CHECK
 		if type( y ) ~= "number" then return error( "expected number y, got " .. class.type( y ) ) end
 	-- @endif
@@ -39,7 +39,7 @@ function IPositionContainer:setY( y )
 	return self
 end
 
-function IPositionContainer:setWidth( width )
+function IPosition:setWidth( width )
 	-- @if SHEETS_TYPE_CHECK
 		if type( width ) ~= "number" then return error( "expected number width, got " .. class.type( width ) ) end
 	-- @endif
@@ -51,7 +51,7 @@ function IPositionContainer:setWidth( width )
 	return self
 end
 
-function IPositionContainer:setHeight( height )
+function IPosition:setHeight( height )
 	-- @if SHEETS_TYPE_CHECK
 		if type( height ) ~= "number" then return error( "expected number height, got " .. class.type( height ) ) end
 	-- @endif

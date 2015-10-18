@@ -11,7 +11,7 @@ local function childDrawSort( a, b )
 	return a.z < b.z
 end
 
-class "Application" implements (IChildContainer) implements (IAnimationContainer)
+class "Application" implements (IChildContainer) implements (IAnimation)
 {
 	name = "UnNamed Application";
 	terminateable = true;
@@ -26,6 +26,9 @@ class "Application" implements (IChildContainer) implements (IAnimationContainer
 	running = true;
 	theme = nil;
 	changed = false;
+
+	mouse = {};
+	keys = {};
 }
 
 -- need to add monitor support
@@ -38,14 +41,12 @@ function Application:Application( name )
 	self.timers = {}
 
 	self:IChildContainer()
-	self:IAnimationContainer()
+	self:IAnimation()
 
 	self.theme = Theme()
 
-	self.root = Sheet( 0, 0, self.width, self.height )
 	self.screen = ScreenCanvas( self.width, self.height )
 
-	self.root.canvas = self.screen
 	self.meta.__add = self.addChild
 end
 
@@ -60,45 +61,105 @@ end
 function Application:event( event, ... )
 	Application.active = self
 
+	local params = { ... }
+
 	if event == "timer" and timer.update( ... ) then
 		Application.active = nil
 		return
 	end
 
+	local function handle( e )
+		if e:typeOf( MouseEvent ) then
+			for i = #self.children, 1, -1 do
+				self.children[i]:handle( e:clone( self.children[i].x, self.children[i].y, true ) )
+			end
+		else
+			for i = #self.children, 1, -1 do
+				self.children[i]:handle( e )
+			end
+		end
+	end
+
 	if event == "mouse_click" then
+		self.mouse = {
+			x = params[2] - 1;
+			y = params[3] - 1;
+			down = true;
+			timer = os.startTimer( 1 );
+			moved = false;
+			time = os.clock();
+			button = params[1];
+		}
+
+		handle( MouseEvent( SHEETS_EVENT_MOUSE_DOWN, params[2] - 1, params[3] - 1, params[1], true ) )
 
 	elseif event == "mouse_up" then
+		handle( MouseEvent( SHEETS_EVENT_MOUSE_UP, params[2] - 1, params[3] - 1, params[1], true ) )
+
+		self.mouse.down = false
+		os.cancelTimer( self.mouse.timer )
+
+		if not self.mouse.moved and os.clock() - self.mouse.time < 1 and params[1] == self.mouse.button then
+			handle( MouseEvent( SHEETS_EVENT_MOUSE_CLICK, params[2] - 1, params[3] - 1, params[1], true ) )
+		end
 
 	elseif event == "mouse_drag" then
+		handle( MouseEvent( SHEETS_EVENT_MOUSE_DRAG, params[2] - 1, params[3] - 1, params[1], true ) )
 
-	elseif event == "monitor_touch" then
-
-	elseif event == "char" then
-
-	elseif event == "key" then
+		self.mouse.moved = true
+		os.cancelTimer( self.mouse.timer )
 
 	elseif event == "mouse_scroll" then
+		handle( MouseEvent( SHEETS_EVENT_MOUSE_SCROLL, params[2] - 1, params[3] - 1, params[1], true ) )
+
+	elseif event == "monitor_touch" then
+		handle( MouseEvent( SHEETS_EVENT_MOUSE_CLICK, params[2] - 1, params[3] - 1, params[1] ) )
+
+	elseif event == "chatbox_something" then
+		handle( TextEvent( SHEETS_EVENT_VOICE, params[1] ) )
+
+	elseif event == "char" then
+		handle( TextEvent( SHEETS_EVENT_TEXT, params[1] ) )
 
 	elseif event == "paste" then
+		handle( TextEvent( SHEETS_EVENT_PASTE, params[1] ) )
+
+	elseif event == "key" then
+		handle( TextEvent( SHEETS_EVENT_KEY_DOWN, params[1], self.keys ) )
+
+	elseif event == "key_up" then
+		handle( TextEvent( SHEETS_EVENT_KEY_UP, params[1], self.keys ) )
 
 	elseif event == "term_resize" then
 		self.width, self.height = term.getSize()
 		self.root:setWidth( self.width )
 		self.root:setHeight( self.height )
 		self.root:handleParentResize()
+
+	elseif event == "timer" then
+		if params[1] == self.mouse.timer then
+			handle( MouseEvent( SHEETS_EVENT_MOUSE_HOLD, self.mouse.x, self.mouse.y, self.mouse.button, true ) )
+		else
+			handle( TimerEvent( params[1] ) )
+		end
+
+	else
+		handle( MiscEvent( event, ... ) )
 	end
+
 	Application.active = nil
 end
 
 function Application:update()
-	local dt = timer.getDelta()
 
 	Application.active = self
+
+	local dt = timer.getDelta()
+	local c = {}
 
 	timer.step()
 	self:updateAnimations( dt )
 
-	local c = {}
 	for i = 1, #self.children do
 		c[i] = self.children[i]
 	end
@@ -135,16 +196,17 @@ function Application:draw()
 end
 
 function Application:run()
-	local t = timer.new( .05 )
+	local t = timer.new( 0 )
 	while self.running do
 		local event = { coroutine.yield() }
 		if event[1] == "timer" and event[2] == t then
 			t = timer.new( .05 )
+			self:update()
 		elseif event[1] == "terminate" and self.terminateable then
 			self:stop()
+		else
+			self:event( unpack( event ) )
 		end
-		self:event( unpack( event ) )
-		self:update()
 		self:draw()
 	end
 end

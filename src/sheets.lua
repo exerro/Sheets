@@ -1,4 +1,7 @@
 
+ -- @load sheets.noindent
+ -- @noindent
+
  -- @defineifndef SHEETS_TYPE_CHECK true
  -- @defineifndef SHEETS_LOWRES true
  -- @defineifndef SHEETS_ANIMATION_FRAMERATE .05
@@ -32,6 +35,8 @@
  -- @define SHEETS_EVENT_TEXT 8
  -- @define SHEETS_EVENT_VOICE 9
  -- @define SHEETS_EVENT_TIMER 10
+ -- @define SHEETS_EVENT_PASTE 11
+ -- @define SHEETS_EVENT_MOUSE_PING 12
 
  -- @define SML_TOKEN_STRING 0
  -- @define SML_TOKEN_EQUAL 1
@@ -48,9 +53,9 @@
 
  -- @require sheets.timer
 
- -- @require sheets.interfaces.IAnimationContainer
+ -- @require sheets.interfaces.IAnimation
  -- @require sheets.interfaces.IChildContainer
- -- @require sheets.interfaces.IPositionContainer
+ -- @require sheets.interfaces.IPosition
  -- @require sheets.interfaces.IEvent
  -- @require sheets.interfaces.IParentContainer
 
@@ -60,6 +65,12 @@
  -- @require sheets.animation.KeyFrame
  -- @require sheets.animation.Pause
  -- @require sheets.animation.Animation
+
+ -- @require sheets.events.KeyboardEvent
+ -- @require sheets.events.MiscEvent
+ -- @require sheets.events.MouseEvent
+ -- @require sheets.events.TextEvent
+ -- @require sheets.events.TimerEvent
 
  -- @require sheets.Theme
 
