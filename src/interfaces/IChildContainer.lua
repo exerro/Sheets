@@ -13,6 +13,13 @@ IChildContainer.children = {}
 
 function IChildContainer:IChildContainer()
 	self.children = {}
+
+	self.meta.__add = self.addChild
+
+	function self.meta:__concat( child )
+		self:addChild( child )
+		return self
+	end
 end
 
 function IChildContainer:addChild( child )

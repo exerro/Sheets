@@ -41,8 +41,6 @@ function Sheet:Sheet( x, y, width, height )
 
 	self.canvas = DrawingCanvas( width, height )
 	self.theme = Theme()
-
-	self.meta.__add = self.addChild
 end
 
 function Sheet:tostring()

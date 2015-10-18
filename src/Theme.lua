@@ -73,28 +73,29 @@ SMLEnvironment:setDecoder( "theme", function( node )
 	end
 	if type( node:get "name" ) == "string" then
 		env:setTheme( node:get "name", theme )
-		for i = 1, #node.body do
-			local element = env:getElement( node.body[i].nodetype )
-			if element then
-				local fields = node.body[i].body
-				if fields then
-					for i = 1, #fields do
-						for k, v in pairs( fields[i].attributes ) do
-							if env:getVariable( v ) ~= nil then
-								v = env:getVariable( v )
-							end
-							theme:setField( element, fields[i].nodetype, k, v )
-						end
+	end
+	for i = 1, #node.body do
+		local element = env:getElement( node.body[i].nodetype )
+		if element then
+			local fields = node.body[i].body
+			if fields then
+				for i = 1, #fields do
+					if fields[i].body then
+						error( "[" .. fields[i].position.line .. ", " .. fields[i].position.character .. "] : field '" .. fields[i].nodetype .. "' has body", 0 )
 					end
-				else
-					error(  "[" .. node.body[i].position.line .. ", " .. node.body[i].position.character .. "] : element has no body for fields", 0 )
+					for k, v in pairs( fields[i].attributes ) do
+						if env:getVariable( v ) ~= nil then
+							v = env:getVariable( v )
+						end
+						theme:setField( element, fields[i].nodetype, k, v )
+					end
 				end
 			else
-				error( "[" .. node.body[i].position.line .. ", " .. node.body[i].position.character .. "] : unknown element '" .. node.body[i].nodetype .. "'", 0 )
+				error( "[" .. node.body[i].position.line .. ", " .. node.body[i].position.character .. "] : element has no body for fields", 0 )
 			end
+		else
+			error( "[" .. node.body[i].position.line .. ", " .. node.body[i].position.character .. "] : unknown element '" .. node.body[i].nodetype .. "'", 0 )
 		end
-	else
-		error( "[" .. node.position.line .. ", " .. node.position.character .. "] : expected string name, got " .. type( node:get "name" ), 0 )
 	end
 	return theme
 end )

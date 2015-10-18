@@ -49,6 +49,38 @@
  -- @define SML_TOKEN_UNKNOWN 8
  -- @define SML_TOKEN_EOF 9
 
+ -- @define ALIGNMENT_LEFT 0
+ -- @define ALIGNMENT_CENTRE 1
+ -- @define ALIGNMENT_CENTER ALIGNMENT_CENTRE
+ -- @define ALIGNMENT_RIGHT 2
+ -- @define ALIGNMENT_TOP 3
+ -- @define ALIGNMENT_BOTTOM 4
+
+event = {
+	mouse_down = SHEETS_EVENT_MOUSE_DOWN;
+	mouse_up = SHEETS_EVENT_MOUSE_UP;
+	mouse_click = SHEETS_EVENT_MOUSE_CLICK;
+	mouse_hold = SHEETS_EVENT_MOUSE_HOLD;
+	mouse_drag = SHEETS_EVENT_MOUSE_DRAG;
+	mouse_scroll = SHEETS_EVENT_MOUSE_SCROLL;
+	key_down = SHEETS_EVENT_KEY_DOWN;
+	key_up = SHEETS_EVENT_KEY_UP;
+	text = SHEETS_EVENT_TEXT;
+	voice = SHEETS_EVENT_VOICE;
+	timer = SHEETS_EVENT_TIMER;
+	paste = SHEETS_EVENT_PASTE;
+	mouse_ping = SHEETS_EVENT_MOUSE_PING;
+}
+
+alignment = {
+	left = ALIGNMENT_LEFT;
+	centre = ALIGNMENT_CENTRE;
+	center = ALIGNMENT_CENTRE;
+	right = ALIGNMENT_RIGHT;
+	top = ALIGNMENT_TOP;
+	bottom = ALIGNMENT_BOTTOM;
+}
+
  -- @include graphics
 
  -- @require sheets.timer
@@ -61,6 +93,7 @@
  -- @require sheets.interfaces.IChildContainer
  -- @require sheets.interfaces.IHasParent
  -- @require sheets.interfaces.IPosition
+ -- @require sheets.interfaces.ITextRenderer
 
  -- @require sheets.animation.KeyFrame
  -- @require sheets.animation.Pause

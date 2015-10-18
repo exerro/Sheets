@@ -44,8 +44,6 @@ function Application:Application( name )
 
 	self.screen = ScreenCanvas( self.width, self.height )
 
-	self.meta.__add = self.addChild
-
 	Application.active = self
 end
 

@@ -56,5 +56,12 @@ function SML.loadFile( file )
 		if type( file ) ~= "string" then return error( "expected string file, got " .. class.type( file ) ) end
 	 -- @endif
 	SMLEnvironment.current()
-
+	local h = fs.open( file, "r" )
+	if h then
+		local content = h.readAll()
+		h.close()
+		return SML.load( content, fs.getName( file ) )
+	else
+		return false, "failed to open file"
+	end
 end
