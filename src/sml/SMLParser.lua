@@ -207,15 +207,37 @@ function SMLParser:skip( type, value )
 	return self.token:matches( type, value ) and self:next() or nil
 end
 
+function SMLParser:parseArrayList()
+	if self:test( SML_TOKEN_UNKNOWN, "]" ) then
+		return {}
+	else
+		local t = {}
+		repeat
+			t[#t + 1] = self:parseValue()
+		until not self:skip( SML_TOKEN_UNKNOWN, "," )
+		return t
+	end
+end
+
+function SMLParser:parseValue()
+	local value = self:next()
+	if value.type == SML_TOKEN_STRING or value.type == SML_TOKEN_IDENTIFIER or value.type == SML_TOKEN_NUMBER or value.type == SML_TOKEN_BOOL then
+		return value.value
+	elseif value:matches( SML_TOKEN_UNKNOWN, "[" ) then
+		local array = self:parseArrayList()
+		if not self:skip( SML_TOKEN_UNKNOWN, "]" ) then
+			return error( "[" .. self:peek().line .. ", " .. self:peek().character .. "]: expected ']', got " .. tType( self:peek().type ), 0 )
+		end 
+		return array
+	else
+		return error( "[" .. value.line .. ", " .. value.character .. "]: unexpected " .. tType( value.type ), 0 )
+	end
+end
+
 function SMLParser:parseAttribute()
 	local ident = self:skip( SML_TOKEN_IDENTIFIER ).value
 	if self:skip( SML_TOKEN_EQUAL ) then
-		local value = self:next()
-		if value.type == SML_TOKEN_STRING or value.type == SML_TOKEN_IDENTIFIER or value.type == SML_TOKEN_NUMBER or value.type == SML_TOKEN_BOOL then
-			return ident, value.value
-		else
-			return error( "[" .. value.line .. ", " .. value.character .. "]: unexpected " .. tType( value.type ) )
-		end
+		return ident, self:parseValue()
 	else
 		return ident, true
 	end
@@ -239,12 +261,12 @@ function SMLParser:parseObject()
 			if not self:skip( SML_TOKEN_CLOSE ) then
 				return error( "[" .. self:peek().line .. ", " .. self:peek().character .. "]: expected '>' after '/'", 0 )
 			end
-			return SMLNode( name, attributes )
+			return SMLNode( name, attributes, nil, position )
 		else
 			if not self:skip( SML_TOKEN_CLOSE ) then
 				return error( "[" .. self:peek().line .. ", " .. self:peek().character .. "]: expected '>' after '/'", 0 )
 			end
-			return SMLNode( name, attributes, self:parseBody( name ) )
+			return SMLNode( name, attributes, self:parseBody( name ), position )
 		end
 	else
 		return error( "[" .. self:peek().line .. ", " .. self:peek().character .. "]: expected object type, got " .. tType( self:peek().type ), 0 )
@@ -253,6 +275,7 @@ end
 
 function SMLParser:parseBody( closing )
 	local body = {}
+	local position = { line = self:peek().line, character = self:peek().character }
 	while self:skip( SML_TOKEN_OPEN ) do
 		if self:test( SML_TOKEN_SLASH ) then
 			if closing then
@@ -271,8 +294,9 @@ function SMLParser:parseBody( closing )
 				return error( "[" .. self:peek().line .. ", " .. self:peek().character .. "]: unexpected closing tag", 0 )
 			end
 		else
-			body[#body + 1] = self:parseObject()
+			body[#body + 1] = self:parseObject( position )
 		end
+		position = { line = self:peek().line, character = self:peek().character }
 	end
 	return body
 end

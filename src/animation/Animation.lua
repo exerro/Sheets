@@ -47,10 +47,10 @@ function Animation:addKeyFrame( initial, final, duration, easing )
 		easing = easing_entrance
 	end
 	 -- @if SHEETS_TYPE_CHECK
-		if type( initial ) ~= "number" then return error( "expected number initial, got " .. type( initial ) ) end
-		if type( final ) ~= "number" then return error( "expected number final, got " .. type( final ) ) end
-		if type( duration ) ~= "number" then return error( "expected number duration, got " .. type( duration ) ) end
-		if easing and type( easing ) ~= "function" then return error( "expected function easing, got " .. type( easing ) ) end
+		if type( initial ) ~= "number" then return error( "expected number initial, got " .. class.type( initial ) ) end
+		if type( final ) ~= "number" then return error( "expected number final, got " .. class.type( final ) ) end
+		if type( duration ) ~= "number" then return error( "expected number duration, got " .. class.type( duration ) ) end
+		if easing and type( easing ) ~= "function" then return error( "expected function easing, got " .. class.type( easing ) ) end
 	 -- @endif
 	 
 	local frame = KeyFrame( initial, final, duration, easing )
@@ -67,7 +67,7 @@ end
 function Animation:addPause( pause )
 	pause = pause or 1
 	 -- @if SHEETS_TYPE_CHECK
-		if type( pause ) ~= "number" then return error( "expected number pause, got " .. type( pause ) ) end
+		if type( pause ) ~= "number" then return error( "expected number pause, got " .. class.type( pause ) ) end
 	 -- @endif
 
 	local p = Pause( pause )
@@ -81,6 +81,9 @@ function Animation:getLastAdded()
 end
 
 function Animation:update( dt )
+	 -- @if SHEETS_TYPE_CHECK
+		if type( dt ) ~= "number" then return error( "expected number dt, got " .. class.type( dt ) ) end
+	 -- @endif
 	if self.frames[1] then
 		self.frames[1]:update( dt )
 		self.value = self.frames[1].value or self.value -- the or self.value is because pauses don't have a value

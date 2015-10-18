@@ -8,15 +8,17 @@
  -- @print Including sheets.sml.SMLNode
 
 class "SMLNode" {
-	nodetype = nil;
-	attributes = nil;
+	nodetype = "blank";
+	attributes = {};
 	body = nil;
+	position = { line = 0, character = 0 };
 }
 
-function SMLNode:SMLNode( type, attributes, body )
+function SMLNode:SMLNode( type, attributes, body, position )
 	self.nodetype = type
 	self.attributes = attributes
 	self.body = body
+	self.position = position
 end
 
 function SMLNode:set( attribute, value )

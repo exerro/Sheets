@@ -1,4 +1,5 @@
 
+
  -- @once
 
  -- @ifndef __INCLUDE_sheets
@@ -23,11 +24,21 @@ function MouseEvent:MouseEvent( event, x, y, button, within )
 end
 
 function MouseEvent:isWithinArea( x, y, width, height )
+	 -- @if SHEETS_TYPE_CHECK
+		if type( x ) ~= "number" then return error( "expected number x, got " .. class.type( x ) ) end
+		if type( y ) ~= "number" then return error( "expected number y, got " .. class.type( y ) ) end
+		if type( width ) ~= "number" then return error( "expected number width, got " .. class.type( width ) ) end
+		if type( height ) ~= "number" then return error( "expected number height, got " .. class.type( height ) ) end
+	 -- @endif
 	return self.x >= x and self.y >= y and self.x < x + width and self.y < y + height
 end
 
 function MouseEvent:clone( x, y, within )
-	local sub = MouseEvent( self.event, self.x - x, self.y - y, self.button, self.within and within )
+	 -- @if SHEETS_TYPE_CHECK
+		if type( x ) ~= "number" then return error( "expected number x, got " .. class.type( x ) ) end
+		if type( y ) ~= "number" then return error( "expected number y, got " .. class.type( y ) ) end
+	 -- @endif
+	local sub = MouseEvent( self.event, self.x - x, self.y - y, self.button, self.within and within or false )
 	sub.handled = self.handled
 
 	function sub.handle()

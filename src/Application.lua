@@ -15,7 +15,7 @@ class "Application" implements (IChildContainer) implements (IAnimation)
 	width = 0;
 	height = 0;
 
-	root = nil;
+	environment = nil;
 	screen = nil;
 	terminal = term;
 
@@ -40,14 +40,17 @@ function Application:Application( name )
 	self:IAnimation()
 
 	self.theme = Theme()
+	self.environment = SMLEnvironment()
 
 	self.screen = ScreenCanvas( self.width, self.height )
 
 	self.meta.__add = self.addChild
+
+	Application.active = self
 end
 
 function Application:setChanged( state )
-	self.changed = state
+	self.changed = state ~= false
 end
 
 function Application:addChild( child )
@@ -76,7 +79,6 @@ function Application:event( event, ... )
 	local params = { ... }
 
 	if event == "timer" and timer.update( ... ) then
-		Application.active = nil
 		return
 	end
 
@@ -143,15 +145,17 @@ function Application:event( event, ... )
 
 	elseif event == "key" then
 		handle( TextEvent( SHEETS_EVENT_KEY_DOWN, params[1], self.keys ) )
+		self.keys[keys.getName( params[1] )] = os.clock()
 
 	elseif event == "key_up" then
 		handle( TextEvent( SHEETS_EVENT_KEY_UP, params[1], self.keys ) )
+		self.keys[keys.getName( params[1] )] = nil
 
 	elseif event == "term_resize" then
 		self.width, self.height = term.getSize()
-		self.root:setWidth( self.width )
-		self.root:setHeight( self.height )
-		self.root:handleParentResize()
+		for i = 1, #self.children do
+			self.children[i]:onParentResized()
+		end
 
 	elseif event == "timer" then
 		if params[1] == self.mouse.timer then
@@ -163,8 +167,6 @@ function Application:event( event, ... )
 	else
 		handle( MiscEvent( event, ... ) )
 	end
-
-	Application.active = nil
 end
 
 function Application:update()
@@ -184,8 +186,6 @@ function Application:update()
 	for i = #c, 1, -1 do
 		c[i]:update( dt )
 	end
-
-	Application.active = nil
 end
 
 function Application:draw()

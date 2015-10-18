@@ -53,25 +53,27 @@
 
  -- @require sheets.timer
 
- -- @require sheets.interfaces.IAnimation
- -- @require sheets.interfaces.IChildContainer
- -- @require sheets.interfaces.IPosition
- -- @require sheets.interfaces.IEvent
- -- @require sheets.interfaces.IParentContainer
- -- @require sheets.interfaces.IPositionAnimator
-
  -- @require sheets.sml.SMLNode
  -- @require sheets.sml.SMLParser
+ -- @require sheets.sml.SMLEnvironment
+ -- @require sheets.sml.SML
+
+ -- @require sheets.interfaces.IChildContainer
+ -- @require sheets.interfaces.IHasParent
+ -- @require sheets.interfaces.IPosition
 
  -- @require sheets.animation.KeyFrame
  -- @require sheets.animation.Pause
  -- @require sheets.animation.Animation
+ -- @require sheets.animation.interfaces.IPositionAnimator
+ -- @require sheets.animation.interfaces.IAnimation
 
  -- @require sheets.events.KeyboardEvent
  -- @require sheets.events.MiscEvent
  -- @require sheets.events.MouseEvent
  -- @require sheets.events.TextEvent
  -- @require sheets.events.TimerEvent
+ -- @require sheets.events.interfaces.IEvent
 
  -- @require sheets.Theme
 

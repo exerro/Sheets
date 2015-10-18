@@ -11,7 +11,7 @@ local function childDrawSort( a, b )
 	return a.z < b.z
 end
 
-class "View" implements (IChildContainer) implements (IPosition) implements (IAnimation) implements (IParentContainer) implements (IPositionAnimator)
+class "View" implements (IChildContainer) implements (IPosition) implements (IAnimation) implements (IHasParent) implements (IPositionAnimator)
 {
 	id = "default";
 
@@ -80,6 +80,10 @@ function View:draw()
 end
 
 function View:update( dt )
+	 -- @if SHEETS_TYPE_CHECK
+		if type( dt ) ~= "number" then return error( "expected number dt, got " .. class.type( dt ) ) end
+	 -- @endif
+	
 	self:updateAnimations( dt )
 
 	local c = {}

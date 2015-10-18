@@ -2,16 +2,16 @@
  -- @once
 
  -- @ifndef __INCLUDE_sheets
-	-- @error 'sheets' must be included before including 'sheets.interfaces.IParentContainer'
+	-- @error 'sheets' must be included before including 'sheets.interfaces.IHasParent'
  -- @endif
 
- -- @print Including sheets.interfaces.IParentContainer
+ -- @print Including sheets.interfaces.IHasParent
 
-IParentContainer = {}
+IHasParent = {}
 
-IParentContainer.parent = nil
+IHasParent.parent = nil
 
-function IParentContainer:setParent( parent )
+function IHasParent:setParent( parent )
 	-- @if SHEETS_TYPE_CHECK
 		if parent ~= nil and ( not class.isInstance( parent ) or not parent:implements( IChildContainer ) ) then return error( "expected IChildContainer parent, got " .. class.type( parent ) ) end
 	-- @endif
@@ -23,7 +23,7 @@ function IParentContainer:setParent( parent )
 	return self
 end
 
-function IParentContainer:remove()
+function IHasParent:remove()
 	if self.parent then
 		return self.parent:removeChild( self )
 	end

@@ -11,7 +11,7 @@ local function childDrawSort( a, b )
 	return a.z < b.z
 end
 
-class "Sheet" implements (IChildContainer) implements (IPosition) implements (IAnimation) implements (IParentContainer) implements (IPositionAnimator)
+class "Sheet" implements (IChildContainer) implements (IPosition) implements (IAnimation) implements (IHasParent) implements (IPositionAnimator)
 {
 	id = "ID";
 
@@ -101,6 +101,9 @@ function Sheet:draw()
 end
 
 function Sheet:update( dt )
+	 -- @if SHEETS_TYPE_CHECK
+		if type( dt ) ~= "number" then return error( "expected number dt, got " .. class.type( dt ) ) end
+	 -- @endif
 	self:onUpdate( dt )
 	self:updateAnimations( dt )
 
@@ -115,7 +118,6 @@ function Sheet:update( dt )
 end
 
 function Sheet:handle( event )
-
 	local c = {}
 	for i = 1, #self.children do
 		c[i] = self.children[i]
