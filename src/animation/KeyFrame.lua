@@ -12,13 +12,12 @@
  -- @define SHEETS_EASING_TRANSITION 2
 
 class "KeyFrame" {
-	easing = easing_transition;
-	duration = 0;
 	clock = 0;
+	value = 0;
 	initial = 0;
 	difference = 0;
-	value = 0;
-	rounded = false;
+	duration = 0;
+	easing = nil;
 	onFinish = nil;
 }
 
@@ -33,15 +32,7 @@ end
 function KeyFrame:update( dt )
 	self.clock = math.min( math.max( self.clock + dt, 0 ), self.duration )
 
-	if self.rounded then
-		self.value = math.floor( self.easing( self.initial, self.difference, self.clock / self.duration ) + .5 )
-	else
-		self.value = self.easing( self.initial, self.difference, self.clock / self.duration )
-	end
-
-	if self.clock == self.duration and type( self.onFinish ) == "function" then
-		self:onFinish()
-	end
+	self.value = self.easing( self.initial, self.difference, self.clock / self.duration )
 end
 
 function KeyFrame:finished()

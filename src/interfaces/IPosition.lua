@@ -47,6 +47,7 @@ function IPosition:setWidth( width )
 	for i = 1, #self.children do
 		self.children[i]:onParentResized()
 	end
+	self.canvas:setWidth( width )
 	self:setChanged( true )
 	return self
 end
@@ -59,6 +60,7 @@ function IPosition:setHeight( height )
 	for i = 1, #self.children do
 		self.children[i]:onParentResized()
 	end
+	self.canvas:setHeight( height )
 	self:setChanged( true )
 	return self
 end

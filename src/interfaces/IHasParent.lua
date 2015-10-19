@@ -28,3 +28,7 @@ function IHasParent:remove()
 		return self.parent:removeChild( self )
 	end
 end
+
+function IHasParent:isVisible()
+	return self.parent and self.parent:isChildVisible( self )
+end

@@ -252,7 +252,7 @@ function SMLParser:parseAttributes()
 	return a
 end
 
-function SMLParser:parseObject()
+function SMLParser:parseObject( position )
 	if self:test( SML_TOKEN_IDENTIFIER ) then
 		local name = self:skip( SML_TOKEN_IDENTIFIER ).value
 		local attributes = self:parseAttributes()

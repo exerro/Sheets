@@ -56,6 +56,9 @@
  -- @define ALIGNMENT_TOP 3
  -- @define ALIGNMENT_BOTTOM 4
 
+ -- @defineifndef SHEETS_DEFAULT_TRANSITION_TIME .3
+ -- @defineifndef SHEETS_DEFAULT_TRANSITION_EASING SHEETS_EASING_TRANSITION
+
 event = {
 	mouse_down = SHEETS_EVENT_MOUSE_DOWN;
 	mouse_up = SHEETS_EVENT_MOUSE_UP;
@@ -96,18 +99,18 @@ alignment = {
  -- @require sheets.interfaces.IPosition
  -- @require sheets.interfaces.ITextRenderer
 
+ -- @require sheets.animation.interfaces.IAnimation
+ -- @require sheets.animation.interfaces.IPositionAnimator
  -- @require sheets.animation.KeyFrame
  -- @require sheets.animation.Pause
  -- @require sheets.animation.Animation
- -- @require sheets.animation.interfaces.IPositionAnimator
- -- @require sheets.animation.interfaces.IAnimation
 
+ -- @require sheets.events.interfaces.IEvent
  -- @require sheets.events.KeyboardEvent
  -- @require sheets.events.MiscEvent
  -- @require sheets.events.MouseEvent
  -- @require sheets.events.TextEvent
  -- @require sheets.events.TimerEvent
- -- @require sheets.events.interfaces.IEvent
 
  -- @require sheets.Theme
 
@@ -116,6 +119,7 @@ alignment = {
  -- @require sheets.Sheet
 
  -- @require sheets.sml.interfaces.IPositionAttributes
+ -- @require sheets.sml.interfaces.ICommonAttributes
 
  -- @if SHEETS_WRAP
 	end

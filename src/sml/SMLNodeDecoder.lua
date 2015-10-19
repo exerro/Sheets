@@ -25,7 +25,7 @@ function SMLNodeDecoder:decode( node )
 
 	for k, v in pairs( node.attributes ) do
 		if self["attribute_" .. k] then
-			local ok, data = pcall( self["attribute_" .. k], element, v )
+			local ok, data = pcall( self["attribute_" .. k], element, v, node )
 			if not ok then
 				return false, data
 			end

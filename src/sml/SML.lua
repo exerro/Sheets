@@ -16,6 +16,8 @@ function SML.loadNode( node )
 	local env = SMLEnvironment.current()
 	if env:getDecoder( node.nodetype ) then
 		return env:getDecoder( node.nodetype ):decode( node )
+	else
+		return false, "[" .. node.position.line .. ", " .. node.position.character .. "]: unknown node type '" .. node.nodetype .. "'"
 	end
 end
 

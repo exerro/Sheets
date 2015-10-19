@@ -9,14 +9,14 @@
 
 local function wrapline( text, width )
 	if text:sub( 1, width ):find "\n" then
-		return text:match "^(.-)\n%s*(.*)$"
+		return text:match "^(.-)\n[^%S\n]*(.*)$"
 	end
 	if #text < width then
 		return text
 	end
 	for i = width + 1, 1, -1 do
 		if text:sub( i, i ):find "%s" then
-			return text:sub( 1, i - 1 ):gsub( "%s+$", "" ), text:sub( i + 1 ):gsub( "^%s+", "" )
+			return text:sub( 1, i - 1 ):gsub( "[^%S\n]+$", "" ), text:sub( i + 1 ):gsub( "^[^%S\n]+", "" )
 		end
 	end
 	return text:sub( 1, width ), text:sub( width + 1 )

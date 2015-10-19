@@ -9,18 +9,18 @@
 
 -- if you try to update the value being animated using an onFinish method, nothing will happen unless you set self.value to nil
 
+local halfpi = math.pi / 2
+
 local function easing_transition( u, d, t )
 	return u + d * ( 3 * t * t - 2 * t * t * t )
 end
 
 local function easing_exit( u, d, t )
-	local t2 = t - 2
-	return u + d * ( t * t * t * t * t2 * t2 * t2 * t2 )
+	return -d * math.cos(t * halfpi) + d + u
 end
 
 local function easing_entrance( u, d, t )
-	local t2 = t - 2
-	return u + d * ( t * t * t2 * t2 )
+	return u + d * math.sin(t * halfpi)
 end
 
 class "Animation" {
@@ -54,7 +54,6 @@ function Animation:addKeyFrame( initial, final, duration, easing )
 	 -- @endif
 	 
 	local frame = KeyFrame( initial, final, duration, easing )
-	frame.rounded = self.rounded
 	self.frames[#self.frames + 1] = frame
 
 	if #self.frames == 0 then
@@ -87,6 +86,9 @@ function Animation:update( dt )
 	if self.frames[1] then
 		self.frames[1]:update( dt )
 		self.value = self.frames[1].value or self.value -- the or self.value is because pauses don't have a value
+		if self.rounded and self.value then
+			self.value = math.floor( self.value + .5 )
+		end
 		if self.frames[1]:finished() then
 			if type( self.frames[1].onFinish ) == "function" then
 				self.frames[1].onFinish( self )

@@ -22,7 +22,7 @@ function Theme.addToTemplate( class, field, states )
 end
 
 function Theme:Theme()
-	self.elements = setmetatable( {}, { __index = template } )
+	self.elements = {}
 end
 
 function Theme:setField( cls, field, state, value )

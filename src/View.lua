@@ -7,8 +7,16 @@
 
  -- @print Including sheets.View
 
-local function childDrawSort( a, b )
-	return a.z < b.z
+local function orderChildren( children )
+	local t = {}
+	for i = 1, #children do
+		local n = 1
+		while t[n] and t[n].z <= children[i].z do
+			n = n + 1
+		end
+		table.insert( t, n, children[i] )
+	end
+	return t
 end
 
 class "View" implements (IChildContainer) implements (IPosition) implements (IAnimation) implements (IHasParent) implements (IPositionAnimator)
@@ -61,11 +69,7 @@ function View:draw()
 
 		canvas:clear( self.theme:getField( self.class, "colour", "default" ) )
 
-		local children = {}
-		for i = 1, #self.children do
-			children[i] = self.children[i]
-		end
-		table.sort( children, childDrawSort )
+		local children = orderChildren( self.children )
 
 		for i = 1, #children do
 			local child = children[i]
@@ -96,11 +100,7 @@ end
 
 function View:handle( event )
 
-	local c = {}
-	for i = 1, #self.children do
-		c[i] = self.children[i]
-	end
-	table.sort( c, childDrawSort )
+	local c = orderChildren( self.children )
 
 	if event:typeOf( MouseEvent ) then
 		local within = event:isWithinArea( 0, 0, self.width, self.height )
@@ -121,9 +121,9 @@ function View:handle( event )
 end
 
 function View:onMouseEvent( event )
-
+	-- click callbacks
 end
 
 function View:onKeyboardEvent( event )
-
+	-- keyboard shortcut callbacks
 end

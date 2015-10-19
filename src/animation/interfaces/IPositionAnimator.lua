@@ -7,9 +7,6 @@
 
  -- @print Including sheets.interfaces.IPositionAnimator
 
- -- @defineifndef SHEETS_DEFAULT_TRANSITION_TIME .3
- -- @defineifndef SHEETS_DEFAULT_TRANSITION_EASING SHEETS_EASING_TRANSITION
-
 IPositionAnimator = {}
 
 function IPositionAnimator:transitionX( to, time, easing )
@@ -60,7 +57,7 @@ function IPositionAnimator:transitionHeight( to, time, easing )
 	return a
 end
 
-function IPositionAnimator:transitionInLeft( time, to )
+function IPositionAnimator:transitionInLeft( to, time )
 	 -- @if SHEETS_TYPE_CHECK then
 	 	if time and type( time ) ~= "number" then return error( "expected number time, got " .. class.type( time ) ) end
 	 	if to and type( to ) ~= "number" then return error( "expected number to, got " .. class.type( to ) ) end
@@ -71,9 +68,11 @@ function IPositionAnimator:transitionInLeft( time, to )
 	local a = Animation():setRounded()
 		:addKeyFrame( self.x, to or 0, time or SHEETS_DEFAULT_TRANSITION_TIME, SHEETS_EASING_ENTRANCE )
 	self:addAnimation( "x", self.setX, a )
+
+	return a
 end
 
-function IPositionAnimator:transitionOutLeft( time, to )
+function IPositionAnimator:transitionOutLeft( to, time )
 	 -- @if SHEETS_TYPE_CHECK then
 	 	if time and type( time ) ~= "number" then return error( "expected number time, got " .. class.type( time ) ) end
 	 	if to and type( to ) ~= "number" then return error( "expected number to, got " .. class.type( to ) ) end
@@ -91,9 +90,11 @@ function IPositionAnimator:transitionOutLeft( time, to )
 	function f.onFinish()
 		self:remove()
 	end
+
+	return a
 end
 
-function IPositionAnimator:transitionInRight( time, to )
+function IPositionAnimator:transitionInRight( to, time )
 	 -- @if SHEETS_TYPE_CHECK then
 	 	if time and type( time ) ~= "number" then return error( "expected number time, got " .. class.type( time ) ) end
 	 	if to and type( to ) ~= "number" then return error( "expected number to, got " .. class.type( to ) ) end
@@ -104,9 +105,11 @@ function IPositionAnimator:transitionInRight( time, to )
 	local a = Animation():setRounded()
 		:addKeyFrame( self.x, to or self.parent.width - self.width, time or SHEETS_DEFAULT_TRANSITION_TIME, SHEETS_EASING_ENTRANCE )
 	self:addAnimation( "x", self.setX, a )
+
+	return a
 end
 
-function IPositionAnimator:transitionOutRight( time, to )
+function IPositionAnimator:transitionOutRight( to, time )
 	 -- @if SHEETS_TYPE_CHECK then
 	 	if time and type( time ) ~= "number" then return error( "expected number time, got " .. class.type( time ) ) end
 	 	if to and type( to ) ~= "number" then return error( "expected number to, got " .. class.type( to ) ) end
@@ -124,9 +127,11 @@ function IPositionAnimator:transitionOutRight( time, to )
 	function f.onFinish()
 		self:remove()
 	end
+
+	return a
 end
 
-function IPositionAnimator:transitionInTop( time, to )
+function IPositionAnimator:transitionInTop( to, time )
 	 -- @if SHEETS_TYPE_CHECK then
 	 	if time and type( time ) ~= "number" then return error( "expected number time, got " .. class.type( time ) ) end
 	 	if to and type( to ) ~= "number" then return error( "expected number to, got " .. class.type( to ) ) end
@@ -137,9 +142,11 @@ function IPositionAnimator:transitionInTop( time, to )
 	local a = Animation():setRounded()
 		:addKeyFrame( self.y, to or 0, time or SHEETS_DEFAULT_TRANSITION_TIME, SHEETS_EASING_ENTRANCE )
 	self:addAnimation( "y", self.setY, a )
+
+	return a
 end
 
-function IPositionAnimator:transitionOutTop( time, to )
+function IPositionAnimator:transitionOutTop( to, time )
 	 -- @if SHEETS_TYPE_CHECK then
 	 	if time and type( time ) ~= "number" then return error( "expected number time, got " .. class.type( time ) ) end
 	 	if to and type( to ) ~= "number" then return error( "expected number to, got " .. class.type( to ) ) end
@@ -157,9 +164,11 @@ function IPositionAnimator:transitionOutTop( time, to )
 	function f.onFinish()
 		self:remove()
 	end
+
+	return a
 end
 
-function IPositionAnimator:transitionInBottom( time, to )
+function IPositionAnimator:transitionInBottom( to, time )
 	 -- @if SHEETS_TYPE_CHECK then
 	 	if time and type( time ) ~= "number" then return error( "expected number time, got " .. class.type( time ) ) end
 	 	if to and type( to ) ~= "number" then return error( "expected number to, got " .. class.type( to ) ) end
@@ -170,9 +179,11 @@ function IPositionAnimator:transitionInBottom( time, to )
 	local a = Animation():setRounded()
 		:addKeyFrame( self.y, to or self.parent.height - self.height, time or SHEETS_DEFAULT_TRANSITION_TIME, SHEETS_EASING_ENTRANCE )
 	self:addAnimation( "y", self.setY, a )
+
+	return a
 end
 
-function IPositionAnimator:transitionOutBottom( time, to )
+function IPositionAnimator:transitionOutBottom( to, time )
 	 -- @if SHEETS_TYPE_CHECK then
 	 	if time and type( time ) ~= "number" then return error( "expected number time, got " .. class.type( time ) ) end
 	 	if to and type( to ) ~= "number" then return error( "expected number to, got " .. class.type( to ) ) end
@@ -190,4 +201,6 @@ function IPositionAnimator:transitionOutBottom( time, to )
 	function f.onFinish()
 		self:remove()
 	end
+
+	return a
 end

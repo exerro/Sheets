@@ -29,18 +29,26 @@ function UIButton:onMouseEvent( event )
 		self:setChanged()
 	end
 
-	if event.handled or not event:isWithinArea( 0, 0, self.width, self.height ) then
+	if event.handled or not event:isWithinArea( 0, 0, self.width, self.height ) or not event.within then
 		return
 	end
-	event:handle()
 
 	if event:is( SHEETS_EVENT_MOUSE_DOWN ) and not self.down then
 		self.down = true
 		self:setChanged()
-	elseif event:is( SHEETS_EVENT_MOUSE_CLICK ) and self.onClick then
-		self:onClick()
-	elseif event:is( SHEETS_EVENT_MOUSE_HOLD ) and self.onHold then
-		self:onHold()
+		event:handle()
+	elseif event:is( SHEETS_EVENT_MOUSE_CLICK ) then
+		if self.onClick then
+			self:onClick( event.button, event.x, event.y )
+		end
+		event:handle()
+	elseif event:is( SHEETS_EVENT_MOUSE_HOLD ) then
+		if self.onHold then
+			self:onHold( event.button, event.x, event.y )
+		end
+		event:handle()
+	elseif event:is( SHEETS_EVENT_MOUSE_UP ) and self.down then
+		event:handle()
 	end
 end
 
@@ -50,12 +58,16 @@ Theme.addToTemplate( UIButton, "colour", {
 } )
 Theme.addToTemplate( UIButton, "textColour", {
 	default = WHITE;
-	pressed = BLUE;
+	pressed = WHITE;
 } )
 
 local decoder = SMLNodeDecoder()
 
+decoder.isBodyAllowed = false
+decoder.isBodyNecessary = false
+
 decoder:implement( IPositionAttributes )
+decoder:implement( ICommonAttributes )
 
 function decoder:init()
 	return UIButton( 0, 0, 10, 3 )

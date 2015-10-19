@@ -7,32 +7,38 @@
 
  -- @print Including sheets.Application
 
+-- need to add monitor support
+
 class "Application" implements (IChildContainer) implements (IAnimation)
 {
 	name = "UnNamed Application";
+	path = "";
 	terminateable = true;
+
+	viewportX = 0;
+	viewportY = 0;
 
 	width = 0;
 	height = 0;
 
 	environment = nil;
 	screen = nil;
-	terminal = term;
-
-	running = true;
 	theme = nil;
+
+	terminal = term;
+	running = true;
 	changed = false;
 
 	mouse = {};
 	keys = {};
 }
 
--- need to add monitor support
-
 Application.active = nil
 
-function Application:Application( name )
+function Application:Application( name, path )
 	self.name = tostring( name or "UnNamed Application" )
+	self.path = path
+
 	self.width, self.height = term.getSize()
 	self.timers = {}
 
@@ -51,6 +57,10 @@ function Application:setChanged( state )
 	self.changed = state ~= false
 end
 
+function Application:stop()
+	self.running = false
+end
+
 function Application:addChild( child )
 	-- @if SHEETS_TYPE_CHECK
 		if not class.typeOf( child, View ) then return error( "expected View child, got " .. class.type( child ) ) end
@@ -67,8 +77,59 @@ function Application:addChild( child )
 	return child
 end
 
-function Application:stop()
-	self.running = false
+function Application:isChildVisible( child )
+	-- @if SHEETS_TYPE_CHECK
+		if not class.typeOf( child, View ) then return error( "expected View child, got " .. class.type( child ) ) end
+	-- @endif
+	return child.x - self.viewportX + child.width > 0 and child.y - self.viewportY + child.height > 0 and child.x - self.viewportX < self.width and child.y - self.viewportY < self.height
+end
+
+function Application:setViewportX( x )
+	-- @if SHEETS_TYPE_CHECK
+		if type( x ) ~= "number" then return error( "expected number x, got " .. class.type( x ) ) end
+	-- @endif
+	self.viewportX = x
+	self:setChanged()
+end
+
+function Application:setViewportY( y )
+	-- @if SHEETS_TYPE_CHECK
+		if type( y ) ~= "number" then return error( "expected number y, got " .. class.type( y ) ) end
+	-- @endif
+	self.viewportY = y
+	self:setChanged()
+end
+
+function Application:transitionViewport( x, y )
+	-- @if SHEETS_TYPE_CHECK
+		if x and type( x ) ~= "number" then return error( "expected number x, got " .. class.type( x ) ) end
+		if y and type( y ) ~= "number" then return error( "expected number y, got " .. class.type( y ) ) end
+	-- @endif
+	local ax, ay
+	local dx = x and math.abs( x - self.viewportX ) or 0
+	local dy = y and math.abs( y - self.viewportY ) or 0
+	local xt = .5 * dx / self.width
+	if dx > 0 then
+		local ax = self:addAnimation( "viewportX", self.setViewportX, Animation():setRounded()
+			:addKeyFrame( self.viewportX, x, xt, SHEETS_EASING_TRANSITION ) )
+	end
+	if dy > 0 then
+		local ay = self:addAnimation( "viewportY", self.setViewportY, Animation():setRounded()
+			:addPause( xt )
+			:addKeyFrame( self.viewportY, y, .5 * dy / self.height, SHEETS_EASING_TRANSITION ) )
+	end
+	return ax, ay
+end
+
+function Application:transitionView( view )
+	-- @if SHEETS_TYPE_CHECK
+		if not class.typeOf( view, View ) then return error( "expected View view, got " .. class.type( view ) ) end
+	-- @endif
+	if view.parent == self then
+		return self:transitionViewport( view.x, view.y )
+	else
+		return error( "View is not a part of application '" .. self.name .. "'" )
+	end
 end
 
 function Application:event( event, ... )
@@ -88,7 +149,7 @@ function Application:event( event, ... )
 	local function handle( e )
 		if e:typeOf( MouseEvent ) then
 			for i = #children, 1, -1 do
-				children[i]:handle( e:clone( children[i].x, children[i].y, true ) )
+				children[i]:handle( e:clone( children[i].x - self.viewportX, children[i].y - self.viewportY, true ) )
 			end
 		else
 			for i = #children, 1, -1 do
@@ -129,8 +190,8 @@ function Application:event( event, ... )
 	elseif event == "mouse_scroll" then
 		handle( MouseEvent( SHEETS_EVENT_MOUSE_SCROLL, params[2] - 1, params[3] - 1, params[1], true ) )
 
-	elseif event == "monitor_touch" then
-		handle( MouseEvent( SHEETS_EVENT_MOUSE_CLICK, params[2] - 1, params[3] - 1, params[1] ) )
+	elseif event == "monitor_touch" then -- need to think about this one
+		-- handle( MouseEvent( SHEETS_EVENT_MOUSE_CLICK, params[2] - 1, params[3] - 1, 1 ) )
 
 	elseif event == "chatbox_something" then
 		handle( TextEvent( SHEETS_EVENT_VOICE, params[1] ) )
@@ -143,11 +204,11 @@ function Application:event( event, ... )
 
 	elseif event == "key" then
 		handle( TextEvent( SHEETS_EVENT_KEY_DOWN, params[1], self.keys ) )
-		self.keys[keys.getName( params[1] )] = os.clock()
+		self.keys[keys.getName( params[1] ) or params[1]] = os.clock()
 
 	elseif event == "key_up" then
 		handle( TextEvent( SHEETS_EVENT_KEY_UP, params[1], self.keys ) )
-		self.keys[keys.getName( params[1] )] = nil
+		self.keys[keys.getName( params[1] ) or params[1]] = nil
 
 	elseif event == "term_resize" then
 		self.width, self.height = term.getSize()
@@ -199,8 +260,10 @@ function Application:draw()
 
 		for i = 1, #children do
 			local child = children[i]
-			child:draw()
-			child.canvas:drawTo( screen, child.x, child.y )
+			if child:isVisible() then
+				child:draw()
+				child.canvas:drawTo( screen, child.x - self.viewportX, child.y - self.viewportY )
+			end
 		end
 
 		self.changed = false

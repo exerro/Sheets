@@ -80,24 +80,20 @@ function IChildContainer:getChildrenById( id )
 	return t
 end
 
-function IChildContainer:setChildrenTheme( theme )
-	 -- @if SHEETS_TYPE_CHECK
-	 	if type( id ) ~= "string" then return error( "expected string id, got " .. class.type( id ) ) end
-	 -- @endif
-	for i = 1, #self.children do
-		self.children[i]:setTheme( theme )
-		self.children[i]:setChildrenTheme( theme )
-	end
+function IChildContainer:isChildVisible( child )
+	return child.x + child.width > 0 and child.y + child.height > 0 and child.x < self.width and child.y < self.height
 end
 
-function IChildContainer:setTheme( theme )
+function IChildContainer:setTheme( theme, children )
 	theme = theme or Theme()
 	-- @if SHEETS_TYPE_CHECK
 		if not class.typeOf( theme, Theme ) then return error( "expected Theme theme, got " .. type( theme ) ) end
 	-- @endif
 	self.theme = theme
-	for i = 1, #self.children do
-		self.children[i]:setTheme( theme )
+	if children then
+		for i = 1, #self.children do
+			self.children[i]:setTheme( theme, true )
+		end
 	end
 	self:setChanged( true )
 	return self
