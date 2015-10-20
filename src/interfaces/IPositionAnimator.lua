@@ -10,11 +10,10 @@
 IPositionAnimator = {}
 
 function IPositionAnimator:transitionX( to, time, easing )
-	 -- @if SHEETS_TYPE_CHECK then
-	 	if type( to ) ~= "number" then return error( "expected number to, got " .. class.type( to ) ) end
-	 	if time and type( time ) ~= "number" then return error( "expected number time, got " .. class.type( time ) ) end
-	 	if easing and type( easing ) ~= "function" and easing ~= SHEETS_EASING_TRANSITION and easing ~= SHEETS_EASING_EXIT and easing ~= SHEETS_EASING_ENTRANCE then return error( "expected function easing, got " .. class.type( easing ) ) end
-	 -- @endif
+	if type( to ) ~= "number" then return error( "expected number to, got " .. class.type( to ) ) end
+	if time and type( time ) ~= "number" then return error( "expected number time, got " .. class.type( time ) ) end
+	if easing and type( easing ) ~= "function" and easing ~= SHEETS_EASING_TRANSITION and easing ~= SHEETS_EASING_EXIT and easing ~= SHEETS_EASING_ENTRANCE then return error( "expected function easing, got " .. class.type( easing ) ) end
+	
 	local a = Animation():setRounded()
 		:addKeyFrame( self.x, to, time or SHEETS_DEFAULT_TRANSITION_TIME, easing or SHEETS_DEFAULT_TRANSITION_EASING )
 	self:addAnimation( "x", self.setX, a )
@@ -22,11 +21,10 @@ function IPositionAnimator:transitionX( to, time, easing )
 end
 
 function IPositionAnimator:transitionY( to, time, easing )
-	 -- @if SHEETS_TYPE_CHECK then
-	 	if type( to ) ~= "number" then return error( "expected number to, got " .. class.type( to ) ) end
-	 	if time and type( time ) ~= "number" then return error( "expected number time, got " .. class.type( time ) ) end
-	 	if easing and type( easing ) ~= "function" and easing ~= SHEETS_EASING_TRANSITION and easing ~= SHEETS_EASING_EXIT and easing ~= SHEETS_EASING_ENTRANCE then return error( "expected function easing, got " .. class.type( easing ) ) end
-	 -- @endif
+	if type( to ) ~= "number" then return error( "expected number to, got " .. class.type( to ) ) end
+	if time and type( time ) ~= "number" then return error( "expected number time, got " .. class.type( time ) ) end
+	if easing and type( easing ) ~= "function" and easing ~= SHEETS_EASING_TRANSITION and easing ~= SHEETS_EASING_EXIT and easing ~= SHEETS_EASING_ENTRANCE then return error( "expected function easing, got " .. class.type( easing ) ) end
+	
 	local a = Animation():setRounded()
 		:addKeyFrame( self.y, to, time or SHEETS_DEFAULT_TRANSITION_TIME, easing or SHEETS_DEFAULT_TRANSITION_EASING )
 	self:addAnimation( "y", self.setY, a )
@@ -34,11 +32,10 @@ function IPositionAnimator:transitionY( to, time, easing )
 end
 
 function IPositionAnimator:transitionWidth( to, time, easing )
-	 -- @if SHEETS_TYPE_CHECK then
-	 	if type( to ) ~= "number" then return error( "expected number to, got " .. class.type( to ) ) end
-	 	if time and type( time ) ~= "number" then return error( "expected number time, got " .. class.type( time ) ) end
-	 	if easing and type( easing ) ~= "function" and easing ~= SHEETS_EASING_TRANSITION and easing ~= SHEETS_EASING_EXIT and easing ~= SHEETS_EASING_ENTRANCE then return error( "expected function easing, got " .. class.type( easing ) ) end
-	 -- @endif
+	if type( to ) ~= "number" then return error( "expected number to, got " .. class.type( to ) ) end
+	if time and type( time ) ~= "number" then return error( "expected number time, got " .. class.type( time ) ) end
+	if easing and type( easing ) ~= "function" and easing ~= SHEETS_EASING_TRANSITION and easing ~= SHEETS_EASING_EXIT and easing ~= SHEETS_EASING_ENTRANCE then return error( "expected function easing, got " .. class.type( easing ) ) end
+	
 	local a = Animation():setRounded()
 		:addKeyFrame( self.width, to, time or SHEETS_DEFAULT_TRANSITION_TIME, easing or SHEETS_DEFAULT_TRANSITION_EASING )
 	self:addAnimation( "width", self.setWidth, a )
@@ -46,11 +43,10 @@ function IPositionAnimator:transitionWidth( to, time, easing )
 end
 
 function IPositionAnimator:transitionHeight( to, time, easing )
-	 -- @if SHEETS_TYPE_CHECK then
-	 	if type( to ) ~= "number" then return error( "expected number to, got " .. class.type( to ) ) end
-	 	if time and type( time ) ~= "number" then return error( "expected number time, got " .. class.type( time ) ) end
-	 	if easing and type( easing ) ~= "function" and easing ~= SHEETS_EASING_TRANSITION and easing ~= SHEETS_EASING_EXIT and easing ~= SHEETS_EASING_ENTRANCE then return error( "expected function easing, got " .. class.type( easing ) ) end
-	 -- @endif
+	if type( to ) ~= "number" then return error( "expected number to, got " .. class.type( to ) ) end
+	if time and type( time ) ~= "number" then return error( "expected number time, got " .. class.type( time ) ) end
+	if easing and type( easing ) ~= "function" and easing ~= SHEETS_EASING_TRANSITION and easing ~= SHEETS_EASING_EXIT and easing ~= SHEETS_EASING_ENTRANCE then return error( "expected function easing, got " .. class.type( easing ) ) end
+	
 	local a = Animation():setRounded()
 		:addKeyFrame( self.height, to, time or SHEETS_DEFAULT_TRANSITION_TIME, easing or SHEETS_DEFAULT_TRANSITION_EASING )
 	self:addAnimation( "height", self.setHeight, a )
@@ -58,10 +54,9 @@ function IPositionAnimator:transitionHeight( to, time, easing )
 end
 
 function IPositionAnimator:transitionInLeft( to, time )
-	 -- @if SHEETS_TYPE_CHECK then
-	 	if time and type( time ) ~= "number" then return error( "expected number time, got " .. class.type( time ) ) end
-	 	if to and type( to ) ~= "number" then return error( "expected number to, got " .. class.type( to ) ) end
-	 -- @endif
+	if time and type( time ) ~= "number" then return error( "expected number time, got " .. class.type( time ) ) end
+	if to and type( to ) ~= "number" then return error( "expected number to, got " .. class.type( to ) ) end
+	
 	if not self.parent then
 		return error( tostring( self ) .. " has no parent, cannot transition in" )
 	end
@@ -73,10 +68,9 @@ function IPositionAnimator:transitionInLeft( to, time )
 end
 
 function IPositionAnimator:transitionOutLeft( to, time )
-	 -- @if SHEETS_TYPE_CHECK then
-	 	if time and type( time ) ~= "number" then return error( "expected number time, got " .. class.type( time ) ) end
-	 	if to and type( to ) ~= "number" then return error( "expected number to, got " .. class.type( to ) ) end
-	 -- @endif
+	if time and type( time ) ~= "number" then return error( "expected number time, got " .. class.type( time ) ) end
+	if to and type( to ) ~= "number" then return error( "expected number to, got " .. class.type( to ) ) end
+	
 	if not self.parent then
 		return error( tostring( self ) .. " has no parent, cannot transition out" )
 	end
@@ -95,10 +89,9 @@ function IPositionAnimator:transitionOutLeft( to, time )
 end
 
 function IPositionAnimator:transitionInRight( to, time )
-	 -- @if SHEETS_TYPE_CHECK then
-	 	if time and type( time ) ~= "number" then return error( "expected number time, got " .. class.type( time ) ) end
-	 	if to and type( to ) ~= "number" then return error( "expected number to, got " .. class.type( to ) ) end
-	 -- @endif
+	if time and type( time ) ~= "number" then return error( "expected number time, got " .. class.type( time ) ) end
+	if to and type( to ) ~= "number" then return error( "expected number to, got " .. class.type( to ) ) end
+	
 	if not self.parent then
 		return error( tostring( self ) .. " has no parent, cannot transition in" )
 	end
@@ -110,10 +103,9 @@ function IPositionAnimator:transitionInRight( to, time )
 end
 
 function IPositionAnimator:transitionOutRight( to, time )
-	 -- @if SHEETS_TYPE_CHECK then
-	 	if time and type( time ) ~= "number" then return error( "expected number time, got " .. class.type( time ) ) end
-	 	if to and type( to ) ~= "number" then return error( "expected number to, got " .. class.type( to ) ) end
-	 -- @endif
+	if time and type( time ) ~= "number" then return error( "expected number time, got " .. class.type( time ) ) end
+	if to and type( to ) ~= "number" then return error( "expected number to, got " .. class.type( to ) ) end
+	
 	if not self.parent then
 		return error( tostring( self ) .. " has no parent, cannot transition out" )
 	end
@@ -132,10 +124,9 @@ function IPositionAnimator:transitionOutRight( to, time )
 end
 
 function IPositionAnimator:transitionInTop( to, time )
-	 -- @if SHEETS_TYPE_CHECK then
-	 	if time and type( time ) ~= "number" then return error( "expected number time, got " .. class.type( time ) ) end
-	 	if to and type( to ) ~= "number" then return error( "expected number to, got " .. class.type( to ) ) end
-	 -- @endif
+	if time and type( time ) ~= "number" then return error( "expected number time, got " .. class.type( time ) ) end
+	if to and type( to ) ~= "number" then return error( "expected number to, got " .. class.type( to ) ) end
+	
 	if not self.parent then
 		return error( tostring( self ) .. " has no parent, cannot transition in" )
 	end
@@ -147,10 +138,9 @@ function IPositionAnimator:transitionInTop( to, time )
 end
 
 function IPositionAnimator:transitionOutTop( to, time )
-	 -- @if SHEETS_TYPE_CHECK then
-	 	if time and type( time ) ~= "number" then return error( "expected number time, got " .. class.type( time ) ) end
-	 	if to and type( to ) ~= "number" then return error( "expected number to, got " .. class.type( to ) ) end
-	 -- @endif
+	if time and type( time ) ~= "number" then return error( "expected number time, got " .. class.type( time ) ) end
+	if to and type( to ) ~= "number" then return error( "expected number to, got " .. class.type( to ) ) end
+	
 	if not self.parent then
 		return error( tostring( self ) .. " has no parent, cannot transition out" )
 	end
@@ -169,10 +159,9 @@ function IPositionAnimator:transitionOutTop( to, time )
 end
 
 function IPositionAnimator:transitionInBottom( to, time )
-	 -- @if SHEETS_TYPE_CHECK then
-	 	if time and type( time ) ~= "number" then return error( "expected number time, got " .. class.type( time ) ) end
-	 	if to and type( to ) ~= "number" then return error( "expected number to, got " .. class.type( to ) ) end
-	 -- @endif
+	if time and type( time ) ~= "number" then return error( "expected number time, got " .. class.type( time ) ) end
+	if to and type( to ) ~= "number" then return error( "expected number to, got " .. class.type( to ) ) end
+	
 	if not self.parent then
 		return error( tostring( self ) .. " has no parent, cannot transition in" )
 	end
@@ -184,10 +173,9 @@ function IPositionAnimator:transitionInBottom( to, time )
 end
 
 function IPositionAnimator:transitionOutBottom( to, time )
-	 -- @if SHEETS_TYPE_CHECK then
-	 	if time and type( time ) ~= "number" then return error( "expected number time, got " .. class.type( time ) ) end
-	 	if to and type( to ) ~= "number" then return error( "expected number to, got " .. class.type( to ) ) end
-	 -- @endif
+	if time and type( time ) ~= "number" then return error( "expected number time, got " .. class.type( time ) ) end
+	if to and type( to ) ~= "number" then return error( "expected number to, got " .. class.type( to ) ) end
+	
 	if not self.parent then
 		return error( tostring( self ) .. " has no parent, cannot transition out" )
 	end

@@ -41,11 +41,14 @@ end
 local function rawLoadNode( self, node, parent )
 	local decoder = self:getDecoder( node.nodetype )
 	if decoder then
-		if node.attributes.src then
+		local src = node:get "src"
+		if src then
 			if node.body then
 				return error( "[" .. node.position.line .. ", " .. node.position.character .. "]: cannot have src attribute and body", 0 )
+			elseif type( src ) ~= "string" then
+				return error( "[" .. node.position.line .. ", " .. node.position.character .. "]: expected string 'src'", 0 )
 			else
-				local ok, data = readScript( self.application and self.application.path .. "/" .. node.attributes.src or node.attributes.src )
+				local ok, data = readScript( self.application and self.application.path .. "/" .. src or src )
 				if ok then
 					node.body = data
 				else
@@ -62,7 +65,8 @@ local function rawLoadNode( self, node, parent )
 
 		local element = decoder:init( parent )
 
-		for k, v in pairs( node.attributes ) do
+		for i = 1, #node.attributes do
+			local k, v = node.attributes[i][1], node.attributes[i][2]
 			if k ~= "src" then
 				if decoder["attribute_" .. k] then
 					local ok, data = pcall( decoder["attribute_" .. k], element, v, node, parent )
@@ -114,9 +118,8 @@ function SMLDocument:SMLDocument( application )
 end
 
 function SMLDocument:loadSMLNode( node, parent )
-	 -- @if SHEETS_TYPE_CHECK
-		if not class.typeOf( node, SMLNode ) then return error( "expected SMLNode node, got " .. class.type( node ) ) end
-	 -- @endif
+	if not class.typeOf( node, SMLNode ) then return error( "expected SMLNode node, got " .. class.type( node ) ) end
+
 	active = self
 	if not self.application then
 		return error( "SMLDocument has no application: load an application first using SMLDocument:loadSMLApplication()" )
@@ -126,10 +129,10 @@ end
 
 function SMLDocument:loadSMLScript( script, name, parent )
 	name = name or "sml-script"
-	 -- @if SHEETS_TYPE_CHECK
-		if type( script ) ~= "string" then return error( "expected string script, got " .. class.type( script ) ) end
-		if type( name ) ~= "string" then return error( "expected string source, got " .. class.type( name ) ) end
-	 -- @endif
+
+	if type( script ) ~= "string" then return error( "expected string script, got " .. class.type( script ) ) end
+	if type( name ) ~= "string" then return error( "expected string source, got " .. class.type( name ) ) end
+
 	if not self.application then
 		return error( "SMLDocument has no application: load an application first using SMLDocument:loadSMLApplication()" )
 	end
@@ -143,7 +146,7 @@ function SMLDocument:loadSMLScript( script, name, parent )
 			if not object then
 				return false, name .. " " .. tostring( err )
 			end
-			t[#t + 1] = object
+			t[i] = object
 		end
 		return t
 	else
@@ -152,9 +155,8 @@ function SMLDocument:loadSMLScript( script, name, parent )
 end
 
 function SMLDocument:loadSMLFile( file, parent )
-	 -- @if SHEETS_TYPE_CHECK
-		if type( file ) ~= "string" then return error( "expected string file, got " .. class.type( file ) ) end
-	 -- @endif
+	if type( file ) ~= "string" then return error( "expected string file, got " .. class.type( file ) ) end
+
 	if not self.application then
 		return error( "SMLDocument has no application: load an application first using SMLDocument:loadSMLApplication()" )
 	end
@@ -170,10 +172,8 @@ end
 
 function SMLDocument:loadSMLApplication( script, name )
 	name = name or "sml-script"
-	 -- @if SHEETS_TYPE_CHECK
-		if type( script ) ~= "string" then return error( "expected string script, got " .. class.type( script ) ) end
-		if type( name ) ~= "string" then return error( "expected string source, got " .. class.type( name ) ) end
-	 -- @endif
+	if type( script ) ~= "string" then return error( "expected string script, got " .. class.type( script ) ) end
+	if type( name ) ~= "string" then return error( "expected string source, got " .. class.type( name ) ) end
 
 	if self.application then
 		return error "document already has an application"
@@ -208,9 +208,7 @@ function SMLDocument:loadSMLApplication( script, name )
 end
 
 function SMLDocument:loadSMLApplicationFile( file )
-	 -- @if SHEETS_TYPE_CHECK
-		if type( file ) ~= "string" then return error( "expected string file, got " .. class.type( file ) ) end
-	 -- @endif
+	if type( file ) ~= "string" then return error( "expected string file, got " .. class.type( file ) ) end
 
 	if self.application then
 		return error "document already has an application"
@@ -227,62 +225,54 @@ function SMLDocument:loadSMLApplicationFile( file )
 end
 
 function SMLDocument:setTheme( name, theme )
-	 -- @if SHEETS_TYPE_CHECK
-		if type( name ) ~= "string" then return error( "expected string name, got " .. class.type( name ) ) end
-		if not class.typeOf( theme, Theme ) then return error( "expected Theme theme, got " .. class.type( theme ) ) end
-	 -- @endif
+	if type( name ) ~= "string" then return error( "expected string name, got " .. class.type( name ) ) end
+	if not class.typeOf( theme, Theme ) then return error( "expected Theme theme, got " .. class.type( theme ) ) end
+
 	self.themes[name] = theme
 end
 
 function SMLDocument:getTheme( name )
-	 -- @if SHEETS_TYPE_CHECK
-		if type( name ) ~= "string" then return error( "expected string name, got " .. class.type( name ) ) end
-	 -- @endif
+	if type( name ) ~= "string" then return error( "expected string name, got " .. class.type( name ) ) end
+
 	return self.themes[name] or self.themes.default
 end
 
 function SMLDocument:addElement( name, cls, decoder )
-	 -- @if SHEETS_TYPE_CHECK
-		if type( name ) ~= "string" then return error( "expected string name, got " .. class.type( name ) ) end
-		if not class.isClass( cls ) then return error( "expected Class class, got " .. class.type( cls ) ) end
-		if not class.typeOf( decoder, SMLNodeDecoder ) then return error( "expected SMLNodeDecoder decoder, got " .. class.type( decoder ) ) end
-	 -- @endif
+	if type( name ) ~= "string" then return error( "expected string name, got " .. class.type( name ) ) end
+	if not class.isClass( cls ) then return error( "expected Class class, got " .. class.type( cls ) ) end
+	if not class.typeOf( decoder, SMLNodeDecoder ) then return error( "expected SMLNodeDecoder decoder, got " .. class.type( decoder ) ) end
+
 	self.elements[name] = cls
 	self.decoders[name] = decoder
 end
 
 function SMLDocument:getElement( name )
-	 -- @if SHEETS_TYPE_CHECK
-		if type( name ) ~= "string" then return error( "expected string name, got " .. class.type( name ) ) end
-	 -- @endif
+	if type( name ) ~= "string" then return error( "expected string name, got " .. class.type( name ) ) end
+	
 	return self.elements[name]
 end
 
 function SMLDocument:setDecoder( name, decoder )
-	 -- @if SHEETS_TYPE_CHECK
-		if type( name ) ~= "string" then return error( "expected string name, got " .. class.type( name ) ) end
-		if not class.typeOf( decoder, SMLNodeDecoder ) then return error( "expected SMLNodeDecoder decoder, got " .. class.type( decoder ) ) end
-	 -- @endif
+	if type( name ) ~= "string" then return error( "expected string name, got " .. class.type( name ) ) end
+	if not class.typeOf( decoder, SMLNodeDecoder ) then return error( "expected SMLNodeDecoder decoder, got " .. class.type( decoder ) ) end
+	
 	self.decoders[name] = decoder
 end
 
 function SMLDocument:getDecoder( name )
-	 -- @if SHEETS_TYPE_CHECK
-		if type( name ) ~= "string" then return error( "expected string name, got " .. class.type( name ) ) end
-	 -- @endif
+	if type( name ) ~= "string" then return error( "expected string name, got " .. class.type( name ) ) end
+	
 	return self.decoders[name]
 end
 
 function SMLDocument:setVariable( name, value )
-	 -- @if SHEETS_TYPE_CHECK
-		if type( name ) ~= "string" then return error( "expected string name, got " .. class.type( name ) ) end
-	 -- @endif
+	if type( name ) ~= "string" then return error( "expected string name, got " .. class.type( name ) ) end
+	
 	self.environment[name] = value
 end
 
 function SMLDocument:getVariable( name )
-	 -- @if SHEETS_TYPE_CHECK
-		if type( name ) ~= "string" then return error( "expected string name, got " .. class.type( name ) ) end
-	 -- @endif
+	if type( name ) ~= "string" then return error( "expected string name, got " .. class.type( name ) ) end
+	
 	return self.environment[name]
 end

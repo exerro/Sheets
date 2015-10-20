@@ -1,12 +1,13 @@
 
- -- @load sheets.noindent
+ -- @load sheets.preprocessor.noindent
  -- @noindent
 
- -- @defineifndef SHEETS_TYPE_CHECK true
  -- @defineifndef SHEETS_LOWRES true
  -- @defineifndef SHEETS_ANIMATION_FRAMERATE .05
  -- @defineifndef SHEETS_WRAP false
  -- @defineifndef SHEETS_EXTERNAL false
+ -- @defineifndef SHEETS_DEFAULT_TRANSITION_TIME .3
+ -- @defineifndef SHEETS_DEFAULT_TRANSITION_EASING SHEETS_EASING_TRANSITION
 
  -- @if SHEETS_LOWRES
 	 -- @define GRAPHICS_NO_TEXT false
@@ -22,7 +23,7 @@
 
  -- @once
  -- @define __INCLUDE_sheets
- -- @print Including sheets (animation-fps: $SHEETS_ANIMATION_FRAMERATE, low resolution: $SHEETS_LOWRES, type-check: $SHEETS_TYPE_CHECK, wrap: $SHEETS_WRAP, external: $SHEETS_EXTERNAL)
+ -- @print Including sheets (transition-time: $SHEETS_DEFAULT_TRANSITION_TIME, transition-easing: $SHEETS_DEFAULT_TRANSITION_EASING animation-fps: $SHEETS_ANIMATION_FRAMERATE, low resolution: $SHEETS_LOWRES, wrap: $SHEETS_WRAP, external: $SHEETS_EXTERNAL)
 
  -- @define SHEETS_EVENT_MOUSE_DOWN 0
  -- @define SHEETS_EVENT_MOUSE_UP 1
@@ -38,26 +39,12 @@
  -- @define SHEETS_EVENT_PASTE 11
  -- @define SHEETS_EVENT_MOUSE_PING 12
 
- -- @define SML_TOKEN_STRING 0
- -- @define SML_TOKEN_EQUAL 1
- -- @define SML_TOKEN_OPEN 2
- -- @define SML_TOKEN_CLOSE 3
- -- @define SML_TOKEN_SLASH 4
- -- @define SML_TOKEN_NUMBER 5
- -- @define SML_TOKEN_BOOL 6
- -- @define SML_TOKEN_IDENTIFIER 7
- -- @define SML_TOKEN_UNKNOWN 8
- -- @define SML_TOKEN_EOF 9
-
  -- @define ALIGNMENT_LEFT 0
  -- @define ALIGNMENT_CENTRE 1
  -- @define ALIGNMENT_CENTER ALIGNMENT_CENTRE
  -- @define ALIGNMENT_RIGHT 2
  -- @define ALIGNMENT_TOP 3
  -- @define ALIGNMENT_BOTTOM 4
-
- -- @defineifndef SHEETS_DEFAULT_TRANSITION_TIME .3
- -- @defineifndef SHEETS_DEFAULT_TRANSITION_EASING SHEETS_EASING_TRANSITION
 
  -- @define SHEETS_EASING_EXIT 0
  -- @define SHEETS_EASING_ENTRANCE 1
@@ -92,23 +79,32 @@ alignment = {
 
  -- @require sheets.timer
 
+ -- @require sheets.interfaces.IAnimation
+ -- @require sheets.interfaces.IChildContainer
+ -- @require sheets.interfaces.IChildDecoder
+ -- @require sheets.interfaces.ICommon
+ -- @require sheets.interfaces.IEvent
+ -- @require sheets.interfaces.IHasID
+ -- @require sheets.interfaces.IHasParent
+ -- @require sheets.interfaces.IHasText
+ -- @require sheets.interfaces.IHasTheme
+ -- @require sheets.interfaces.IPosition
+ -- @require sheets.interfaces.IPositionAnimator
+ -- @require sheets.interfaces.attributes.IAnimatedPositionAttributes
+ -- @require sheets.interfaces.attributes.ICommonAttributes
+ -- @require sheets.interfaces.attributes.IPositionAttributes
+ -- @require sheets.interfaces.attributes.ITextAttributes
+ -- @require sheets.interfaces.attributes.IThemeAttribute
+
  -- @require sheets.sml.SMLNode
  -- @require sheets.sml.SMLParser
  -- @require sheets.sml.SMLNodeDecoder
  -- @require sheets.sml.SMLDocument
 
- -- @require sheets.interfaces.IChildContainer
- -- @require sheets.interfaces.IHasParent
- -- @require sheets.interfaces.IPosition
- -- @require sheets.interfaces.ITextRenderer
-
- -- @require sheets.animation.interfaces.IAnimation
- -- @require sheets.animation.interfaces.IPositionAnimator
  -- @require sheets.animation.KeyFrame
  -- @require sheets.animation.Pause
  -- @require sheets.animation.Animation
 
- -- @require sheets.events.interfaces.IEvent
  -- @require sheets.events.KeyboardEvent
  -- @require sheets.events.MiscEvent
  -- @require sheets.events.MouseEvent
@@ -121,9 +117,6 @@ default_theme = Theme()
 
  -- @require sheets.Application
  -- @require sheets.Sheet
-
- -- @require sheets.sml.interfaces.IPositionAttributes
- -- @require sheets.sml.interfaces.ICommonAttributes
 
  -- @require sheets.View
 

@@ -7,6 +7,17 @@
 
  -- @print Including sheets.sml.SMLParser
 
+ -- @define SML_TOKEN_STRING 0
+ -- @define SML_TOKEN_EQUAL 1
+ -- @define SML_TOKEN_OPEN 2
+ -- @define SML_TOKEN_CLOSE 3
+ -- @define SML_TOKEN_SLASH 4
+ -- @define SML_TOKEN_NUMBER 5
+ -- @define SML_TOKEN_BOOL 6
+ -- @define SML_TOKEN_IDENTIFIER 7
+ -- @define SML_TOKEN_UNKNOWN 8
+ -- @define SML_TOKEN_EOF 9
+
 local type_lookup = {
 	[SML_TOKEN_STRING] = "string";
 	[SML_TOKEN_EQUAL] = "equals";
@@ -89,7 +100,7 @@ function SMLParser:consume()
 		self.character = self.character + 1
 		return Token( SML_TOKEN_EQUAL, c, line, char )
 
-	elseif self.text:find( "^%.?%d", self.char ) then
+	elseif self.text:find( "^%-?%.?%d", self.char ) then
 		return self:consumeNumber( line, char )
 
 	elseif c:find "[%w_]" then
@@ -122,7 +133,7 @@ function SMLParser:consumeWord( line, char )
 end
 
 function SMLParser:consumeNumber( line, char )
-	local n = self.text:match( "%d*%.?%d+", self.char )
+	local n = self.text:match( "%-?%d*%.?%d+", self.char )
 	if self.text:sub( self.char + #n, self.char + #n ) == "e" then
 		n = n .. ( self.text:match( "^e%-?%d+", self.char + #n ) or error( "[" .. line .. ", " .. char .. "]: expected number after exponent 'e'", 0 ) )
 	end
@@ -244,12 +255,15 @@ function SMLParser:parseAttribute()
 end
 
 function SMLParser:parseAttributes()
-	local a = {}
+	local t = {}
+	local l = {}
 	while self:test( SML_TOKEN_IDENTIFIER ) do
 		local k, v = self:parseAttribute()
-		a[k] = v
+		local n = l[k] or #t + 1
+		l[k] = n
+		t[n] = { k, v }
 	end
-	return a
+	return t
 end
 
 function SMLParser:parseObject( position )

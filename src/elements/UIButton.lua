@@ -7,7 +7,7 @@
 
  -- @print Including sheets.UIButton
 
-class "UIButton" extends "Sheet" implements (ITextRenderer) {
+class "UIButton" extends "Sheet" implements (IHasText) {
 	down = false;
 	vertical_alignment = ALIGNMENT_CENTRE;
 	horizontal_alignment = ALIGNMENT_CENTRE;
@@ -66,15 +66,14 @@ local decoder = SMLNodeDecoder()
 decoder.isBodyAllowed = false
 decoder.isBodyNecessary = false
 
-decoder:implement( IPositionAttributes )
 decoder:implement( ICommonAttributes )
+decoder:implement( IPositionAttributes )
+decoder:implement( IAnimatedPositionAttributes )
+decoder:implement( IThemeAttribute )
+decoder:implement( ITextAttributes )
 
 function decoder:init()
 	return UIButton( 0, 0, 10, 3 )
-end
-
-function decoder:attribute_text( text )
-	self:setText( text )
 end
 
 SMLDocument:addElement( "button", UIButton, decoder )

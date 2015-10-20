@@ -23,9 +23,7 @@ function IChildContainer:IChildContainer()
 end
 
 function IChildContainer:addChild( child )
-	-- @if SHEETS_TYPE_CHECK
-		if not class.typeOf( child, Sheet ) then return error( "expected Sheet child, got " .. class.type( child ) ) end
-	-- @endif
+	if not class.typeOf( child, Sheet ) then return error( "expected Sheet child, got " .. class.type( child ) ) end
 
 	if child.parent then
 		child.parent:removeChild( child )
@@ -52,9 +50,8 @@ function IChildContainer:removeChild( child )
 end
 
 function IChildContainer:getChildById( id )
-	 -- @if SHEETS_TYPE_CHECK
-	 	if type( id ) ~= "string" then return error( "expected string id, got " .. class.type( id ) ) end
-	 -- @endif
+	 if type( id ) ~= "string" then return error( "expected string id, got " .. class.type( id ) ) end
+
 	for i = #self.children, 1, -1 do
 		local c = self.children[i]:getChildById( id )
 		if c then
@@ -66,9 +63,8 @@ function IChildContainer:getChildById( id )
 end
 
 function IChildContainer:getChildrenById( id )
-	 -- @if SHEETS_TYPE_CHECK
-	 	if type( id ) ~= "string" then return error( "expected string id, got " .. class.type( id ) ) end
-	 -- @endif
+	 if type( id ) ~= "string" then return error( "expected string id, got " .. class.type( id ) ) end
+
 	local t = {}
 	for i = #self.children, 1, -1 do
 		local subt = self.children[i]:getChildById( id )

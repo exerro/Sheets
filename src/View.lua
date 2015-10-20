@@ -19,25 +19,25 @@ local function orderChildren( children )
 	return t
 end
 
-class "View" implements (IChildContainer) implements (IPosition) implements (IAnimation) implements (IHasParent) implements (IPositionAnimator)
+class "View"
+	implements (IChildContainer)
+	implements (IPosition)
+	implements (IAnimation)
+	implements (IHasParent)
+	implements (IPositionAnimator)
+	implements (IHasID)
+	implements (IHasTheme)
+	implements (ICommon)
 {
-	id = "default";
-
-	parent = nil;
-
-	changed = true;
-
 	canvas = nil;
-	theme = nil;
 }
 
 function View:View( x, y, width, height )
-	-- @if SHEETS_TYPE_CHECK
-		if type( x ) ~= "number" then return error( "element attribute #1 'x' not a number (" .. class.type( x ) .. ")", 2 ) end
-		if type( y ) ~= "number" then return error( "element attribute #2 'y' not a number (" .. class.type( y ) .. ")", 2 ) end
-		if type( width ) ~= "number" then return error( "element attribute #3 'width' not a number (" .. class.type( width ) .. ")", 2 ) end
-		if type( height ) ~= "number" then return error( "element attribute #4 'height' not a number (" .. class.type( height ) .. ")", 2 ) end
-	-- @endif
+	if type( x ) ~= "number" then return error( "element attribute #1 'x' not a number (" .. class.type( x ) .. ")", 2 ) end
+	if type( y ) ~= "number" then return error( "element attribute #2 'y' not a number (" .. class.type( y ) .. ")", 2 ) end
+	if type( width ) ~= "number" then return error( "element attribute #3 'width' not a number (" .. class.type( width ) .. ")", 2 ) end
+	if type( height ) ~= "number" then return error( "element attribute #4 'height' not a number (" .. class.type( height ) .. ")", 2 ) end
+
 	self:IPosition( x, y, width, height )
 	self:IChildContainer()
 	self:IAnimation()
@@ -48,34 +48,6 @@ end
 
 function View:tostring()
 	return "[Instance] View " .. tostring( self.id )
-end
-
-function View:setID( id )
-	self.id = tostring( id )
-	return self
-end
-
-function View:setTheme( theme, children )
-	theme = theme or Theme()
-	-- @if SHEETS_TYPE_CHECK
-		if not class.typeOf( theme, Theme ) then return error( "expected Theme theme, got " .. type( theme ) ) end
-	-- @endif
-	self.theme = theme
-	if children then
-		for i = 1, #self.children do
-			self.children[i]:setTheme( theme, true )
-		end
-	end
-	self:setChanged( true )
-	return self
-end
-
-function View:setChanged( state )
-	self.changed = state
-	if state and self.parent and not self.parent.changed then
-		self.parent:setChanged( true )
-	end
-	return self
 end
 
 function View:draw()
@@ -97,9 +69,7 @@ function View:draw()
 end
 
 function View:update( dt )
-	 -- @if SHEETS_TYPE_CHECK
-		if type( dt ) ~= "number" then return error( "expected number dt, got " .. class.type( dt ) ) end
-	 -- @endif
+	if type( dt ) ~= "number" then return error( "expected number dt, got " .. class.type( dt ) ) end
 	
 	self:updateAnimations( dt )
 
@@ -154,9 +124,23 @@ decoder.isBodyNecessary = false
 
 decoder:implement( ICommonAttributes )
 decoder:implement( IPositionAttributes )
+decoder:implement( IAnimatedPositionAttributes )
+decoder:implement( IThemeAttribute )
 
 function decoder:init( parent )
 	return View( 0, 0, parent.width, parent.height )
+end
+
+function decoder:decodeBody( body )
+	local children = IChildDecoder.decodeChildren( self, body )
+
+	for i = 1, #children do
+		if children[i]:typeOf( Sheet ) then
+			self:addChild( children[i] )
+		else
+			return error( "[" .. body[i].position.line .. ", " .. body[i].position.character .. "]: child not a sheet", 0 )
+		end
+	end
 end
 
 SMLDocument:addElement( "view", View, decoder )

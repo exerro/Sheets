@@ -9,7 +9,7 @@
 
 -- need to add monitor support
 
-class "Application" implements (IChildContainer) implements (IAnimation)
+class "Application" implements (IChildContainer) implements (IAnimation) implements (ICommon)
 {
 	name = "UnNamed Application";
 	path = "";
@@ -28,7 +28,6 @@ class "Application" implements (IChildContainer) implements (IAnimation)
 	monitor_sides = {};
 
 	running = true;
-	changed = false;
 
 	mouse = {};
 	keys = {};
@@ -47,18 +46,12 @@ function Application:Application( name, path )
 	self.screen = ScreenCanvas( self.width, self.height )
 end
 
-function Application:setChanged( state )
-	self.changed = state ~= false
-end
-
 function Application:stop()
 	self.running = false
 end
 
 function Application:addChild( child )
-	-- @if SHEETS_TYPE_CHECK
-		if not class.typeOf( child, View ) then return error( "expected View child, got " .. class.type( child ) ) end
-	-- @endif
+	if not class.typeOf( child, View ) then return error( "expected View child, got " .. class.type( child ) ) end
 
 	if child.parent then
 		child.parent:removeChild( child )
@@ -71,33 +64,29 @@ function Application:addChild( child )
 end
 
 function Application:isChildVisible( child )
-	-- @if SHEETS_TYPE_CHECK
-		if not class.typeOf( child, View ) then return error( "expected View child, got " .. class.type( child ) ) end
-	-- @endif
+	if not class.typeOf( child, View ) then return error( "expected View child, got " .. class.type( child ) ) end
+
 	return child.x - self.viewportX + child.width > 0 and child.y - self.viewportY + child.height > 0 and child.x - self.viewportX < self.width and child.y - self.viewportY < self.height
 end
 
 function Application:setViewportX( x )
-	-- @if SHEETS_TYPE_CHECK
-		if type( x ) ~= "number" then return error( "expected number x, got " .. class.type( x ) ) end
-	-- @endif
+	if type( x ) ~= "number" then return error( "expected number x, got " .. class.type( x ) ) end
+
 	self.viewportX = x
 	self:setChanged()
 end
 
 function Application:setViewportY( y )
-	-- @if SHEETS_TYPE_CHECK
-		if type( y ) ~= "number" then return error( "expected number y, got " .. class.type( y ) ) end
-	-- @endif
+	if type( y ) ~= "number" then return error( "expected number y, got " .. class.type( y ) ) end
+	
 	self.viewportY = y
 	self:setChanged()
 end
 
 function Application:transitionViewport( x, y )
-	-- @if SHEETS_TYPE_CHECK
-		if x and type( x ) ~= "number" then return error( "expected number x, got " .. class.type( x ) ) end
-		if y and type( y ) ~= "number" then return error( "expected number y, got " .. class.type( y ) ) end
-	-- @endif
+	if x and type( x ) ~= "number" then return error( "expected number x, got " .. class.type( x ) ) end
+	if y and type( y ) ~= "number" then return error( "expected number y, got " .. class.type( y ) ) end
+	
 	local ax, ay
 	local dx = x and math.abs( x - self.viewportX ) or 0
 	local dy = y and math.abs( y - self.viewportY ) or 0
@@ -115,9 +104,8 @@ function Application:transitionViewport( x, y )
 end
 
 function Application:transitionView( view )
-	-- @if SHEETS_TYPE_CHECK
-		if not class.typeOf( view, View ) then return error( "expected View view, got " .. class.type( view ) ) end
-	-- @endif
+	if not class.typeOf( view, View ) then return error( "expected View view, got " .. class.type( view ) ) end
+	
 	if view.parent == self then
 		return self:transitionViewport( view.x, view.y )
 	else

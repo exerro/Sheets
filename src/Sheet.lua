@@ -19,28 +19,30 @@ local function orderChildren( children )
 	return t
 end
 
-class "Sheet" implements (IChildContainer) implements (IPosition) implements (IAnimation) implements (IHasParent) implements (IPositionAnimator)
+class "Sheet"
+	implements (IChildContainer)
+	implements (IPosition)
+	implements (IAnimation)
+	implements (IHasParent)
+	implements (IPositionAnimator)
+	implements (IHasID)
+	implements (IHasTheme)
+	implements (ICommon)
 {
-	id = "ID";
 	z = 0;
-	parent = nil;
-
-	changed = true;
 
 	canvas = nil;
-	theme = nil;
 
 	handlesKeyboard = true;
 	handlesText = true;
 }
 
 function Sheet:Sheet( x, y, width, height )
-	-- @if SHEETS_TYPE_CHECK
-		if type( x ) ~= "number" then return error( "element attribute #1 'x' not a number (" .. class.type( x ) .. ")", 2 ) end
-		if type( y ) ~= "number" then return error( "element attribute #2 'y' not a number (" .. class.type( y ) .. ")", 2 ) end
-		if type( width ) ~= "number" then return error( "element attribute #3 'width' not a number (" .. class.type( width ) .. ")", 2 ) end
-		if type( height ) ~= "number" then return error( "element attribute #4 'height' not a number (" .. class.type( height ) .. ")", 2 ) end
-	-- @endif
+	if type( x ) ~= "number" then return error( "element attribute #1 'x' not a number (" .. class.type( x ) .. ")", 2 ) end
+	if type( y ) ~= "number" then return error( "element attribute #2 'y' not a number (" .. class.type( y ) .. ")", 2 ) end
+	if type( width ) ~= "number" then return error( "element attribute #3 'width' not a number (" .. class.type( width ) .. ")", 2 ) end
+	if type( height ) ~= "number" then return error( "element attribute #4 'height' not a number (" .. class.type( height ) .. ")", 2 ) end
+
 	self:IPosition( x, y, width, height )
 	self:IChildContainer()
 	self:IAnimation()
@@ -53,40 +55,11 @@ function Sheet:tostring()
 	return "[Instance] Sheet " .. tostring( self.id )
 end
 
-function Sheet:setID( id )
-	self.id = tostring( id )
-	return self
-end
-
-function Sheet:setTheme( theme, children )
-	theme = theme or Theme()
-	-- @if SHEETS_TYPE_CHECK
-		if not class.typeOf( theme, Theme ) then return error( "expected Theme theme, got " .. type( theme ) ) end
-	-- @endif
-	self.theme = theme
-	if children then
-		for i = 1, #self.children do
-			self.children[i]:setTheme( theme, true )
-		end
-	end
-	self:setChanged( true )
-	return self
-end
-
 function Sheet:setZ( z )
-	-- @if SHEETS_TYPE_CHECK
-		if type( z ) ~= "number" then return error( "expected number z, got " .. class.type( z ) ) end
-	-- @endif
+	if type( z ) ~= "number" then return error( "expected number z, got " .. class.type( z ) ) end
+
 	self.z = z
 	if self.parent then self.parent:setChanged( true ) end
-	return self
-end
-
-function Sheet:setChanged( state )
-	self.changed = state ~= false
-	if state ~= false and self.parent and not self.parent.changed then
-		self.parent:setChanged( true )
-	end
 	return self
 end
 
@@ -116,9 +89,8 @@ function Sheet:draw()
 end
 
 function Sheet:update( dt )
-	 -- @if SHEETS_TYPE_CHECK
-		if type( dt ) ~= "number" then return error( "expected number dt, got " .. class.type( dt ) ) end
-	 -- @endif
+	if type( dt ) ~= "number" then return error( "expected number dt, got " .. class.type( dt ) ) end
+
 	self:onUpdate( dt )
 	self:updateAnimations( dt )
 

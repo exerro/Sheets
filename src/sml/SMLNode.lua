@@ -22,38 +22,17 @@ function SMLNode:SMLNode( type, attributes, body, position )
 end
 
 function SMLNode:set( attribute, value )
-	self.attributes[attribute] = value == nil or value
-end
-
-function SMLNode:get( attribute )
-	return self.attributes[attribute]
-end
-
-function SMLNode:findChildOfType( type )
-	if self.body then
-		for i = 1, #self.body do
-			if self.body[i].nodetype == type then
-				return self.body[i]
-			end
-			local child = self.body[i]:findChildOfType( type )
-			if child then
-				return child
-			end
+	for i = 1, #self.attributes do
+		if self.attributes[i][1] == attribute then
+			self.attributes[i][2] = value
 		end
 	end
 end
 
-function SMLNode:findChildWithAttribute( attribute, value )
-	if value == nil then value = true end
-	if self.body then
-		for i = 1, #self.body do
-			if self.body[i]:get( attribute ) == value then
-				return self.body[i]
-			end
-			local child = self.body[i]:findChildWithAttribute( attribute, value )
-			if child then
-				return child
-			end
+function SMLNode:get( attribute )
+	for i = 1, #self.attributes do
+		if self.attributes[i][1] == attribute then
+			return self.attributes[i][2]
 		end
 	end
 end
