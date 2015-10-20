@@ -298,5 +298,8 @@ function SMLParser:parseBody( closing )
 		end
 		position = { line = self:peek().line, character = self:peek().character }
 	end
+	if closing then
+		return error( "[" .. self:peek().line .. ", " .. self:peek().character .. "]: unexpected '" .. tType( self:peek().type ) .. "', expected closing tag to close '" .. closing .. "'", 0 )
+	end
 	return body
 end

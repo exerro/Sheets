@@ -55,7 +55,7 @@ function View:setID( id )
 	return self
 end
 
-function IChildContainer:setTheme( theme, children )
+function View:setTheme( theme, children )
 	theme = theme or Theme()
 	-- @if SHEETS_TYPE_CHECK
 		if not class.typeOf( theme, Theme ) then return error( "expected Theme theme, got " .. type( theme ) ) end

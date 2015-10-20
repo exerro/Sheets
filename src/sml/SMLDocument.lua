@@ -19,21 +19,73 @@ local function copyt( o )
 	return t
 end
 
-local function rawLoadNode( self, node, parent )
-	local decoder = self:getDecoder( node.nodetype )
-	if decoder then
-		return decoder:decode( node, parent )
-	else
-		return false, "[" .. node.position.line .. ", " .. node.position.character .. "]: unknown node type '" .. node.nodetype .. "'"
-	end
-end
-
 local function parseScript( script, name )
 	return pcall( function()
 		local parser = SMLParser( script )
 		parser:begin()
 		return parser:parseBody()
 	end )
+end
+
+local function readScript( file )
+	local h = fs.open( file, "r" )
+	if h then
+		local content = h.readAll()
+		h.close()
+		return parseScript( content, fs.getName( file ) )
+	else
+		return false, "failed to open file '" .. file .. "'"
+	end
+end
+
+local function rawLoadNode( self, node, parent )
+	local decoder = self:getDecoder( node.nodetype )
+	if decoder then
+		if node.attributes.src then
+			if node.body then
+				return error( "[" .. node.position.line .. ", " .. node.position.character .. "]: cannot have src attribute and body", 0 )
+			else
+				local ok, data = readScript( self.application and self.application.path .. "/" .. node.attributes.src or node.attributes.src )
+				if ok then
+					node.body = data
+				else
+					return false, data
+				end
+			end
+		end
+
+		if node.body and not decoder.isBodyAllowed then
+			return error( "[" .. node.position.line .. ", " .. node.position.character .. "]: body not allowed for node '" .. decoder.name .. "'", 0 )
+		elseif not node.body and decoder.isBodyNecessary then
+			return error( "[" .. node.position.line .. ", " .. node.position.character .. "]: body required for node '" .. decoder.name .. "'", 0 )
+		end
+
+		local element = decoder:init( parent )
+
+		for k, v in pairs( node.attributes ) do
+			if k ~= "src" then
+				if decoder["attribute_" .. k] then
+					local ok, data = pcall( decoder["attribute_" .. k], element, v, node, parent )
+					if not ok then
+						return false, data
+					end
+				else
+					return error( "[" .. node.position.line .. ", " .. node.position.character .. "]: invalid attribute '" .. k .. "' for node '" .. decoder.name .. "'", 0 )
+				end
+			end
+		end
+
+		if node.body then
+			local ok, data = pcall( decoder.decodeBody, element, node.body, parent )
+			if not ok then
+				return false, data
+			end
+		end
+
+		return element
+	else
+		return false, "[" .. node.position.line .. ", " .. node.position.character .. "]: unknown node type '" .. node.nodetype .. "'"
+	end
 end
 
 class "SMLDocument" {
@@ -106,7 +158,7 @@ function SMLDocument:loadSMLFile( file, parent )
 	if not self.application then
 		return error( "SMLDocument has no application: load an application first using SMLDocument:loadSMLApplication()" )
 	end
-	local h = fs.open( file, "r" )
+	local h = fs.open( self.application.path .. "/" .. file, "r" )
 	if h then
 		local content = h.readAll()
 		h.close()
