@@ -77,4 +77,4 @@ function decoder:attribute_text( text )
 	self:setText( text )
 end
 
-SMLEnvironment:addElement( "button", UIButton, decoder )
+SMLDocument:addElement( "button", UIButton, decoder )

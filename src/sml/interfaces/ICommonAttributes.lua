@@ -10,11 +10,11 @@
 ICommonAttributes = {}
 
 function ICommonAttributes:attribute_theme( theme, node )
-	local themeobj = SMLEnvironment.current():getTheme( theme )
+	local themeobj = SMLDocument.current():getTheme( theme )
 	if theme then
 		self:setTheme( themeobj )
 	else
-		return error( "[" .. node.position.line .. ", " .. node.position.character .. "]: no such theme '" .. tostring( theme ) .. "'" )
+		return error( "[" .. node.position.line .. ", " .. node.position.character .. "]: no such theme '" .. tostring( theme ) .. "'", 0 )
 	end
 end
 

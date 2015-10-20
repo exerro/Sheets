@@ -18,7 +18,10 @@ function Theme.addToTemplate( class, field, states )
 	if type( field ) ~= "string" then return error( "expected string field, got " .. class.type( field ) ) end
 	if type( states ) ~= "table" then return error( "expected table states, got " .. class.type( states ) ) end
 	template[class] = template[class] or {}
-	template[class][field] = states
+	template[class][field] = template[class][field] or {}
+	for k, v in pairs( states ) do
+		template[class][field][k] = v
+	end
 end
 
 function Theme:Theme()
@@ -65,7 +68,7 @@ function Theme:getField( cls, field, state )
 	end
 end
 
-local decoder = SMLNodeDecoder()
+local decoder = SMLNodeDecoder "theme"
 
 decoder.isBodyAllowed = true
 decoder.isBodyNecessary = true
@@ -75,13 +78,13 @@ function decoder:init()
 end
 
 function decoder:attribute_name( name )
-	SMLEnvironment.current():setTheme( name, self )
+	SMLDocument.current():setTheme( name, self )
 end
 
 function decoder:decodeBody( body )
-	local env = SMLEnvironment.current()
+	local doc = SMLDocument.current()
 	for i = 1, #body do
-		local element = env:getElement( body[i].nodetype )
+		local element = doc:getElement( body[i].nodetype )
 		if element then
 			local fields = body[i].body
 			if fields then
@@ -90,8 +93,8 @@ function decoder:decodeBody( body )
 						error( "[" .. fields[i].position.line .. ", " .. fields[i].position.character .. "] : field '" .. fields[i].nodetype .. "' has body", 0 )
 					end
 					for k, v in pairs( fields[i].attributes ) do
-						if env:getVariable( v ) ~= nil then
-							v = env:getVariable( v )
+						if doc:getVariable( v ) ~= nil then
+							v = doc:getVariable( v )
 						end
 						self:setField( element, fields[i].nodetype, k, v )
 					end
@@ -105,4 +108,4 @@ function decoder:decodeBody( body )
 	end
 end
 
-SMLEnvironment:setDecoder( "theme", decoder )
+SMLDocument:setDecoder( "theme", decoder )

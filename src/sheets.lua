@@ -59,6 +59,10 @@
  -- @defineifndef SHEETS_DEFAULT_TRANSITION_TIME .3
  -- @defineifndef SHEETS_DEFAULT_TRANSITION_EASING SHEETS_EASING_TRANSITION
 
+ -- @define SHEETS_EASING_EXIT 0
+ -- @define SHEETS_EASING_ENTRANCE 1
+ -- @define SHEETS_EASING_TRANSITION 2
+
 event = {
 	mouse_down = SHEETS_EVENT_MOUSE_DOWN;
 	mouse_up = SHEETS_EVENT_MOUSE_UP;
@@ -90,9 +94,8 @@ alignment = {
 
  -- @require sheets.sml.SMLNode
  -- @require sheets.sml.SMLParser
- -- @require sheets.sml.SMLEnvironment
  -- @require sheets.sml.SMLNodeDecoder
- -- @require sheets.sml.SML
+ -- @require sheets.sml.SMLDocument
 
  -- @require sheets.interfaces.IChildContainer
  -- @require sheets.interfaces.IHasParent
@@ -114,12 +117,33 @@ alignment = {
 
  -- @require sheets.Theme
 
+default_theme = Theme()
+
  -- @require sheets.Application
- -- @require sheets.View
  -- @require sheets.Sheet
 
  -- @require sheets.sml.interfaces.IPositionAttributes
  -- @require sheets.sml.interfaces.ICommonAttributes
+
+ -- @require sheets.View
+
+SMLDocument:setVariable( "transparent", TRANSPARENT )
+SMLDocument:setVariable( "white", WHITE )
+SMLDocument:setVariable( "orange", ORANGE )
+SMLDocument:setVariable( "magenta", MAGENTA )
+SMLDocument:setVariable( "lightBlue", LIGHTBLUE )
+SMLDocument:setVariable( "yellow", YELLOW )
+SMLDocument:setVariable( "lime", LIME )
+SMLDocument:setVariable( "pink", PINK )
+SMLDocument:setVariable( "grey", GREY )
+SMLDocument:setVariable( "lightGrey", LIGHTGREY )
+SMLDocument:setVariable( "cyan", CYAN )
+SMLDocument:setVariable( "purple", PURPLE )
+SMLDocument:setVariable( "blue", BLUE )
+SMLDocument:setVariable( "brown", BROWN )
+SMLDocument:setVariable( "green", GREEN )
+SMLDocument:setVariable( "red", RED )
+SMLDocument:setVariable( "black", BLACK )
 
  -- @if SHEETS_WRAP
 	end

@@ -13,7 +13,11 @@ class "SMLNodeDecoder" {
 	isBodyNecessary = false;
 }
 
-function SMLNodeDecoder:decode( node )
+function SMLNodeDecoder:SMLNodeDecoder( name )
+	self.name = name
+end
+
+function SMLNodeDecoder:decode( node, parent )
 
 	if node.body and not self.isBodyAllowed then
 		return error( "[" .. node.position.line .. ", " .. node.position.character .. "]: body not allowed for node '" .. self.name .. "'", 0 )
@@ -21,11 +25,11 @@ function SMLNodeDecoder:decode( node )
 		return error( "[" .. node.position.line .. ", " .. node.position.character .. "]: body required for node '" .. self.name .. "'", 0 )
 	end
 
-	local element = self:init()
+	local element = self:init( parent )
 
 	for k, v in pairs( node.attributes ) do
 		if self["attribute_" .. k] then
-			local ok, data = pcall( self["attribute_" .. k], element, v, node )
+			local ok, data = pcall( self["attribute_" .. k], element, v, node, parent )
 			if not ok then
 				return false, data
 			end
@@ -35,7 +39,7 @@ function SMLNodeDecoder:decode( node )
 	end
 
 	if node.body then
-		local ok, data = pcall( self.decodeBody, element, node.body )
+		local ok, data = pcall( self.decodeBody, element, node.body, parent )
 		if not ok then
 			return false, data
 		end

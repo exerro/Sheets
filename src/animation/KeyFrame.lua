@@ -7,10 +7,6 @@
 
  -- @print Including sheets.animation.KeyFrame
 
- -- @define SHEETS_EASING_EXIT 0
- -- @define SHEETS_EASING_ENTRANCE 1
- -- @define SHEETS_EASING_TRANSITION 2
-
 class "KeyFrame" {
 	clock = 0;
 	value = 0;

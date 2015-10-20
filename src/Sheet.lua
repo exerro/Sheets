@@ -46,7 +46,7 @@ function Sheet:Sheet( x, y, width, height )
 	self:IAnimation()
 
 	self.canvas = DrawingCanvas( width, height )
-	self.theme = Theme()
+	self.theme = default_theme
 end
 
 function Sheet:tostring()
@@ -55,6 +55,21 @@ end
 
 function Sheet:setID( id )
 	self.id = tostring( id )
+	return self
+end
+
+function IChildContainer:setTheme( theme, children )
+	theme = theme or Theme()
+	-- @if SHEETS_TYPE_CHECK
+		if not class.typeOf( theme, Theme ) then return error( "expected Theme theme, got " .. type( theme ) ) end
+	-- @endif
+	self.theme = theme
+	if children then
+		for i = 1, #self.children do
+			self.children[i]:setTheme( theme, true )
+		end
+	end
+	self:setChanged( true )
 	return self
 end
 

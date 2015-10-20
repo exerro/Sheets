@@ -21,19 +21,18 @@ class "Application" implements (IChildContainer) implements (IAnimation)
 	width = 0;
 	height = 0;
 
-	environment = nil;
 	screen = nil;
-	theme = nil;
 
 	terminal = term;
+	terminals = {};
+	monitor_sides = {};
+
 	running = true;
 	changed = false;
 
 	mouse = {};
 	keys = {};
 }
-
-Application.active = nil
 
 function Application:Application( name, path )
 	self.name = tostring( name or "UnNamed Application" )
@@ -45,12 +44,7 @@ function Application:Application( name, path )
 	self:IChildContainer()
 	self:IAnimation()
 
-	self.theme = Theme()
-	self.environment = SMLEnvironment()
-
 	self.screen = ScreenCanvas( self.width, self.height )
-
-	Application.active = self
 end
 
 function Application:setChanged( state )
@@ -72,7 +66,6 @@ function Application:addChild( child )
 
 	self:setChanged( true )
 	child.parent = self
-	child:setTheme( self.theme )
 	self.children[#self.children + 1] = child
 	return child
 end
@@ -133,18 +126,8 @@ function Application:transitionView( view )
 end
 
 function Application:event( event, ... )
-	Application.active = self
-
 	local params = { ... }
-
-	if event == "timer" and timer.update( ... ) then
-		return
-	end
-
 	local children = {}
-	for i = 1, #self.children do
-		children[i] = self.children[i]
-	end
 
 	local function handle( e )
 		if e:typeOf( MouseEvent ) then
@@ -156,6 +139,13 @@ function Application:event( event, ... )
 				children[i]:handle( e )
 			end
 		end
+	end
+
+	if event == "timer" and timer.update( ... ) then
+		return
+	end
+	for i = 1, #self.children do
+		children[i] = self.children[i]
 	end
 
 	if event == "mouse_click" then
@@ -230,8 +220,6 @@ end
 
 function Application:update()
 
-	Application.active = self
-
 	local dt = timer.getDelta()
 	local c = {}
 
@@ -250,10 +238,10 @@ end
 function Application:draw()
 	if self.changed then
 		local screen = self.screen
-
-		screen:clear( self.theme:getField( self.class, "colour", "default" ) )
-
 		local children = {}
+
+		screen:clear()
+
 		for i = 1, #self.children do
 			children[i] = self.children[i]
 		end
@@ -267,7 +255,6 @@ function Application:draw()
 		end
 
 		self.changed = false
-
 		screen:drawToTerminal( self.terminal )
 	end
 end
@@ -287,3 +274,56 @@ function Application:run()
 		self:draw()
 	end
 end
+
+Theme.addToTemplate( Application, "colour", {
+	default = WHITE;
+} )
+
+local decoder = SMLNodeDecoder "application"
+
+decoder.isBodyAllowed = true
+decoder.isBodyNecessary = true
+
+function decoder:init( document )
+	local a = Application()
+	document.application = a
+	return a
+end
+
+function decoder:attribute_name( name, node )
+	if type( name ) == "string" then
+		self.name = name
+	else
+		return error( "[" .. node.position.line .. ", " .. node.position.character .. "]: expected string name, got " .. type( name ), 0 )
+	end
+end
+
+function decoder:attribute_path( path, node )
+	if type( path ) == "string" then
+		self.path = path
+	else
+		return error( "[" .. node.position.line .. ", " .. node.position.character .. "]: expected string path, got " .. type( path ), 0 )
+	end
+end
+
+function decoder:attribute_terminateable( t, node )
+	self.terminateable = t
+end
+
+function decoder:decodeBody( body, parent )
+	local document = SMLDocument.current()
+	for i = 1, #body do
+		if body[i].nodetype == "view" or body[i].nodetype == "theme" or body[i].nodetype == "script" then
+			local element, err = document:loadSMLNode( body[i], self )
+			if element then
+				if element:typeOf( View ) then
+					self:addChild( element )
+				end
+			else
+				return error( err, 0 )
+			end
+		end
+	end
+end
+
+SMLDocument:addElement( "application", Application, decoder )

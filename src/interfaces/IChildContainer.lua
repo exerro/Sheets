@@ -33,7 +33,9 @@ function IChildContainer:addChild( child )
 
 	self:setChanged( true )
 	child.parent = self
-	child:setTheme( self.theme )
+	if child.theme == default_theme then
+		child:setTheme( self.theme )
+	end
 	self.children[#self.children + 1] = child
 	return child
 end
@@ -82,19 +84,4 @@ end
 
 function IChildContainer:isChildVisible( child )
 	return child.x + child.width > 0 and child.y + child.height > 0 and child.x < self.width and child.y < self.height
-end
-
-function IChildContainer:setTheme( theme, children )
-	theme = theme or Theme()
-	-- @if SHEETS_TYPE_CHECK
-		if not class.typeOf( theme, Theme ) then return error( "expected Theme theme, got " .. type( theme ) ) end
-	-- @endif
-	self.theme = theme
-	if children then
-		for i = 1, #self.children do
-			self.children[i]:setTheme( theme, true )
-		end
-	end
-	self:setChanged( true )
-	return self
 end

@@ -1,1 +1,1 @@
-Changing width only changes if actual change is made.
+Application:positionViewsInX( views, XX, XXX )

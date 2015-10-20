@@ -43,7 +43,7 @@ function View:View( x, y, width, height )
 	self:IAnimation()
 
 	self.canvas = DrawingCanvas( width, height )
-	self.theme = Theme()
+	self.theme = default_theme
 end
 
 function View:tostring()
@@ -52,6 +52,21 @@ end
 
 function View:setID( id )
 	self.id = tostring( id )
+	return self
+end
+
+function IChildContainer:setTheme( theme, children )
+	theme = theme or Theme()
+	-- @if SHEETS_TYPE_CHECK
+		if not class.typeOf( theme, Theme ) then return error( "expected Theme theme, got " .. type( theme ) ) end
+	-- @endif
+	self.theme = theme
+	if children then
+		for i = 1, #self.children do
+			self.children[i]:setTheme( theme, true )
+		end
+	end
+	self:setChanged( true )
 	return self
 end
 
@@ -127,3 +142,21 @@ end
 function View:onKeyboardEvent( event )
 	-- keyboard shortcut callbacks
 end
+
+Theme.addToTemplate( View, "colour", {
+	default = WHITE;
+} )
+
+local decoder = SMLNodeDecoder "view"
+
+decoder.isBodyAllowed = true
+decoder.isBodyNecessary = false
+
+decoder:implement( ICommonAttributes )
+decoder:implement( IPositionAttributes )
+
+function decoder:init( parent )
+	return View( 0, 0, parent.width, parent.height )
+end
+
+SMLDocument:addElement( "view", View, decoder )
