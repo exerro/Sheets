@@ -17,6 +17,10 @@ The View class is the interface between Sheet objects and an Application.
 
 - Called when the view updates. Callback may be used by element. See documentation on specific elements for more information.
 
+`onParentResized()`
+
+- Called when the parent resizes.
+
 #### Variables
 
 x `number`, y `number`

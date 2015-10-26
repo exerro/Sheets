@@ -25,6 +25,10 @@ The Sheet class is the root class of any element on the screen.
 
 - Called when the sheet updates. Callback may be used by element. See documentation on specific elements for more information.
 
+`onParentResized()`
+
+- Called when the parent resizes.
+
 #### Variables
 
 x `number`, y `number`

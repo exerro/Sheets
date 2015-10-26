@@ -11,8 +11,6 @@ local wrapline, wrap
 
 IHasText = {
 	text = "";
-	horizontal_alignment = ALIGNMENT_LEFT;
-	vertical_alignment = ALIGNMENT_TOP;
 	text_lines = {};
 }
 
@@ -25,26 +23,6 @@ function IHasText:setText( text )
 	return self
 end
 
-function IHasText:setVerticalAlignment( alignment )
-	if alignment ~= ALIGNMENT_TOP and alignment ~= ALIGNMENT_CENTRE and alignment ~= ALIGNMENT_BOTTOM then return error( "invalid alignment" ) end
-
-	self.vertical_alignment = alignment
-	self:wrapText()
-	self:setChanged()
-
-	return self
-end
-
-function IHasText:setHorizontalAlignment( alignment )
-	if alignment ~= ALIGNMENT_LEFT and alignment ~= ALIGNMENT_CENTRE and alignment ~= ALIGNMENT_RIGHT then return error( "invalid alignment" ) end
-
-	self.horizontal_alignment = alignment
-	self:wrapText()
-	self:setChanged()
-
-	return self
-end
-
 function IHasText:wrapText()
 	self.lines = wrap( self.text, self.width, self.height )
 end
@@ -53,23 +31,26 @@ function IHasText:drawText( mode )
 	local offset, lines = 0, self.lines
 	mode = mode or "default"
 
+	local horizontal_alignment = self.theme:getField( self.class, "horizontal-alignment", mode )
+	local vertical_alignment = self.theme:getField( self.class, "vertical-alignment", mode )
+
 	if not lines then
 		self:wrapText()
 		lines = self.lines
 	end
 
-	if self.vertical_alignment == ALIGNMENT_CENTRE then
+	if vertical_alignment == ALIGNMENT_CENTRE then
 		offset = math.floor( self.height / 2 - #lines / 2 + .5 )
-	elseif self.vertical_alignment == ALIGNMENT_BOTTOM then
+	elseif vertical_alignment == ALIGNMENT_BOTTOM then
 		offset = self.height - #lines
 	end
 
 	for i = 1, #lines do
 
 		local xOffset = 0
-		if self.horizontal_alignment == ALIGNMENT_CENTRE then
+		if horizontal_alignment == ALIGNMENT_CENTRE then
 			xOffset = math.floor( self.width / 2 - #lines[i] / 2 + .5 )
-		elseif self.horizontal_alignment == ALIGNMENT_RIGHT then
+		elseif horizontal_alignment == ALIGNMENT_RIGHT then
 			xOffset = self.width - #lines[i]
 		end
 

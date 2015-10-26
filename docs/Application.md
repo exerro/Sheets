@@ -61,7 +61,7 @@ screen `ScreenCanvas`
 
 - Moves the application viewport to the new coordinates, if given. Returns the animation of each axis if there is a difference between the new and old coordinates of each axis.
 
-`transitionViewTo( View view )` returns `Animation x (if dx>0), Animation y (if dy>0)`
+`transitionToView( View view )` returns `Animation x (if dx>0), Animation y (if dy>0)`
 
 - Moves the application viewport to the coordinates of the view given. See `transitionViewport()` for more information.
 
