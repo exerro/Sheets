@@ -25,12 +25,8 @@ class "Sheet"
 	implements (IAnimation)
 	implements (IHasParent)
 	implements (IPositionAnimator)
-	implements (IHasID)
-	implements (IHasTheme)
 	implements (ICommon)
 {
-	z = 0;
-
 	canvas = nil;
 
 	handlesKeyboard = true;
@@ -46,21 +42,13 @@ function Sheet:Sheet( x, y, width, height )
 	self:IPosition( x, y, width, height )
 	self:IChildContainer()
 	self:IAnimation()
+	self:ICommon()
 
 	self.canvas = DrawingCanvas( width, height )
-	self.theme = default_theme
 end
 
 function Sheet:tostring()
 	return "[Instance] Sheet " .. tostring( self.id )
-end
-
-function Sheet:setZ( z )
-	if type( z ) ~= "number" then return error( "expected number z, got " .. class.type( z ) ) end
-
-	self.z = z
-	if self.parent then self.parent:setChanged( true ) end
-	return self
 end
 
 function Sheet:onPreDraw() end

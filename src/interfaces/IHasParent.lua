@@ -7,9 +7,9 @@
 
  -- @print Including sheets.interfaces.IHasParent
 
-IHasParent = {}
-
-IHasParent.parent = nil
+IHasParent = {
+	parent = nil;
+}
 
 function IHasParent:setParent( parent )
 	if parent and ( not class.isInstance( parent ) or not parent:implements( IChildContainer ) ) then return error( "expected IChildContainer parent, got " .. class.type( parent ) ) end

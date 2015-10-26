@@ -93,9 +93,8 @@ local function rawLoadNode( self, node, parent )
 end
 
 class "SMLDocument" {
-	application = nil;
 	themes = {};
-	environment = {};
+	environment = { application = application };
 	decoders = {};
 	elements = {};
 }
@@ -104,15 +103,13 @@ function SMLDocument.current()
 	return active
 end
 
-function SMLDocument:SMLDocument( application )
-	self.application = application
+function SMLDocument:SMLDocument()
 	self.themes = copyt( SMLDocument.themes )
 	self.environment = copyt( SMLDocument.environment )
 	self.decoders = copyt( SMLDocument.decoders )
 	self.elements = copyt( SMLDocument.elements )
 
 	self.environment.document = self
-	self.environment.application = self.application
 
 	active = self
 end

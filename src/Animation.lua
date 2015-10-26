@@ -1,14 +1,5 @@
 
- -- @once
-
- -- @ifndef __INCLUDE_sheets
-	-- @error 'sheets' must be included before including 'sheets.animation.Animation'
- -- @endif
-
- -- @print Including sheets.animation.Animation
-
--- if you try to update the value being animated using an onFinish method, nothing will happen unless you set self.value to nil
-
+local sin, cos = math.sin, math.cos
 local halfpi = math.pi / 2
 
 local function easing_transition( u, d, t )
@@ -16,14 +7,15 @@ local function easing_transition( u, d, t )
 end
 
 local function easing_exit( u, d, t )
-	return -d * math.cos(t * halfpi) + d + u
+	return -d * cos(t * halfpi) + d + u
 end
 
 local function easing_entrance( u, d, t )
-	return u + d * math.sin(t * halfpi)
+	return u + d * sin(t * halfpi)
 end
 
 class "Animation" {
+	frame = 1;
 	frames = {};
 	value = nil;
 	rounded = false;
@@ -39,24 +31,35 @@ function Animation:setRounded( value )
 end
 
 function Animation:addKeyFrame( initial, final, duration, easing )
-	if easing == SHEETS_EASING_TRANSITION then
+	duration = duration or .5
+	easing = easing or easing_transition
+
+	if not easing or easing == "transition" then
 		easing = easing_transition
-	elseif easing == SHEETS_EASING_EXIT then
-		easing = easing_exit
-	elseif easing == SHEETS_EASING_ENTRANCE then
+	elseif easing == "entrance" then
 		easing = easing_entrance
+	elseif easing == "exit" then
+		easing = easing_exit
 	end
 
 	if type( initial ) ~= "number" then return error( "expected number initial, got " .. class.type( initial ) ) end
 	if type( final ) ~= "number" then return error( "expected number final, got " .. class.type( final ) ) end
 	if type( duration ) ~= "number" then return error( "expected number duration, got " .. class.type( duration ) ) end
 	if easing and type( easing ) ~= "function" then return error( "expected function easing, got " .. class.type( easing ) ) end
-	 
-	local frame = KeyFrame( initial, final, duration, easing )
+
+	local frame = {
+		type = "ease";
+		clock = 0;
+		duration = duration;
+		initial = initial;
+		difference = final - initial;
+		easing = easing;
+	}
+
 	self.frames[#self.frames + 1] = frame
 
-	if #self.frames == 0 then
-		self.value = frame.value
+	if #self.frames == 1 then
+		self.value = initial
 	end
 
 	return self
@@ -66,34 +69,58 @@ function Animation:addPause( pause )
 	pause = pause or 1
 	if type( pause ) ~= "number" then return error( "expected number pause, got " .. class.type( pause ) ) end
 
-	local p = Pause( pause )
-	self.frames[#self.frames + 1] = p
+	local frame = {
+		type = "pause";
+		clock = 0;
+		duration = pause;
+	}
+
+	self.frames[#self.frames + 1] = frame
 
 	return self
 end
 
-function Animation:getLastAdded()
-	return self.frames[#self.frames]
+function Animation:frameFinished()
+	if type( self.onFrameFinished ) == "function" then
+		self:onFrameFinished( self.frame )
+	end
+
+	self.frame = self.frame + 1
+
+	if not self.frames[self.frame] and type( self.onFinish ) == "function" then
+		self:onFinish()
+	end
 end
 
 function Animation:update( dt )
 	if type( dt ) ~= "number" then return error( "expected number dt, got " .. class.type( dt ) ) end
 	
-	if self.frames[1] then
-		self.frames[1]:update( dt )
-		self.value = self.frames[1].value or self.value -- the or self.value is because pauses don't have a value
-		if self.rounded and self.value then
-			self.value = math.floor( self.value + .5 )
-		end
-		if self.frames[1]:finished() then
-			if type( self.frames[1].onFinish ) == "function" then
-				self.frames[1].onFinish( self )
+	local frame = self.frames[self.frame]
+
+	if frame then
+		frame.clock = math.min( frame.clock + dt, frame.duration )
+
+		if frame.type == "ease" then
+
+			local value = frame.easing( frame.initial, frame.difference, frame.clock / frame.duration )
+			if self.rounded then
+				value = math.floor( value + .5 )
 			end
-			table.remove( self.frames, 1 )
+
+			self.value = value
+
+			if frame.clock >= frame.duration then
+				self:frameFinished()
+			end
+
+		end
+
+		if frame.clock >= frame.duration then
+			self:frameFinished()
 		end
 	end
 end
 
 function Animation:finished()
-	return #self.frames == 0
+	return not self.frames[self.frame]
 end

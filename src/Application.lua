@@ -9,7 +9,7 @@
 
 -- need to add monitor support
 
-class "Application" implements (IChildContainer) implements (IAnimation) implements (ICommon)
+class "Application" implements (IChildContainer) implements (IAnimation)
 {
 	name = "UnNamed Application";
 	path = "";
@@ -29,21 +29,24 @@ class "Application" implements (IChildContainer) implements (IAnimation) impleme
 
 	running = true;
 
+	changed = true;
+
 	mouse = {};
 	keys = {};
 }
 
-function Application:Application( name, path )
-	self.name = tostring( name or "UnNamed Application" )
-	self.path = path
-
+function Application:Application()
 	self.width, self.height = term.getSize()
-	self.timers = {}
 
 	self:IChildContainer()
 	self:IAnimation()
 
 	self.screen = ScreenCanvas( self.width, self.height )
+end
+
+function Application:setChanged( state )
+	self.changed = state ~= false
+	return self
 end
 
 function Application:stop()
@@ -53,13 +56,19 @@ end
 function Application:addChild( child )
 	if not class.typeOf( child, View ) then return error( "expected View child, got " .. class.type( child ) ) end
 
-	if child.parent then
-		child.parent:removeChild( child )
+	local children = self.children
+
+	child.parent = self
+	self:setChanged()
+
+	for i = 1, #children do
+		if children[i].z > child.z then
+			table.insert( children, i, child )
+			return child
+		end
 	end
 
-	self:setChanged( true )
-	child.parent = self
-	self.children[#self.children + 1] = child
+	children[#children + 1] = child
 	return child
 end
 
@@ -90,7 +99,7 @@ function Application:transitionViewport( x, y )
 	local ax, ay
 	local dx = x and math.abs( x - self.viewportX ) or 0
 	local dy = y and math.abs( y - self.viewportY ) or 0
-	local xt = .5 * dx / self.width
+	local xt = .4 * dx / self.width
 	if dx > 0 then
 		local ax = self:addAnimation( "viewportX", self.setViewportX, Animation():setRounded()
 			:addKeyFrame( self.viewportX, x, xt, SHEETS_EASING_TRANSITION ) )
@@ -98,12 +107,12 @@ function Application:transitionViewport( x, y )
 	if dy > 0 then
 		local ay = self:addAnimation( "viewportY", self.setViewportY, Animation():setRounded()
 			:addPause( xt )
-			:addKeyFrame( self.viewportY, y, .5 * dy / self.height, SHEETS_EASING_TRANSITION ) )
+			:addKeyFrame( self.viewportY, y, .4 * dy / self.height, SHEETS_EASING_TRANSITION ) )
 	end
 	return ax, ay
 end
 
-function Application:transitionView( view )
+function Application:transitionToView( view )
 	if not class.typeOf( view, View ) then return error( "expected View view, got " .. class.type( view ) ) end
 	
 	if view.parent == self then
@@ -174,11 +183,8 @@ function Application:event( event, ... )
 	elseif event == "chatbox_something" then
 		handle( TextEvent( SHEETS_EVENT_VOICE, params[1] ) )
 
-	elseif event == "char" then
-		handle( TextEvent( SHEETS_EVENT_TEXT, params[1] ) )
-
-	elseif event == "paste" then
-		handle( TextEvent( SHEETS_EVENT_PASTE, params[1] ) )
+	elseif event == "char" or event == "paste" then
+		handle( TextEvent( event == "char" and SHEETS_EVENT_TEXT or SHEETS_EVENT_PASTE, params[1] ) )
 
 	elseif event == "key" then
 		handle( TextEvent( SHEETS_EVENT_KEY_DOWN, params[1], self.keys ) )
@@ -263,55 +269,5 @@ function Application:run()
 	end
 end
 
-Theme.addToTemplate( Application, "colour", {
-	default = WHITE;
-} )
-
-local decoder = SMLNodeDecoder "application"
-
-decoder.isBodyAllowed = true
-decoder.isBodyNecessary = true
-
-function decoder:init( document )
-	local a = Application()
-	document.application = a
-	return a
-end
-
-function decoder:attribute_name( name, node )
-	if type( name ) == "string" then
-		self.name = name
-	else
-		return error( "[" .. node.position.line .. ", " .. node.position.character .. "]: expected string name, got " .. type( name ), 0 )
-	end
-end
-
-function decoder:attribute_path( path, node )
-	if type( path ) == "string" then
-		self.path = path
-	else
-		return error( "[" .. node.position.line .. ", " .. node.position.character .. "]: expected string path, got " .. type( path ), 0 )
-	end
-end
-
-function decoder:attribute_terminateable( t, node )
-	self.terminateable = t
-end
-
-function decoder:decodeBody( body, parent )
-	local document = SMLDocument.current()
-	for i = 1, #body do
-		if body[i].nodetype == "view" or body[i].nodetype == "theme" or body[i].nodetype == "script" then
-			local element, err = document:loadSMLNode( body[i], self )
-			if element then
-				if element:typeOf( View ) then
-					self:addChild( element )
-				end
-			else
-				return error( err, 0 )
-			end
-		end
-	end
-end
-
-SMLDocument:addElement( "application", Application, decoder )
+application = Application()
+Application = nil

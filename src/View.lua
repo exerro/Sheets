@@ -25,8 +25,6 @@ class "View"
 	implements (IAnimation)
 	implements (IHasParent)
 	implements (IPositionAnimator)
-	implements (IHasID)
-	implements (IHasTheme)
 	implements (ICommon)
 {
 	canvas = nil;
@@ -41,9 +39,9 @@ function View:View( x, y, width, height )
 	self:IPosition( x, y, width, height )
 	self:IChildContainer()
 	self:IAnimation()
+	self:ICommon()
 
 	self.canvas = DrawingCanvas( width, height )
-	self.theme = default_theme
 end
 
 function View:tostring()
@@ -116,31 +114,3 @@ end
 Theme.addToTemplate( View, "colour", {
 	default = WHITE;
 } )
-
-local decoder = SMLNodeDecoder "view"
-
-decoder.isBodyAllowed = true
-decoder.isBodyNecessary = false
-
-decoder:implement( ICommonAttributes )
-decoder:implement( IPositionAttributes )
-decoder:implement( IAnimatedPositionAttributes )
-decoder:implement( IThemeAttribute )
-
-function decoder:init( parent )
-	return View( 0, 0, parent.width, parent.height )
-end
-
-function decoder:decodeBody( body )
-	local children = IChildDecoder.decodeChildren( self, body )
-
-	for i = 1, #children do
-		if children[i]:typeOf( Sheet ) then
-			self:addChild( children[i] )
-		else
-			return error( "[" .. body[i].position.line .. ", " .. body[i].position.character .. "]: child not a sheet", 0 )
-		end
-	end
-end
-
-SMLDocument:addElement( "view", View, decoder )

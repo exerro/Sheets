@@ -1,15 +1,7 @@
 
- -- @once
-
- -- @ifndef __INCLUDE_sheets
-	-- @error 'sheets' must be included before including 'sheets.interfaces.IChildContainer'
- -- @endif
-
- -- @print Including sheets.interfaces.IChildContainer
-
-IChildContainer = {}
-
-IChildContainer.children = {}
+local IChildContainer = {
+	children = {}
+}
 
 function IChildContainer:IChildContainer()
 	self.children = {}
@@ -25,32 +17,54 @@ end
 function IChildContainer:addChild( child )
 	if not class.typeOf( child, Sheet ) then return error( "expected Sheet child, got " .. class.type( child ) ) end
 
-	if child.parent then
-		child.parent:removeChild( child )
+	local children = self.children
+
+	child.parent = self
+	self:setChanged()
+
+	for i = 1, #children do
+		if children[i].z > child.z then
+			table.insert( children, i, child )
+			return child
+		end
 	end
 
-	self:setChanged( true )
-	child.parent = self
-	if child.theme == default_theme then
-		child:setTheme( self.theme )
-	end
-	self.children[#self.children + 1] = child
+	children[#children + 1] = child
 	return child
 end
 
 function IChildContainer:removeChild( child )
-	for i = #self.children, 1, -1 do
+	for i = 1, #self.children do
 		if self.children[i] == child then
-			self:setChanged( true )
 			child.parent = nil
-
+			self:setChanged()
 			return table.remove( self.children, i )
 		end
 	end
 end
 
+function IChildContainer:repositionChildZIndex( child )
+	local children = self.children
+
+	for i = 1, #children do
+		if children[i] == child then
+			while children[i-1] and children[i-1].z > child.z do
+				children[i-1], children[i] = child, children[i-1]
+				i = i - 1
+			end
+			while children[i+1] and children[i+1].z < child.z do
+				children[i+1], children[i] = child, children[i+1]
+				i = i + 1
+			end
+			
+			self:setChanged()
+			break
+		end
+	end
+end
+
 function IChildContainer:getChildById( id )
-	 if type( id ) ~= "string" then return error( "expected string id, got " .. class.type( id ) ) end
+	if type( id ) ~= "string" then return error( "expected string id, got " .. class.type( id ) ) end
 
 	for i = #self.children, 1, -1 do
 		local c = self.children[i]:getChildById( id )
@@ -63,11 +77,11 @@ function IChildContainer:getChildById( id )
 end
 
 function IChildContainer:getChildrenById( id )
-	 if type( id ) ~= "string" then return error( "expected string id, got " .. class.type( id ) ) end
+	if type( id ) ~= "string" then return error( "expected string id, got " .. class.type( id ) ) end
 
 	local t = {}
 	for i = #self.children, 1, -1 do
-		local subt = self.children[i]:getChildById( id )
+		local subt = self.children[i]:getChildrenById( id )
 		for i = 1, #subt do
 			t[#t + 1] = subt[i]
 		end
@@ -81,3 +95,5 @@ end
 function IChildContainer:isChildVisible( child )
 	return child.x + child.width > 0 and child.y + child.height > 0 and child.x < self.width and child.y < self.height
 end
+
+return IChildContainer

@@ -7,12 +7,14 @@
 
  -- @print Including sheets.interfaces.IPosition
 
-IPosition = {}
+IPosition = {
+	x = 0;
+	y = 0;
+	z = 0;
 
-IPosition.x = 0
-IPosition.y = 0
-IPosition.width = 0
-IPosition.height = 0
+	width = 0;
+	height = 0;
+}
 
 function IPosition:IPosition( x, y, width, height )
 	self.x = x
@@ -39,6 +41,17 @@ function IPosition:setY( y )
 	if self.y ~= y then
 		self.y = y
 		if self.parent then self.parent:setChanged( true ) end
+	end
+	return self
+end
+
+function IPosition:setZ( z )
+	-- @if SHEETS_TYPE_CHECK
+		if type( z ) ~= "number" then return error( "expected number z, got " .. class.type( z ) ) end
+	-- @endif
+	if self.z ~= z then
+		self.z = z
+		if self.parent then self.parent:repositionChildZIndex( self ) end
 	end
 	return self
 end

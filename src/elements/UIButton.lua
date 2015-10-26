@@ -60,20 +60,3 @@ Theme.addToTemplate( UIButton, "textColour", {
 	default = WHITE;
 	pressed = WHITE;
 } )
-
-local decoder = SMLNodeDecoder()
-
-decoder.isBodyAllowed = false
-decoder.isBodyNecessary = false
-
-decoder:implement( ICommonAttributes )
-decoder:implement( IPositionAttributes )
-decoder:implement( IAnimatedPositionAttributes )
-decoder:implement( IThemeAttribute )
-decoder:implement( ITextAttributes )
-
-function decoder:init()
-	return UIButton( 0, 0, 10, 3 )
-end
-
-SMLDocument:addElement( "button", UIButton, decoder )

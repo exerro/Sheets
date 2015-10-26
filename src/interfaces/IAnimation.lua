@@ -25,6 +25,14 @@ function IAnimation:addAnimation( label, setter, animation )
 	if animation.value then
 		setter( self, animation.value )
 	end
+
+	return animation
+end
+
+function IAnimation:stopAnimation( label )
+	local a = self.animations[label]
+	self.animations[label] = nil
+	return a
 end
 
 function IAnimation:updateAnimations( dt )
@@ -35,15 +43,14 @@ function IAnimation:updateAnimations( dt )
 	local k, v = next( animations )
 
 	while animations[k] do
-		v.animation:update( dt )
-		if v.animation.value then
-			v.setter( self, v.animation.value )
+
+		local animation = v.animation
+		animation:update( dt )
+		if animation.value then
+			v.setter( self, animation.value )
 		end
 
-		if v.animation:finished() then
-			if type( v.animation.onFinish ) == "function" then
-				v.animation:onFinish()
-			end
+		if animation:finished() then
 			finished[#finished + 1] = k
 		end
 

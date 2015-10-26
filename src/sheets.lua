@@ -7,7 +7,7 @@
  -- @defineifndef SHEETS_WRAP false
  -- @defineifndef SHEETS_EXTERNAL false
  -- @defineifndef SHEETS_DEFAULT_TRANSITION_TIME .3
- -- @defineifndef SHEETS_DEFAULT_TRANSITION_EASING SHEETS_EASING_TRANSITION
+ -- @defineifndef SHEETS_DEFAULT_TRANSITION_EASING "transition"
 
  -- @if SHEETS_LOWRES
 	 -- @define GRAPHICS_NO_TEXT false
@@ -84,26 +84,23 @@ alignment = {
  -- @require sheets.interfaces.IChildDecoder
  -- @require sheets.interfaces.ICommon
  -- @require sheets.interfaces.IEvent
- -- @require sheets.interfaces.IHasID
  -- @require sheets.interfaces.IHasParent
  -- @require sheets.interfaces.IHasText
- -- @require sheets.interfaces.IHasTheme
  -- @require sheets.interfaces.IPosition
  -- @require sheets.interfaces.IPositionAnimator
- -- @require sheets.interfaces.attributes.IAnimatedPositionAttributes
- -- @require sheets.interfaces.attributes.ICommonAttributes
- -- @require sheets.interfaces.attributes.IPositionAttributes
- -- @require sheets.interfaces.attributes.ITextAttributes
- -- @require sheets.interfaces.attributes.IThemeAttribute
+ --/ @require sheets.interfaces.attributes.IAnimatedPositionAttributes
+ --/ @require sheets.interfaces.attributes.ICommonAttributes
+ --/ @require sheets.interfaces.attributes.IPositionAttributes
+ --/ @require sheets.interfaces.attributes.ITextAttributes
+ --/ @require sheets.interfaces.attributes.IThemeAttribute
 
- -- @require sheets.sml.SMLNode
- -- @require sheets.sml.SMLParser
- -- @require sheets.sml.SMLNodeDecoder
- -- @require sheets.sml.SMLDocument
+ -- @require sheets.Application
+ -- @require sheets.Animation
 
- -- @require sheets.animation.KeyFrame
- -- @require sheets.animation.Pause
- -- @require sheets.animation.Animation
+ --/ @require sheets.sml.SMLNode
+ --/ @require sheets.sml.SMLParser
+ --/ @require sheets.sml.SMLNodeDecoder
+ --/ @require sheets.sml.SMLDocument
 
  -- @require sheets.events.KeyboardEvent
  -- @require sheets.events.MiscEvent
@@ -113,11 +110,7 @@ alignment = {
 
  -- @require sheets.Theme
 
-default_theme = Theme()
-
- -- @require sheets.Application
  -- @require sheets.Sheet
-
  -- @require sheets.View
 
 SMLDocument:setVariable( "transparent", TRANSPARENT )
