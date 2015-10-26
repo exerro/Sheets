@@ -1,4 +1,12 @@
 
+ -- @once
+
+ -- @ifndef __INCLUDE_sheets
+	-- @error 'sheets' must be included before including 'sheets.Animation'
+ -- @endif
+
+ -- @print Including sheets.Animation
+
 local sin, cos = math.sin, math.cos
 local halfpi = math.pi / 2
 
@@ -48,7 +56,7 @@ function Animation:addKeyFrame( initial, final, duration, easing )
 	if easing and type( easing ) ~= "function" then return error( "expected function easing, got " .. class.type( easing ) ) end
 
 	local frame = {
-		type = "ease";
+		ease = true;
 		clock = 0;
 		duration = duration;
 		initial = initial;
@@ -70,7 +78,6 @@ function Animation:addPause( pause )
 	if type( pause ) ~= "number" then return error( "expected number pause, got " .. class.type( pause ) ) end
 
 	local frame = {
-		type = "pause";
 		clock = 0;
 		duration = pause;
 	}
@@ -100,7 +107,7 @@ function Animation:update( dt )
 	if frame then
 		frame.clock = math.min( frame.clock + dt, frame.duration )
 
-		if frame.type == "ease" then
+		if frame.ease then
 
 			local value = frame.easing( frame.initial, frame.difference, frame.clock / frame.duration )
 			if self.rounded then

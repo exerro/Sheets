@@ -7,17 +7,13 @@
 
  -- @print Including sheets.Sheet
 
-local function orderChildren( children )
-	local t = {}
-	for i = 1, #children do
-		local n = 1
-		while t[n] and t[n].z <= children[i].z do
-			n = n + 1
-		end
-		table.insert( t, n, children[i] )
-	end
-	return t
-end
+-- undefined callbacks
+
+ -- function Sheet:onPreDraw() end
+ -- function Sheet:onPostDraw() end
+ -- function Sheet:onUpdate( dt ) end
+ -- function Sheet:onKeyboardEvent( event ) end
+ -- function Sheet:onTextEvent( event ) end
 
 class "Sheet"
 	implements (IChildContainer)
@@ -48,22 +44,18 @@ function Sheet:Sheet( x, y, width, height )
 end
 
 function Sheet:tostring()
-	return "[Instance] Sheet " .. tostring( self.id )
+	return "[Instance] " .. self.class:type() .. " " .. tostring( self.id )
 end
 
-function Sheet:onPreDraw() end
-function Sheet:onPostDraw() end
-function Sheet:onUpdate( dt ) end
-function Sheet:onMouseEvent( event ) end
-function Sheet:onKeyboardEvent( event ) end
-function Sheet:onTextEvent( event ) end
 function Sheet:onParentResized() end
 
 function Sheet:draw()
 	if self.changed then
-		self:onPreDraw()
+		if self.onPreDraw then
+			self:onPreDraw()
+		end
 
-		local children = orderChildren( self.children )
+		local children = self.children
 
 		for i = 1, #children do
 			local child = children[i]
@@ -71,29 +63,19 @@ function Sheet:draw()
 			child.canvas:drawTo( self.canvas, child.x, child.y )
 		end
 
-		self:onPostDraw()
+		if self.onPostDraw then
+			self:onPostDraw()
+		end
 		self.changed = false
 	end
 end
 
-function Sheet:update( dt )
-	if type( dt ) ~= "number" then return error( "expected number dt, got " .. class.type( dt ) ) end
-
-	self:onUpdate( dt )
-	self:updateAnimations( dt )
-
-	local c = {}
-	for i = 1, #self.children do
-		c[i] = self.children[i]
-	end
-
-	for i = #c, 1, -1 do
-		c[i]:update( dt )
-	end
-end
-
 function Sheet:handle( event )
-	local c = orderChildren( self.children )
+	local c = {}
+	local children = self.children
+	for i = 1, #children do
+		c[i] = children[i]
+	end
 
 	if event:typeOf( MouseEvent ) then
 		local within = event:isWithinArea( 0, 0, self.width, self.height )
@@ -111,9 +93,9 @@ function Sheet:handle( event )
 			event.button[#event.button + 1] = self
 		end
 		self:onMouseEvent( event )
-	elseif event:typeOf( KeyboardEvent ) and self.handlesKeyboard then
+	elseif event:typeOf( KeyboardEvent ) and self.handlesKeyboard and self.onKeyboardEvent then
 		self:onKeyboardEvent( event )
-	elseif event:typeOf( TextEvent ) and self.handlesText then
+	elseif event:typeOf( TextEvent ) and self.handlesText and self.onTextEvent then
 		self:onTextEvent( event )
 	end
 end

@@ -24,9 +24,8 @@ function IPosition:IPosition( x, y, width, height )
 end
 
 function IPosition:setX( x )
-	-- @if SHEETS_TYPE_CHECK
-		if type( x ) ~= "number" then return error( "expected number x, got " .. class.type( x ) ) end
-	-- @endif
+	if type( x ) ~= "number" then return error( "expected number x, got " .. class.type( x ) ) end
+	
 	if self.x ~= x then
 		self.x = x
 		if self.parent then self.parent:setChanged( true ) end
@@ -35,9 +34,8 @@ function IPosition:setX( x )
 end
 
 function IPosition:setY( y )
-	-- @if SHEETS_TYPE_CHECK
-		if type( y ) ~= "number" then return error( "expected number y, got " .. class.type( y ) ) end
-	-- @endif
+	if type( y ) ~= "number" then return error( "expected number y, got " .. class.type( y ) ) end
+	
 	if self.y ~= y then
 		self.y = y
 		if self.parent then self.parent:setChanged( true ) end
@@ -46,9 +44,8 @@ function IPosition:setY( y )
 end
 
 function IPosition:setZ( z )
-	-- @if SHEETS_TYPE_CHECK
-		if type( z ) ~= "number" then return error( "expected number z, got " .. class.type( z ) ) end
-	-- @endif
+	if type( z ) ~= "number" then return error( "expected number z, got " .. class.type( z ) ) end
+
 	if self.z ~= z then
 		self.z = z
 		if self.parent then self.parent:repositionChildZIndex( self ) end
@@ -57,9 +54,8 @@ function IPosition:setZ( z )
 end
 
 function IPosition:setWidth( width )
-	-- @if SHEETS_TYPE_CHECK
-		if type( width ) ~= "number" then return error( "expected number width, got " .. class.type( width ) ) end
-	-- @endif
+	if type( width ) ~= "number" then return error( "expected number width, got " .. class.type( width ) ) end
+
 	if self.width ~= width then
 		self.width = width
 		for i = 1, #self.children do
@@ -72,9 +68,8 @@ function IPosition:setWidth( width )
 end
 
 function IPosition:setHeight( height )
-	-- @if SHEETS_TYPE_CHECK
-		if type( height ) ~= "number" then return error( "expected number height, got " .. class.type( height ) ) end
-	-- @endif
+	if type( height ) ~= "number" then return error( "expected number height, got " .. class.type( height ) ) end
+
 	if self.height ~= height then
 		self.height = height
 		for i = 1, #self.children do

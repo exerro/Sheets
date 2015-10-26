@@ -7,8 +7,6 @@
 
  -- @print Including sheets.Application
 
--- need to add monitor support
-
 class "Application" implements (IChildContainer) implements (IAnimation)
 {
 	name = "UnNamed Application";
@@ -23,15 +21,14 @@ class "Application" implements (IChildContainer) implements (IAnimation)
 
 	screen = nil;
 
-	terminal = term;
-	terminals = {};
+	terminals = { term };
 	monitor_sides = {};
 
 	running = true;
 
 	changed = true;
 
-	mouse = {};
+	mouse = nil;
 	keys = {};
 }
 
@@ -44,38 +41,9 @@ function Application:Application()
 	self.screen = ScreenCanvas( self.width, self.height )
 end
 
-function Application:setChanged( state )
-	self.changed = state ~= false
-	return self
-end
-
 function Application:stop()
 	self.running = false
-end
-
-function Application:addChild( child )
-	if not class.typeOf( child, View ) then return error( "expected View child, got " .. class.type( child ) ) end
-
-	local children = self.children
-
-	child.parent = self
-	self:setChanged()
-
-	for i = 1, #children do
-		if children[i].z > child.z then
-			table.insert( children, i, child )
-			return child
-		end
-	end
-
-	children[#children + 1] = child
-	return child
-end
-
-function Application:isChildVisible( child )
-	if not class.typeOf( child, View ) then return error( "expected View child, got " .. class.type( child ) ) end
-
-	return child.x - self.viewportX + child.width > 0 and child.y - self.viewportY + child.height > 0 and child.x - self.viewportX < self.width and child.y - self.viewportY < self.height
+	return self
 end
 
 function Application:setViewportX( x )
@@ -83,6 +51,7 @@ function Application:setViewportX( x )
 
 	self.viewportX = x
 	self:setChanged()
+	return self
 end
 
 function Application:setViewportY( y )
@@ -90,15 +59,17 @@ function Application:setViewportY( y )
 	
 	self.viewportY = y
 	self:setChanged()
+	return self
 end
 
 function Application:transitionViewport( x, y )
 	if x and type( x ) ~= "number" then return error( "expected number x, got " .. class.type( x ) ) end
 	if y and type( y ) ~= "number" then return error( "expected number y, got " .. class.type( y ) ) end
 	
-	local ax, ay
+	local ax, ay -- the animations defined later on
 	local dx = x and math.abs( x - self.viewportX ) or 0
 	local dy = y and math.abs( y - self.viewportY ) or 0
+
 	local xt = .4 * dx / self.width
 	if dx > 0 then
 		local ax = self:addAnimation( "viewportX", self.setViewportX, Animation():setRounded()
@@ -120,6 +91,40 @@ function Application:transitionToView( view )
 	else
 		return error( "View is not a part of application '" .. self.name .. "'" )
 	end
+end
+
+function Application:addTerminal( t )
+	if type( t ) ~= "table" or not pcall( function()
+		term.redirect( term.redirect( t ) )
+	end ) then
+		return error( "expected terminal-redirect t, got " .. class.type( t ) )
+	end
+
+	self.terminals[#self.terminals + 1] = t
+	self.screen:reset()
+	return self
+end
+
+function Application:addMonitor( side )
+	if peripheral.getType( side ) == "monitor" then
+		local r = term.redirect( side )
+		self.terminals[#self.terminals + 1] = r
+		self.monitor_sides[side] = r
+		return self
+	else
+		return error( "no monitor on side " .. tostring( side ) )
+	end
+end
+
+function Application:removeMonitor( side )
+	for i = #self.terminals, 1, -1 do
+		if self.terminals[i] == self.monitor_sides[side] then
+			table.remove( self.terminals, i )
+			self.monitor_sides[side] = nil
+			break
+		end
+	end
+	return self
 end
 
 function Application:event( event, ... )
@@ -147,13 +152,9 @@ function Application:event( event, ... )
 
 	if event == "mouse_click" then
 		self.mouse = {
-			x = params[2] - 1;
-			y = params[3] - 1;
-			down = true;
-			timer = os.startTimer( 1 );
-			moved = false;
-			time = os.clock();
-			button = params[1];
+			x = params[2] - 1, y = params[3] - 1;
+			down = true, button = params[1];
+			timer = os.startTimer( 1 ), time = os.clock(), moved = false;
 		}
 
 		handle( MouseEvent( SHEETS_EVENT_MOUSE_DOWN, params[2] - 1, params[3] - 1, params[1], true ) )
@@ -177,21 +178,21 @@ function Application:event( event, ... )
 	elseif event == "mouse_scroll" then
 		handle( MouseEvent( SHEETS_EVENT_MOUSE_SCROLL, params[2] - 1, params[3] - 1, params[1], true ) )
 
-	elseif event == "monitor_touch" then -- need to think about this one
-		-- handle( MouseEvent( SHEETS_EVENT_MOUSE_CLICK, params[2] - 1, params[3] - 1, 1 ) )
+	elseif event == "monitor_touch" and self.monitor_sides[params[1]] then
+		handle( MouseEvent( SHEETS_EVENT_MOUSE_CLICK, params[2] - 1, params[3] - 1, 1 ) )
 
 	elseif event == "chatbox_something" then
-		handle( TextEvent( SHEETS_EVENT_VOICE, params[1] ) )
+		-- handle( TextEvent( SHEETS_EVENT_VOICE, params[1] ) )
 
 	elseif event == "char" or event == "paste" then
 		handle( TextEvent( event == "char" and SHEETS_EVENT_TEXT or SHEETS_EVENT_PASTE, params[1] ) )
 
 	elseif event == "key" then
-		handle( TextEvent( SHEETS_EVENT_KEY_DOWN, params[1], self.keys ) )
+		handle( KeyboardEvent( SHEETS_EVENT_KEY_DOWN, params[1], self.keys ) )
 		self.keys[keys.getName( params[1] ) or params[1]] = os.clock()
 
 	elseif event == "key_up" then
-		handle( TextEvent( SHEETS_EVENT_KEY_UP, params[1], self.keys ) )
+		handle( KeyboardEvent( SHEETS_EVENT_KEY_UP, params[1], self.keys ) )
 		self.keys[keys.getName( params[1] ) or params[1]] = nil
 
 	elseif event == "term_resize" then
@@ -200,12 +201,8 @@ function Application:event( event, ... )
 			self.children[i]:onParentResized()
 		end
 
-	elseif event == "timer" then
-		if params[1] == self.mouse.timer then
-			handle( MouseEvent( SHEETS_EVENT_MOUSE_HOLD, self.mouse.x, self.mouse.y, self.mouse.button, true ) )
-		else
-			handle( TimerEvent( params[1] ) )
-		end
+	elseif event == "timer" and params[1] == self.mouse.timer then
+		handle( MouseEvent( SHEETS_EVENT_MOUSE_HOLD, self.mouse.x, self.mouse.y, self.mouse.button, true ) )
 
 	else
 		handle( MiscEvent( event, ... ) )
@@ -249,7 +246,9 @@ function Application:draw()
 		end
 
 		self.changed = false
-		screen:drawToTerminal( self.terminal )
+		for i = 1, #self.terminals do
+			screen:drawToTerminal( self.terminals[i] )
+		end
 	end
 end
 
@@ -259,14 +258,44 @@ function Application:run()
 		local event = { coroutine.yield() }
 		if event[1] == "timer" and event[2] == t then
 			t = timer.new( .05 )
-			self:update()
 		elseif event[1] == "terminate" and self.terminateable then
 			self:stop()
 		else
 			self:event( unpack( event ) )
 		end
+		self:update()
 		self:draw()
 	end
+end
+
+function Application:setChanged( state )
+	self.changed = state ~= false
+	return self
+end
+
+function Application:addChild( child )
+	if not class.typeOf( child, View ) then return error( "expected View child, got " .. class.type( child ) ) end
+
+	local children = self.children
+
+	child.parent = self
+	self:setChanged()
+
+	for i = 1, #children do
+		if children[i].z > child.z then
+			table.insert( children, i, child )
+			return child
+		end
+	end
+
+	children[#children + 1] = child
+	return child
+end
+
+function Application:isChildVisible( child )
+	if not class.typeOf( child, View ) then return error( "expected View child, got " .. class.type( child ) ) end
+
+	return child.x - self.viewportX + child.width > 0 and child.y - self.viewportY + child.height > 0 and child.x - self.viewportX < self.width and child.y - self.viewportY < self.height
 end
 
 application = Application()

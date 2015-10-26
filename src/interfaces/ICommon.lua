@@ -10,7 +10,7 @@
 ICommon = {
 	changed = true;
 	id = "ID";
-	theme = Theme()
+	theme = nil;
 }
 
 function ICommon:ICommon()

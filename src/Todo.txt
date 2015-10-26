@@ -1,1 +1,2 @@
 Application:positionViewsInX( views, XX, XXX )
+Make all elements have the same theme by default

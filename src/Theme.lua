@@ -64,6 +64,7 @@ function Theme:getField( cls, field, state )
 	end
 end
 
+--[[
 local decoder = SMLNodeDecoder "theme"
 
 decoder.isBodyAllowed = true
@@ -110,3 +111,4 @@ function decoder:decodeBody( body )
 end
 
 SMLDocument:setDecoder( "theme", decoder )
+]]

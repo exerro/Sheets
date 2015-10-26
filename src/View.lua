@@ -7,18 +7,6 @@
 
  -- @print Including sheets.View
 
-local function orderChildren( children )
-	local t = {}
-	for i = 1, #children do
-		local n = 1
-		while t[n] and t[n].z <= children[i].z do
-			n = n + 1
-		end
-		table.insert( t, n, children[i] )
-	end
-	return t
-end
-
 class "View"
 	implements (IChildContainer)
 	implements (IPosition)
@@ -54,7 +42,7 @@ function View:draw()
 
 		canvas:clear( self.theme:getField( self.class, "colour", "default" ) )
 
-		local children = orderChildren( self.children )
+		local children = self.children
 
 		for i = 1, #children do
 			local child = children[i]
@@ -66,24 +54,13 @@ function View:draw()
 	end
 end
 
-function View:update( dt )
-	if type( dt ) ~= "number" then return error( "expected number dt, got " .. class.type( dt ) ) end
-	
-	self:updateAnimations( dt )
-
-	local c = {}
-	for i = 1, #self.children do
-		c[i] = self.children[i]
-	end
-
-	for i = #c, 1, -1 do
-		c[i]:update( dt )
-	end
-end
-
 function View:handle( event )
+	local c = {}
+	local children = self.children
 
-	local c = orderChildren( self.children )
+	for i = 1, #children do
+		c[i] = children[i]
+	end
 
 	if event:typeOf( MouseEvent ) then
 		local within = event:isWithinArea( 0, 0, self.width, self.height )

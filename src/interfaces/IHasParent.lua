@@ -31,3 +31,7 @@ end
 function IHasParent:isVisible()
 	return self.parent and self.parent:isChildVisible( self )
 end
+
+function IHasParent:bringToFront()
+	return self:setParent( self.parent )
+end

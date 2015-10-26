@@ -1,5 +1,5 @@
 
-local IChildContainer = {
+IChildContainer = {
 	children = {}
 }
 
@@ -18,6 +18,10 @@ function IChildContainer:addChild( child )
 	if not class.typeOf( child, Sheet ) then return error( "expected Sheet child, got " .. class.type( child ) ) end
 
 	local children = self.children
+
+	if child.parent then
+		child.parent:removeChild( child )
+	end
 
 	child.parent = self
 	self:setChanged()
@@ -92,8 +96,43 @@ function IChildContainer:getChildrenById( id )
 	return t
 end
 
+function IChildContainer:getChildrenAt( x, y )
+	local c = {}
+	local children = self.children
+	for i = 1, #children do
+		c[i] = children[i]
+	end
+
+	local elements = {}
+
+	for i = #c, 1, -1 do
+		c[i]:handle( MouseEvent( EVENT_MOUSE_PING, x - c[i].x, y - c[i].y, elements, true ) )
+	end
+
+	return elements
+end
+
 function IChildContainer:isChildVisible( child )
 	return child.x + child.width > 0 and child.y + child.height > 0 and child.x < self.width and child.y < self.height
 end
 
-return IChildContainer
+function IChildContainer:update( dt )
+	if type( dt ) ~= "number" then return error( "expected number dt, got " .. class.type( dt ) ) end
+
+	local c = {}
+	local children = self.children
+
+	self:updateAnimations( dt )
+
+	if self.onUpdate then
+		self:onUpdate( dt )
+	end
+
+	for i = 1, #children do
+		c[i] = children[i]
+	end
+
+	for i = #c, 1, -1 do
+		c[i]:update( dt )
+	end
+end

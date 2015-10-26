@@ -31,13 +31,12 @@
  -- @define SHEETS_EVENT_MOUSE_HOLD 3
  -- @define SHEETS_EVENT_MOUSE_DRAG 4
  -- @define SHEETS_EVENT_MOUSE_SCROLL 5
- -- @define SHEETS_EVENT_KEY_DOWN 6
- -- @define SHEETS_EVENT_KEY_UP 7
- -- @define SHEETS_EVENT_TEXT 8
- -- @define SHEETS_EVENT_VOICE 9
- -- @define SHEETS_EVENT_TIMER 10
+ -- @define SHEETS_EVENT_MOUSE_PING 6
+ -- @define SHEETS_EVENT_KEY_DOWN 7
+ -- @define SHEETS_EVENT_KEY_UP 8
+ -- @define SHEETS_EVENT_TEXT 9
+ -- @define SHEETS_EVENT_VOICE 10
  -- @define SHEETS_EVENT_PASTE 11
- -- @define SHEETS_EVENT_MOUSE_PING 12
 
  -- @define ALIGNMENT_LEFT 0
  -- @define ALIGNMENT_CENTRE 1
@@ -46,10 +45,6 @@
  -- @define ALIGNMENT_TOP 3
  -- @define ALIGNMENT_BOTTOM 4
 
- -- @define SHEETS_EASING_EXIT 0
- -- @define SHEETS_EASING_ENTRANCE 1
- -- @define SHEETS_EASING_TRANSITION 2
-
 event = {
 	mouse_down = SHEETS_EVENT_MOUSE_DOWN;
 	mouse_up = SHEETS_EVENT_MOUSE_UP;
@@ -57,13 +52,12 @@ event = {
 	mouse_hold = SHEETS_EVENT_MOUSE_HOLD;
 	mouse_drag = SHEETS_EVENT_MOUSE_DRAG;
 	mouse_scroll = SHEETS_EVENT_MOUSE_SCROLL;
+	mouse_ping = SHEETS_EVENT_MOUSE_PING;
 	key_down = SHEETS_EVENT_KEY_DOWN;
 	key_up = SHEETS_EVENT_KEY_UP;
 	text = SHEETS_EVENT_TEXT;
 	voice = SHEETS_EVENT_VOICE;
-	timer = SHEETS_EVENT_TIMER;
 	paste = SHEETS_EVENT_PASTE;
-	mouse_ping = SHEETS_EVENT_MOUSE_PING;
 }
 
 alignment = {
@@ -81,7 +75,7 @@ alignment = {
 
  -- @require sheets.interfaces.IAnimation
  -- @require sheets.interfaces.IChildContainer
- -- @require sheets.interfaces.IChildDecoder
+ --/ @require sheets.interfaces.IChildDecoder
  -- @require sheets.interfaces.ICommon
  -- @require sheets.interfaces.IEvent
  -- @require sheets.interfaces.IHasParent
@@ -94,8 +88,8 @@ alignment = {
  --/ @require sheets.interfaces.attributes.ITextAttributes
  --/ @require sheets.interfaces.attributes.IThemeAttribute
 
- -- @require sheets.Application
  -- @require sheets.Animation
+ -- @require sheets.Application
 
  --/ @require sheets.sml.SMLNode
  --/ @require sheets.sml.SMLParser
@@ -106,13 +100,13 @@ alignment = {
  -- @require sheets.events.MiscEvent
  -- @require sheets.events.MouseEvent
  -- @require sheets.events.TextEvent
- -- @require sheets.events.TimerEvent
 
  -- @require sheets.Theme
 
  -- @require sheets.Sheet
  -- @require sheets.View
 
+--[[
 SMLDocument:setVariable( "transparent", TRANSPARENT )
 SMLDocument:setVariable( "white", WHITE )
 SMLDocument:setVariable( "orange", ORANGE )
@@ -130,6 +124,7 @@ SMLDocument:setVariable( "brown", BROWN )
 SMLDocument:setVariable( "green", GREEN )
 SMLDocument:setVariable( "red", RED )
 SMLDocument:setVariable( "black", BLACK )
+]]
 
  -- @if SHEETS_WRAP
 	end
