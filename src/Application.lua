@@ -105,6 +105,16 @@ function Application:addTerminal( t )
 	return self
 end
 
+function Application:removeTerminal( t )
+	for i = #self.terminals, 1, -1 do
+		if self.terminals[i] == t then
+			table.remove( self.terminals, i )
+			break
+		end
+	end
+	return self
+end
+
 function Application:addMonitor( side )
 	if peripheral.getType( side ) == "monitor" then
 		local r = term.redirect( side )

@@ -15,7 +15,15 @@ Animations should not be modified during execution, or any time after initial se
 
 - Called when the animation has finished.
 
-> Note, you can also give frames and pauses `onFinish` callbacks, which will also be called with the `Animation` object.
+`onFrameFinished( Animation self, number frame )`
+
+- Called when a frame finishes.
+
+#### Variables
+
+rounded `boolean`
+
+- Whether the value of the animation should be rounded.
 
 #### Methods
 
@@ -32,10 +40,6 @@ Animations should not be modified during execution, or any time after initial se
 `setRounded( bool rounded = true )` returns `self`
 
 - Sets whether the value of the animation should be rounded.
-
-`getLastAdded()` returns `KeyFrame/Pause frame`
-
-- Returns the last added frame or pause (or nil if none was added).
 
 `update( number dt )`
 

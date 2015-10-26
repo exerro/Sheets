@@ -16,12 +16,12 @@
  -- function Sheet:onTextEvent( event ) end
 
 class "Sheet"
-	implements (IChildContainer)
-	implements (IPosition)
 	implements (IAnimation)
-	implements (IHasParent)
-	implements (IPositionAnimator)
 	implements (ICommon)
+	implements (IChildContainer)
+	implements (IHasParent)
+	implements (IPosition)
+	implements (IPositionAnimator)
 {
 	canvas = nil;
 
@@ -35,10 +35,10 @@ function Sheet:Sheet( x, y, width, height )
 	if type( width ) ~= "number" then return error( "element attribute #3 'width' not a number (" .. class.type( width ) .. ")", 2 ) end
 	if type( height ) ~= "number" then return error( "element attribute #4 'height' not a number (" .. class.type( height ) .. ")", 2 ) end
 
-	self:IPosition( x, y, width, height )
-	self:IChildContainer()
 	self:IAnimation()
+	self:IChildContainer()
 	self:ICommon()
+	self:IPosition( x, y, width, height )
 
 	self.canvas = DrawingCanvas( width, height )
 end

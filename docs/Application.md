@@ -11,13 +11,17 @@ You can use this to make fancy animations that go between views (see `transition
 
 #### Constructor
 
-`Application( string name )`
+`Application()`
 
 #### Variables
 
 name `string`
 
 - The name of the application.
+
+path `string`
+
+- The path to application files.
 
 width `number`
 
@@ -31,17 +35,9 @@ terminateable `boolean`
 
 - Whether or not the application will stop on a terminate event.
 
-environment `SMLEnvironment`
-
-- The sheets markup environment of the application.
-
 running `boolean`
 
 - Whether the application is currently running. See `stop()`.
-
-theme `Theme`
-
-- The theme of the application. See `setTheme()`.
 
 viewportX `number`
 
@@ -55,10 +51,6 @@ screen `ScreenCanvas`
 
 - The canvas of the application where everything is eventually drawn to.
 
-terminal `table`
-
-- The terminal to draw to. Not yet fully supported as monitor events aren't implemented just yet.
-
 #### Methods
 
 `stop()`
@@ -69,9 +61,25 @@ terminal `table`
 
 - Moves the application viewport to the new coordinates, if given. Returns the animation of each axis if there is a difference between the new and old coordinates of each axis.
 
-`transitionView( View view )` returns `Animation x (if dx>0), Animation y (if dy>0)`
+`transitionViewTo( View view )` returns `Animation x (if dx>0), Animation y (if dy>0)`
 
 - Moves the application viewport to the coordinates of the view given. See `transitionViewport()` for more information.
+
+`addTerminal( table redirect )` returns `self`
+
+- Adds a terminal redirect to draw to.
+
+`removeTerminal( table redirect )` returns `self`
+
+- Removes a terminal redirect previously added.
+
+`addMonitor( string side )` returns `self`
+
+- Adds a monitor (both event handling and drawing)
+
+`removeMonitor( string side )` returns `self`
+
+- Removes a monitor previously added.
 
 `addChild( View child )` returns `View child`
 
@@ -89,13 +97,13 @@ terminal `table`
 
 - Returns a list of all children with the given id.
 
-`setTheme(  Theme theme, boolean children )`
+`getChildrenAt( number x, number y )` returns `table children`
 
-- Sets the theme of the application, and if `children` is true, sets all children themes too.
+- Returns a list of all children at the given coordinates, with the first being on top, and last being on bottom.
 
 `isChildVisible( View child )`
 
-- Returns whether the view given is visible.
+- Returns whether the view given is visible. (Note this only pays position into account, not parenting)
 
 `run()`
 
@@ -134,5 +142,5 @@ application = application .. View( ... )
 > Note, you can chain this, like below:
 
 ```lua
-application = Application "Name" .. view1 .. view2 .. view3 .. view4
+application = application .. view1 .. view2 .. view3 .. view4
 ```

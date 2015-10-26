@@ -5,6 +5,8 @@ The Theme class is used to style Sheets, Views and even entire Applications.
 
 ### SML Decoder
 
+> Note, SML is temporarily disabled while changes are made to the core of Sheets. However, once re-implemented, this will be the case.
+
 This element allows creation through SML, with the following syntax.
 
 ```xml
@@ -42,7 +44,7 @@ This element allows creation through SML, with the following syntax.
 Example:
 
 ```lua
-Theme.addToTemplate( MyButtonClass, "colour", {
+Theme.addToTemplate( MyCustomClass, "colour", {
 	default = BLUE;
 	pressed = LIGHTBLUE;
 } )
