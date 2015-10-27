@@ -25,8 +25,8 @@ class "Sheet"
 {
 	canvas = nil;
 
-	handlesKeyboard = true;
-	handlesText = true;
+	handlesKeyboard = false;
+	handlesText = false;
 }
 
 function Sheet:Sheet( x, y, width, height )

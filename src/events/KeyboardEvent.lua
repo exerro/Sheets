@@ -9,11 +9,32 @@
 
 class "KeyboardEvent" implements (IEvent) {
 	key = 0;
-	meta = {};
+	held = {};
 }
 
-function KeyboardEvent:KeyboardEvent( event, key, meta )
+function KeyboardEvent:KeyboardEvent( event, key, held )
 	self:IEvent( event )
 	self.key = key
-	self.meta = meta
+	self.held = held
+end
+
+function KeyboardEvent:matches( hotkey )
+	local t
+
+	for segment in hotkey:gmatch "(.*)%-" do
+		if not self.held[segment] or ( t and self.held[segment] < t ) then
+			return false
+		end
+		t = self.held[segment]
+	end
+
+	return self.key == keys[hotkey:gsub( ".+%-", "" )]
+end
+
+function KeyboardEvent:isHeld( key )
+	return self.key == keys[key] or self.held[key]
+end
+
+function KeyboardEvent:tostring()
+	return "KeyboardEvent"
 end

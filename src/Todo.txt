@@ -1,2 +1,3 @@
-Application:positionViewsInX( views, XX, XXX )
-Make all elements have the same theme by default
+Application:positionViewsInX( views, XX, XXX ) - not sure whether to add to IChildContainer...
+Add type checking to stuff.
+Add cursors to all elements and rendering system.

@@ -55,7 +55,7 @@ function IHasText:drawText( mode )
 		end
 
 		self.canvas:drawText( xOffset, offset + i - 1, lines[i], {
-			colour = self.theme:getField( self.class, "colour", mode );
+			colour = 0;
 			textColour = self.theme:getField( self.class, "textColour", mode );
 		} )
 
