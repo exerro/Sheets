@@ -51,21 +51,34 @@ function Sheet:onParentResized() end
 
 function Sheet:draw()
 	if self.changed then
+
+		local children = self.children
+		local cx, cy, cc
+
+		self:resetCursor()
+
 		if self.onPreDraw then
 			self:onPreDraw()
 		end
-
-		local children = self.children
 
 		for i = 1, #children do
 			local child = children[i]
 			child:draw()
 			child.canvas:drawTo( self.canvas, child.x, child.y )
+
+			if child.cursor_active then
+				cx, cy, cc = child.x + child.cursor_x, child.y + child.cursor_y, child.cursor_colour
+			end
+		end
+
+		if cx then
+			self:setCursor( cx, cy, cc )
 		end
 
 		if self.onPostDraw then
 			self:onPostDraw()
 		end
+
 		self.changed = false
 	end
 end

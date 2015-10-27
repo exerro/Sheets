@@ -51,6 +51,7 @@ function TextInput:focus()
 		if self.onFocus then
 			self:onFocus()
 		end
+		return self:setChanged()
 	end
 	return self
 end
@@ -61,6 +62,7 @@ function TextInput:unfocus()
 		if self.onUnFocus then
 			self:onUnFocus()
 		end
+		return self:setChanged()
 	end
 	return self
 end
@@ -68,6 +70,9 @@ end
 function TextInput:onPreDraw()
 	self.canvas:clear( self.theme:getField( self.class, "colour", self.focussed and "focussed" or "default" ) )
 	
+	if self.focussed then
+		self:setCursor( self.cursor, 0, self.theme:getField( self.class, "textColour", self.focussed and "focussed" or "default" ) )
+	end
 end
 
 function TextInput:onMouseEvent( event )

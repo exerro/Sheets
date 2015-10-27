@@ -38,16 +38,26 @@ end
 
 function View:draw()
 	if self.changed then
-		local canvas = self.canvas
-
-		canvas:clear( self.theme:getField( self.class, "colour", "default" ) )
 
 		local children = self.children
+		local canvas = self.canvas
+		local cx, cy, cc
+
+		self:resetCursor()
+		canvas:clear( self.theme:getField( self.class, "colour", "default" ) )
 
 		for i = 1, #children do
 			local child = children[i]
 			child:draw()
 			child.canvas:drawTo( canvas, child.x, child.y )
+			
+			if child.cursor_active then
+				cx, cy, cc = child.x + child.cursor_x, child.y + child.cursor_y, child.cursor_colour
+			end
+		end
+
+		if cx then
+			self:setCursor( cx, cy, cc )
 		end
 
 		self.changed = false

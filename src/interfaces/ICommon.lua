@@ -11,6 +11,10 @@ ICommon = {
 	changed = true;
 	id = "ID";
 	theme = nil;
+	cursor_x = 0;
+	cursor_y = 0;
+	cursor_colour = 0;
+	cursor_active = false;
 }
 
 function ICommon:ICommon()
@@ -43,4 +47,15 @@ function ICommon:setTheme( theme, children )
 
 	self:setChanged( true )
 	return self
+end
+
+function ICommon:setCursor( x, y, colour )
+	self.cursor_active = true
+	self.cursor_x = x
+	self.cursor_y = y
+	self.cursor_colour = colour or GREY
+end
+
+function ICommon:resetCursor()
+	self.cursor_active = false
 end

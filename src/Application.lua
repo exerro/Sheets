@@ -238,8 +238,10 @@ end
 
 function Application:draw()
 	if self.changed then
+
 		local screen = self.screen
 		local children = {}
+		local cx, cy, cc
 
 		screen:clear()
 
@@ -249,15 +251,27 @@ function Application:draw()
 
 		for i = 1, #children do
 			local child = children[i]
+
 			if child:isVisible() then
 				child:draw()
 				child.canvas:drawTo( screen, child.x - self.viewportX, child.y - self.viewportY )
+			
+				if child.cursor_active then
+					cx, cy, cc = child.x + child.cursor_x, child.y + child.cursor_y, child.cursor_colour
+				end
 			end
 		end
 
 		self.changed = false
 		for i = 1, #self.terminals do
 			screen:drawToTerminal( self.terminals[i] )
+			if cx then
+				self.terminals[i].setCursorPos( cx + 1, cy + 1 )
+				self.terminals[i].setTextColour( cc )
+				self.terminals[i].setCursorBlink( true )
+			else
+				self.terminals[i].setCursorBlink( false )
+			end
 		end
 	end
 end

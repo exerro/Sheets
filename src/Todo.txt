@@ -1,3 +1,2 @@
 Application:positionViewsInX( views, XX, XXX ) - not sure whether to add to IChildContainer...
 Add type checking to stuff.
-Add cursors to all elements and rendering system.
