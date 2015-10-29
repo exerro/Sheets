@@ -66,5 +66,13 @@ function Style:getField( field )
 
 	field = formatPropertyName( field )
 	local default = getDefaultPropertyName( field )
-	return self.fields[field] or template[self.object.class][field] or self.fields[default] or template[self.object.class][default]
+	if self.fields[field] ~= nil then
+		return self.fields[field]
+	elseif template[self.object.class][field] ~= nil then
+		return template[self.object.class][field]
+	elseif self.fields[default] ~= nil then
+		return self.fields[default]
+	else
+		return template[self.object.class][default]
+	end
 end

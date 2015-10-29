@@ -247,7 +247,7 @@ function ScrollContainer:handle( event )
 end
 
 function ScrollContainer:onPreDraw()
-	self.canvas:clear( self.style:getField( self.class, "colour", "default" ) )
+	self.canvas:clear( self.style:getField "colour" )
 end
 
 function ScrollContainer:onPostDraw()

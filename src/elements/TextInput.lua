@@ -28,6 +28,13 @@ local function extendSelection( text, forward, pos )
 	end
 end
 
+local function mask( text, mask )
+	if mask then
+		return mask:rep( #text )
+	end
+	return text
+end
+
 class "TextInput" extends "Sheet" {
 	text = "";
 	cursor = 0;
@@ -118,30 +125,32 @@ function TextInput:unfocus()
 end
 
 function TextInput:onPreDraw()
-	self.canvas:clear( self.style:getField( self.class, "colour", self.focussed and "focussed" or "default" ) )
+	self.canvas:clear( self.style:getField( "colour." .. ( self.focussed and "focussed" or "default" ) ) )
+
+	local masking = self.style:getField( "mask." .. ( self.focussed and "focussed" or "default" ) )
 
 	if self.selection then
 		local min = math.min( self.cursor, self.selection )
 		local max = math.max( self.cursor, self.selection )
 
-		self.canvas:drawText( -self.scroll, 0, self.text:sub( 1, min ), {
-			textColour = self.style:getField( self.class, "textColour", self.focussed and "focussed" or "default" );
+		self.canvas:drawText( -self.scroll, 0, mask( self.text:sub( 1, min ), masking ), {
+			textColour = self.style:getField( "textColour." .. ( self.focussed and "focussed" or "default" ) );
 		} )
-		self.canvas:drawText( min - self.scroll, 0, self.text:sub( min + 1, max ), {
-			colour = self.style:getField( self.class, "colour", "highlighted" );
-			textColour = self.style:getField( self.class, "textColour", "highlighted" );
+		self.canvas:drawText( min - self.scroll, 0, mask( self.text:sub( min + 1, max ), masking ), {
+			colour = self.style:getField "colour.highlighted";
+			textColour = self.style:getField "textColour.highlighted";
 		} )
-		self.canvas:drawText( max - self.scroll, 0, self.text:sub( max + 1 ), {
-			textColour = self.style:getField( self.class, "textColour", self.focussed and "focussed" or "default" );
+		self.canvas:drawText( max - self.scroll, 0, mask( self.text:sub( max + 1 ), masking ), {
+			textColour = self.style:getField( "textColour." .. ( self.focussed and "focussed" or "default" ) );
 		} )
 	else
-		self.canvas:drawText( -self.scroll, 0, self.text, {
-			textColour = self.style:getField( self.class, "textColour", self.focussed and "focussed" or "default" );
+		self.canvas:drawText( -self.scroll, 0, mask( self.text, masking ), {
+			textColour = self.style:getField( "textColour." .. ( self.focussed and "focussed" or "default" ) );
 		} )
 	end
 	
 	if not self.selection and self.focussed and self.cursor - self.scroll >= 0 and self.cursor - self.scroll < self.width then
-		self:setCursorBlink( self.cursor - self.scroll, 0, self.style:getField( self.class, "textColour", self.focussed and "focussed" or "default" ) )
+		self:setCursorBlink( self.cursor - self.scroll, 0, self.style:getField( "textColour." .. ( self.focussed and "focussed" or "default" ) ) )
 	end
 end
 

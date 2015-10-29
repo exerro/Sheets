@@ -2,10 +2,10 @@
  -- @once
 
  -- @ifndef __INCLUDE_sheets
-	-- @error 'sheets' must be included before including 'test.elements.Draggable'
+	-- @error 'sheets' must be included before including 'sheets.elements.Draggable'
  -- @endif
 
- -- @print Including test.elements.Draggable
+ -- @print Including sheets.elements.Draggable
 
 class "Draggable" extends "Sheet" implements (IHasText) {
 	down = false;
@@ -17,7 +17,7 @@ function Draggable:Draggable( x, y, width, height, text )
 end
 
 function Draggable:onPreDraw()
-	self.canvas:clear( self.down and BLUE or CYAN )
+	self.canvas:clear( self.down and self.style:getField "colour.pressed" or self.style:getField "colour" )
 	self:drawText( self.down and "pressed" or "default" )
 end
 

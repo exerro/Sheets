@@ -15,7 +15,7 @@ function Text:Text( x, y, width, height, text )
 end
 
 function Text:onPreDraw()
-	self.canvas:clear( self.style:getField( self.class, "colour", "default" ) )
+	self.canvas:clear( self.style:getField "colour" )
 	self:drawText "default"
 end
 

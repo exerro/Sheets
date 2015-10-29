@@ -35,8 +35,8 @@ end
 
 function Checkbox:onPreDraw()
 	self.canvas:drawPoint( 0, 0, {
-		colour = self.style:getField( self.class, "colour", ( self.down and "pressed" ) or ( self.checked and "checked" ) or "default" );
-		textColour = self.style:getField( self.class, "checkColour", self.down and "pressed" or "default" );
+		colour = self.style:getField( "colour." .. ( ( self.down and "pressed" ) or ( self.checked and "checked" ) or "default" ) );
+		textColour = self.style:getField( "checkColour." .. ( self.down and "pressed" or "default" ) );
 		character = self.checked and "x" or " ";
 	} )
 end

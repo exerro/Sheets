@@ -1,6 +1,5 @@
-Add masking to TextInput.
-Fix TextInput... everything...
 Image class.
+Fix TextInput... everything...
 Container class.
 ColourSelector class.
 Label class.

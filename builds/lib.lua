@@ -2860,7 +2860,15 @@ if type( field ) ~= \"string\" then return error( \"expected string field, got \
 \
 field = formatPropertyName( field )\
 local default = getDefaultPropertyName( field )\
-return self.fields[field] or template[self.object.class][field] or self.fields[default] or template[self.object.class][default]\
+if self.fields[field] ~= nil then\
+return self.fields[field]\
+elseif template[self.object.class][field] ~= nil then\
+return template[self.object.class][field]\
+elseif self.fields[default] ~= nil then\
+return self.fields[default]\
+else\
+return template[self.object.class][default]\
+end\
 end","sheets.Style",nil,_ENV)if not __f then error(__err,0)end __f()
 
 --/ @require sheets.sml.SMLNode
@@ -3318,8 +3326,8 @@ end\
 \
 function Checkbox:onPreDraw()\
 self.canvas:drawPoint( 0, 0, {\
-colour = self.style:getField( self.class, \"colour\", ( self.down and \"pressed\" ) or ( self.checked and \"checked\" ) or \"default\" );\
-textColour = self.style:getField( self.class, \"checkColour\", self.down and \"pressed\" or \"default\" );\
+colour = self.style:getField( \"colour.\" .. ( ( self.down and \"pressed\" ) or ( self.checked and \"checked\" ) or \"default\" ) );\
+textColour = self.style:getField( \"checkColour.\" .. ( self.down and \"pressed\" or \"default\" ) );\
 character = self.checked and \"x\" or \" \";\
 } )\
 end\
@@ -3374,7 +3382,7 @@ return self:Sheet( x, y, width, height )\
 end\
 \
 function Draggable:onPreDraw()\
-self.canvas:clear( self.down and 2048 or 512 )\
+self.canvas:clear( self.down and self.style:getField \"colour.pressed\" or self.style:getField \"colour\" )\
 self:drawText( self.down and \"pressed\" or \"default\" )\
 end\
 \
@@ -3444,7 +3452,7 @@ local __f,__err=load("\
 class \"Panel\" extends \"Sheet\" {}\
 \
 function Panel:onPreDraw()\
-self.canvas:clear( self.style:getField( self.class, \"colour\", \"default\" ) )\
+self.canvas:clear( self.style:getField \"colour\" )\
 end\
 \
 Style.addToTemplate( Panel, {\
@@ -3701,7 +3709,7 @@ end\
 end\
 \
 function ScrollContainer:onPreDraw()\
-self.canvas:clear( self.style:getField( self.class, \"colour\", \"default\" ) )\
+self.canvas:clear( self.style:getField \"colour\" )\
 end\
 \
 function ScrollContainer:onPostDraw()\
@@ -3760,7 +3768,7 @@ return self:Sheet( x, y, width, height )\
 end\
 \
 function Text:onPreDraw()\
-self.canvas:clear( self.style:getField( self.class, \"colour\", \"default\" ) )\
+self.canvas:clear( self.style:getField \"colour\" )\
 self:drawText \"default\"\
 end\
 \
@@ -3800,6 +3808,13 @@ local reverse = text:reverse()\
 local newpos = #text - pos + 1\
 return #( reverse:match( pat, newpos ) or \"\" )\
 end\
+end\
+\
+local function mask( text, mask )\
+if mask then\
+return mask:rep( #text )\
+end\
+return text\
 end\
 \
 class \"TextInput\" extends \"Sheet\" {\
@@ -3892,30 +3907,32 @@ return self\
 end\
 \
 function TextInput:onPreDraw()\
-self.canvas:clear( self.style:getField( self.class, \"colour\", self.focussed and \"focussed\" or \"default\" ) )\
+self.canvas:clear( self.style:getField( \"colour.\" .. ( self.focussed and \"focussed\" or \"default\" ) ) )\
+\
+local masking = self.style:getField( \"mask.\" .. ( self.focussed and \"focussed\" or \"default\" ) )\
 \
 if self.selection then\
 local min = math.min( self.cursor, self.selection )\
 local max = math.max( self.cursor, self.selection )\
 \
-self.canvas:drawText( -self.scroll, 0, self.text:sub( 1, min ), {\
-textColour = self.style:getField( self.class, \"textColour\", self.focussed and \"focussed\" or \"default\" );\
+self.canvas:drawText( -self.scroll, 0, mask( self.text:sub( 1, min ), masking ), {\
+textColour = self.style:getField( \"textColour.\" .. ( self.focussed and \"focussed\" or \"default\" ) );\
 } )\
-self.canvas:drawText( min - self.scroll, 0, self.text:sub( min + 1, max ), {\
-colour = self.style:getField( self.class, \"colour\", \"highlighted\" );\
-textColour = self.style:getField( self.class, \"textColour\", \"highlighted\" );\
+self.canvas:drawText( min - self.scroll, 0, mask( self.text:sub( min + 1, max ), masking ), {\
+colour = self.style:getField \"colour.highlighted\";\
+textColour = self.style:getField \"textColour.highlighted\";\
 } )\
-self.canvas:drawText( max - self.scroll, 0, self.text:sub( max + 1 ), {\
-textColour = self.style:getField( self.class, \"textColour\", self.focussed and \"focussed\" or \"default\" );\
+self.canvas:drawText( max - self.scroll, 0, mask( self.text:sub( max + 1 ), masking ), {\
+textColour = self.style:getField( \"textColour.\" .. ( self.focussed and \"focussed\" or \"default\" ) );\
 } )\
 else\
-self.canvas:drawText( -self.scroll, 0, self.text, {\
-textColour = self.style:getField( self.class, \"textColour\", self.focussed and \"focussed\" or \"default\" );\
+self.canvas:drawText( -self.scroll, 0, mask( self.text, masking ), {\
+textColour = self.style:getField( \"textColour.\" .. ( self.focussed and \"focussed\" or \"default\" ) );\
 } )\
 end\
 \
 if not self.selection and self.focussed and self.cursor - self.scroll >= 0 and self.cursor - self.scroll < self.width then\
-self:setCursorBlink( self.cursor - self.scroll, 0, self.style:getField( self.class, \"textColour\", self.focussed and \"focussed\" or \"default\" ) )\
+self:setCursorBlink( self.cursor - self.scroll, 0, self.style:getField( \"textColour.\" .. ( self.focussed and \"focussed\" or \"default\" ) ) )\
 end\
 end\
 \
