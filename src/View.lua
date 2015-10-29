@@ -98,6 +98,6 @@ function View:onKeyboardEvent( event )
 	-- keyboard shortcut callbacks
 end
 
-Theme.addToTemplate( View, "colour", {
-	default = WHITE;
+Style.addToTemplate( View, {
+	colour = WHITE;
 } )

@@ -2825,7 +2825,7 @@ if type( properties ) ~= \"table\" then return error( \"expected table fields, g
 \
 template[cls] = template[cls] or {}\
 for k, v in pairs( properties ) do\
-template[class][formatPropertyName( k )] = v\
+template[cls][formatPropertyName( k )] = v\
 end\
 end\
 \
@@ -3214,8 +3214,8 @@ function View:onKeyboardEvent( event )\
 -- keyboard shortcut callbacks\
 end\
 \
-Theme.addToTemplate( View, \"colour\", {\
-default = 1;\
+Style.addToTemplate( View, {\
+colour = 1;\
 } )","sheets.View",nil,_ENV)if not __f then error(__err,0)end __f()
 
 

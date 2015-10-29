@@ -31,7 +31,7 @@ function Style.addToTemplate( cls, properties )
 
 	template[cls] = template[cls] or {}
 	for k, v in pairs( properties ) do
-		template[class][formatPropertyName( k )] = v
+		template[cls][formatPropertyName( k )] = v
 	end
 end
 
