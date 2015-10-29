@@ -104,6 +104,7 @@ alignment = {
 
  -- @require sheets.Animation
  -- @require sheets.Application
+ -- @require sheets.Style
 
  --/ @require sheets.sml.SMLNode
  --/ @require sheets.sml.SMLParser
@@ -114,8 +115,6 @@ alignment = {
  -- @require sheets.events.MiscEvent
  -- @require sheets.events.MouseEvent
  -- @require sheets.events.TextEvent
-
- -- @require sheets.Theme
 
  -- @require sheets.Sheet
  -- @require sheets.View

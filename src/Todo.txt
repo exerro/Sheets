@@ -1,11 +1,5 @@
-Application:positionViewsInX( views, XX, XXX ) - not sure whether to add to IChildContainer...
-Document the cursor stuff.
-Document new elements.
-Add double click and ctrl-shift-left/right selection to TextInput.
-Make TextInput use clipboard.
-Fix bug with ScrollContainer bar positioning.
-Updating Theme selectors.
 Add masking to TextInput.
+Fix TextInput... everything...
 Image class.
 Container class.
 ColourSelector class.
@@ -14,3 +8,4 @@ RadioButton class.
 Tabs class.
 Toggle class.
 Window class.
+Application:positionChildrenInGrid()

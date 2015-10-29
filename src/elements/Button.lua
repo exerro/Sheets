@@ -17,7 +17,7 @@ function Button:Button( x, y, width, height, text )
 end
 
 function Button:onPreDraw()
-	self.canvas:clear( self.theme:getField( self.class, "colour", self.down and "pressed" or "default" ) )
+	self.canvas:clear( self.down and self.style:getField "colour.pressed" or self.style:getField "colour" )
 	self:drawText( self.down and "pressed" or "default" )
 end
 
@@ -48,20 +48,13 @@ function Button:onMouseEvent( event )
 	end
 end
 
-Theme.addToTemplate( Button, "colour", {
-	default = CYAN;
-	pressed = LIGHTBLUE;
-} )
-Theme.addToTemplate( Button, "textColour", {
-	default = WHITE;
-	pressed = WHITE;
-} )
-
-Theme.addToTemplate( Button, "horizontal-alignment", {
-	default = ALIGNMENT_CENTRE;
-	pressed = ALIGNMENT_CENTRE;
-} )
-Theme.addToTemplate( Button, "vertical-alignment", {
-	default = ALIGNMENT_CENTRE;
-	pressed = ALIGNMENT_CENTRE;
+Style.addToTemplate( Button, {
+	["colour"] = CYAN;
+	["colour.pressed"] = LIGHTBLUE;
+	["textColour"] = WHITE;
+	["textColour.pressed"] = WHITE;
+	["horizontal-alignment"] = ALIGNMENT_CENTRE;
+	["horizontal-alignment.pressed"] = ALIGNMENT_CENTRE;
+	["vertical-alignment"] = ALIGNMENT_CENTRE;
+	["vertical-alignment.pressed"] = ALIGNMENT_CENTRE;
 } )

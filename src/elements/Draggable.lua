@@ -63,20 +63,13 @@ function Draggable:onMouseEvent( event )
 	end
 end
 
-Theme.addToTemplate( Draggable, "colour", {
-	default = CYAN;
-	pressed = BLUE;
-} )
-Theme.addToTemplate( Draggable, "textColour", {
-	default = WHITE;
-	pressed = WHITE;
-} )
-
-Theme.addToTemplate( Draggable, "horizontal-alignment", {
-	default = ALIGNMENT_CENTRE;
-	pressed = ALIGNMENT_CENTRE;
-} )
-Theme.addToTemplate( Draggable, "vertical-alignment", {
-	default = ALIGNMENT_CENTRE;
-	pressed = ALIGNMENT_CENTRE;
+Style.addToTemplate( Draggable, {
+	["colour"] = CYAN;
+	["colour.pressed"] = LIGHTBLUE;
+	["textColour"] = WHITE;
+	["textColour.pressed"] = WHITE;
+	["horizontal-alignment"] = ALIGNMENT_CENTRE;
+	["horizontal-alignment.pressed"] = ALIGNMENT_CENTRE;
+	["vertical-alignment"] = ALIGNMENT_CENTRE;
+	["vertical-alignment.pressed"] = ALIGNMENT_CENTRE;
 } )

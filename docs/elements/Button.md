@@ -11,15 +11,15 @@ The Button is a clickable object with word wrapped text (default centre aligned)
 
 `Button( number x, number y, number width, number height, string text )`
 
-#### Theme options
+#### Style options
 
-- `colour.default` - The background colour.
+- `colour` - The background colour.
 - `colour.pressed` - The background colour when pressed.
-- `textColour.default` - The text colour.
+- `textColour` - The text colour.
 - `textColour.pressed` - The text colour when pressed.
-- `horizontal-alignment.default` - The horizontal alignment.
+- `horizontal-alignment` - The horizontal alignment.
 - `horizontal-alignment.pressed` - The horizontal alignment when pressed.
-- `vertical-alignment.default` - The vertical alignment.
+- `vertical-alignment` - The vertical alignment.
 - `vertical-alignment.pressed` - The vertical alignment when pressed.
 
 #### Callbacks

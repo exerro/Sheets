@@ -31,8 +31,8 @@ function IHasText:drawText( mode )
 	local offset, lines = 0, self.lines
 	mode = mode or "default"
 
-	local horizontal_alignment = self.theme:getField( self.class, "horizontal-alignment", mode )
-	local vertical_alignment = self.theme:getField( self.class, "vertical-alignment", mode )
+	local horizontal_alignment = self.style:getField( "horizontal-alignment." .. mode )
+	local vertical_alignment = self.style:getField( "vertical-alignment." .. mode )
 
 	if not lines then
 		self:wrapText()
@@ -56,7 +56,7 @@ function IHasText:drawText( mode )
 
 		self.canvas:drawText( xOffset, offset + i - 1, lines[i], {
 			colour = 0;
-			textColour = self.theme:getField( self.class, "textColour", mode );
+			textColour = self.style:getField( "textColour." .. mode );
 		} )
 
 	end

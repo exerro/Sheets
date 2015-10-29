@@ -43,9 +43,9 @@ id `string`
 
 - The ID of the view.
 
-theme `Theme`
+style `Style`
 
-- The view's theme.
+- The view's style.
 
 parent `Application`
 
@@ -81,10 +81,10 @@ canvas `DrawingCanvas`
 
 - Sets the ID of the view.
 
-`setTheme( Theme theme, boolean children = false )`
+`setStyle( Style style, boolean children = false )`
 
-- Sets the theme of the view.
-- If `children` is true, it will set all child themes too.
+- Sets the style of the view.
+- If `children` is true, it will set all child styles too.
 
 `setCursorBlink( number x, number y, number colour = GREY )` returns `self`
 

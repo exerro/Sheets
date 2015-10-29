@@ -11,12 +11,12 @@ The Text is an object with word wrapped text.
 
 `Text( number x, number y, number width, number height, string text )`
 
-#### Theme options
+#### Style options
 
-- `colour.default` - The background colour.
-- `textColour.default` - The text colour.
-- `horizontal-alignment.default` - The horizontal alignment.
-- `vertical-alignment.default` - The vertical alignment.
+- `colour` - The background colour.
+- `textColour` - The text colour.
+- `horizontal-alignment` - The horizontal alignment.
+- `vertical-alignment` - The vertical alignment.
 
 #### Variables
 

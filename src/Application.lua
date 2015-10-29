@@ -238,8 +238,15 @@ function Application:event( event, ... )
 	elseif event == "chatbox_something" then
 		-- handle( TextEvent( SHEETS_EVENT_VOICE, params[1] ) )
 
-	elseif event == "char" or event == "paste" then
-		handle( TextEvent( event == "char" and SHEETS_EVENT_TEXT or SHEETS_EVENT_PASTE, params[1] ) )
+	elseif event == "char" then
+		handle( TextEvent( SHEETS_EVENT_TEXT, params[1] ) )
+
+	elseif event == "paste" then
+		if self.keys.leftShift or self.keys.rightShift then
+			handle( KeyboardEvent( SHEETS_EVENT_KEY_DOWN, keys.v, { leftCtrl = true, rightCtrl = true } ) )
+		else
+			handle( TextEvent( SHEETS_EVENT_PASTE, params[1] ) )
+		end
 
 	elseif event == "key" then
 		handle( KeyboardEvent( SHEETS_EVENT_KEY_DOWN, params[1], self.keys ) )

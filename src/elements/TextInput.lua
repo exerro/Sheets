@@ -7,6 +7,27 @@
 
  -- @print Including sheets.elements.TextInput
 
+local function getSimilarPattern( char )
+	local pat = "^[^_%w%s]+"
+	if char:find "%s" then
+		pat = "^%s+"
+	elseif char:find "[%w_]" then
+		pat = "^[%w_]+"
+	end
+	return pat
+end
+
+local function extendSelection( text, forward, pos )
+	local pat = getSimilarPattern( text:sub( pos, pos ) )
+	if forward then
+		return #( text:match( pat, pos ) or "" )
+	else
+		local reverse = text:reverse()
+		local newpos = #text - pos + 1
+		return #( reverse:match( pat, newpos ) or "" )
+	end
+end
+
 class "TextInput" extends "Sheet" {
 	text = "";
 	cursor = 0;
@@ -15,6 +36,7 @@ class "TextInput" extends "Sheet" {
 	focussed = false;
 	handlesKeyboard = true;
 	handlesText = true;
+	doubleClickData = false;
 }
 
 function TextInput:TextInput( x, y, width )
@@ -56,7 +78,7 @@ function TextInput:setSelection( position )
 end
 
 function TextInput:getSelectedText()
-	return self.selection and self.text:sub( math.min( self.cursor, self.selection ) + 1, math.max( self.cursor, self.selection ) + 1 )
+	return self.selection and self.text:sub( math.min( self.cursor, self.selection ) + 1, math.max( self.cursor, self.selection ) )
 end
 
 function TextInput:write( text )
@@ -96,37 +118,37 @@ function TextInput:unfocus()
 end
 
 function TextInput:onPreDraw()
-	self.canvas:clear( self.theme:getField( self.class, "colour", self.focussed and "focussed" or "default" ) )
+	self.canvas:clear( self.style:getField( self.class, "colour", self.focussed and "focussed" or "default" ) )
 
 	if self.selection then
 		local min = math.min( self.cursor, self.selection )
 		local max = math.max( self.cursor, self.selection )
 
 		self.canvas:drawText( -self.scroll, 0, self.text:sub( 1, min ), {
-			textColour = self.theme:getField( self.class, "textColour", self.focussed and "focussed" or "default" );
+			textColour = self.style:getField( self.class, "textColour", self.focussed and "focussed" or "default" );
 		} )
 		self.canvas:drawText( min - self.scroll, 0, self.text:sub( min + 1, max ), {
-			colour = self.theme:getField( self.class, "colour", "highlighted" );
-			textColour = self.theme:getField( self.class, "textColour", "highlighted" );
+			colour = self.style:getField( self.class, "colour", "highlighted" );
+			textColour = self.style:getField( self.class, "textColour", "highlighted" );
 		} )
 		self.canvas:drawText( max - self.scroll, 0, self.text:sub( max + 1 ), {
-			textColour = self.theme:getField( self.class, "textColour", self.focussed and "focussed" or "default" );
+			textColour = self.style:getField( self.class, "textColour", self.focussed and "focussed" or "default" );
 		} )
 	else
 		self.canvas:drawText( -self.scroll, 0, self.text, {
-			textColour = self.theme:getField( self.class, "textColour", self.focussed and "focussed" or "default" );
+			textColour = self.style:getField( self.class, "textColour", self.focussed and "focussed" or "default" );
 		} )
 	end
 	
 	if not self.selection and self.focussed and self.cursor - self.scroll >= 0 and self.cursor - self.scroll < self.width then
-		self:setCursorBlink( self.cursor - self.scroll, 0, self.theme:getField( self.class, "textColour", self.focussed and "focussed" or "default" ) )
+		self:setCursorBlink( self.cursor - self.scroll, 0, self.style:getField( self.class, "textColour", self.focussed and "focussed" or "default" ) )
 	end
 end
 
 function TextInput:onMouseEvent( event )
 	if self.down and event:is( SHEETS_EVENT_MOUSE_DRAG ) then
 		self.selection = self.selection or self.cursor
-		self:setCursor( event.x - self.scroll + 1 )
+		self:setCursor( event.x + self.scroll + 1 )
 	elseif self.down and event:is( SHEETS_EVENT_MOUSE_UP ) then
 		self.down = false
 	end
@@ -141,10 +163,33 @@ function TextInput:onMouseEvent( event )
 	if event:is( SHEETS_EVENT_MOUSE_DOWN ) then
 		self:focus()
 		self.selection = nil
-		self:setCursor( event.x - self.scroll )
+		self:setCursor( event.x + self.scroll )
 		self.down = true
 		event:handle()
-	elseif event:is( SHEETS_EVENT_MOUSE_CLICK ) or event:is( SHEETS_EVENT_MOUSE_HOLD ) then
+	elseif event:is( SHEETS_EVENT_MOUSE_CLICK ) then
+		if self.doubleClickData and self.doubleClickData.x == event.x + self.scroll then
+			local pos1, pos2 = event.x + self.scroll + 1, event.x + self.scroll + 1
+			local pat = getSimilarPattern( self.text:sub( pos1, pos1 ) )
+			while self.text:sub( pos1 - 1, pos1 - 1 ):find( pat ) do
+				pos1 = pos1 - 1
+			end
+			while self.text:sub( pos2 + 1, pos2 + 1 ):find( pat ) do
+				pos2 = pos2 + 1
+			end
+			self:setCursor( pos2 )
+			self.selection = pos1 - 1
+			timer.cancel( self.doubleClickData.timer )
+			self.doubleClickData = false
+		else
+			if self.doubleClickData then
+				timer.cancel( self.doubleClickData.timer )
+			end
+			local t = timer.queue( 0.3, function()
+				self.doubleClickData = false
+			end )
+			self.doubleClickData = { x = event.x + self.scroll, timer = t }
+		end
+	elseif event:is( SHEETS_EVENT_MOUSE_HOLD ) then
 		event:handle()
 	end
 end
@@ -156,7 +201,11 @@ function TextInput:onKeyboardEvent( event )
 		if self.selection then
 			if event:matches "left" then
 				if event:isHeld "leftShift" or event:isHeld "rightShift" then
-					self:setCursor( self.cursor - 1 )
+					local diff = 1
+					if event:isHeld "rightCtrl" or event:isHeld "leftCtrl" then
+						diff = extendSelection( self.text, false, self.cursor )
+					end
+					self:setCursor( self.cursor - diff )
 				else
 					self:setCursor( math.min( self.cursor, self.selection ) )
 					self.selection = nil
@@ -164,7 +213,11 @@ function TextInput:onKeyboardEvent( event )
 				event:handle()
 			elseif event:matches "right" then
 				if event:isHeld "leftShift" or event:isHeld "rightShift" then
-					self:setCursor( self.cursor + 1 )
+					local diff = 1
+					if event:isHeld "rightCtrl" or event:isHeld "leftCtrl" then
+						diff = extendSelection( self.text, true, self.cursor + 1 )
+					end
+					self:setCursor( self.cursor + diff )
 				else
 					self:setCursor( math.max( self.cursor, self.selection ) )
 					self.selection = nil
@@ -179,13 +232,21 @@ function TextInput:onKeyboardEvent( event )
 				if event:isHeld "leftShift" or event:isHeld "rightShift" then
 					self.selection = self.cursor
 				end
-				self:setCursor( self.cursor - 1 )
+				local diff = 1
+				if event:isHeld "rightCtrl" or event:isHeld "leftCtrl" then
+					diff = extendSelection( self.text, false, self.cursor )
+				end
+				self:setCursor( self.cursor - diff )
 				event:handle()
 			elseif event:matches "right" then
 				if event:isHeld "leftShift" or event:isHeld "rightShift" then
 					self.selection = self.cursor
 				end
-				self:setCursor( self.cursor + 1 )
+				local diff = 1
+				if event:isHeld "rightCtrl" or event:isHeld "leftCtrl" then
+					diff = extendSelection( self.text, true, self.cursor + 1 )
+				end
+				self:setCursor( self.cursor + diff )
 				event:handle()
 			elseif event:matches "backspace" and self.cursor > 0 then
 				self.text = self.text:sub( 1, self.cursor - 1 ) .. self.text:sub( self.cursor + 1 )
@@ -223,6 +284,24 @@ function TextInput:onKeyboardEvent( event )
 				self:onTab()
 			end
 			event:handle()
+		elseif event:matches "v" and ( event:isHeld "leftCtrl" or event:isHeld "rightCtrl" ) then
+			local text = clipboard.get "plain-text"
+			if text then
+				self:write( text )
+			end
+		elseif event:matches "leftCtrl-c" or event:matches "rightCtrl-c" then
+			if self.selection then
+				clipboard.put {
+					["plain-text"] = self:getSelectedText();
+				}
+			end
+		elseif event:matches "leftCtrl-x" or event:matches "rightCtrl-x" then
+			if self.selection then
+				clipboard.put {
+					["plain-text"] = self:getSelectedText();
+				}
+				self:write ""
+			end
 		end
 
 	end
@@ -235,18 +314,13 @@ function TextInput:onTextEvent( event )
 	end
 end
 
-Theme.addToTemplate( TextInput, "colour", {
-	default = LIGHTGREY;
-	focussed = LIGHTGREY;
-	highlighted = BLUE;
-} )
-Theme.addToTemplate( TextInput, "textColour", {
-	default = GREY;
-	focussed = GREY;
-	highlighted = WHITE;
-} )
-
-Theme.addToTemplate( TextInput, "mask", {
-	default = false;
-	focussed = false;
+Style.addToTemplate( TextInput, {
+	["colour"] = LIGHTGREY;
+	["colour.focussed"] = LIGHTGREY;
+	["colour.highlighted"] = BLUE;
+	["textColour"] = GREY;
+	["textColour.focussed"] = GREY;
+	["textColour.highlighted"] = WHITE;
+	["mask"] = false;
+	["mask.focussed"] = false;
 } )

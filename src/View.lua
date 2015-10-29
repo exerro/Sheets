@@ -44,7 +44,7 @@ function View:draw()
 		local cx, cy, cc
 
 		self:resetCursorBlink()
-		canvas:clear( self.theme:getField( self.class, "colour", "default" ) )
+		canvas:clear( self.style:getField "colour" )
 
 		for i = 1, #children do
 			local child = children[i]

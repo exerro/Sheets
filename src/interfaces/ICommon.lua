@@ -10,7 +10,7 @@
 ICommon = {
 	changed = true;
 	id = "ID";
-	theme = nil;
+	style = nil;
 	cursor_x = 0;
 	cursor_y = 0;
 	cursor_colour = 0;
@@ -18,7 +18,7 @@ ICommon = {
 }
 
 function ICommon:ICommon()
-	self.theme = Theme()
+	self.style = Style( self )
 end
 
 function ICommon:setChanged( state )
@@ -34,14 +34,14 @@ function ICommon:setID( id )
 	return self
 end
 
-function ICommon:setTheme( theme, children )
-	if not class.typeOf( theme, Theme ) then return error( "expected Theme theme, got " .. type( theme ) ) end
+function ICommon:setStyle( style, children )
+	if not class.typeOf( style, Style ) then return error( "expected Style style, got " .. type( style ) ) end
 
-	self.theme = theme
+	self.style = style:clone( self )
 	
 	if children and self.children then
 		for i = 1, #self.children do
-			self.children[i]:setTheme( theme, true )
+			self.children[i]:setStyle( style, true )
 		end
 	end
 

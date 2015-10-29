@@ -11,6 +11,6 @@ The Panel is an object of fixed colour.
 
 `Panel( number x, number y, number width, number height )`
 
-#### Theme options
+#### Style options
 
-- `colour.default` - The background colour.
+- `colour` - The background colour.

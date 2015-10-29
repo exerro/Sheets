@@ -15,13 +15,13 @@ The ScrollContainer is an object that adds scrollbars to scroll its content if n
 
 `ScrollContainer( Sheet element )`
 
-#### Theme options
+#### Style options
 
-- `colour.default` - The background colour.
-- `horizontal-bar.default` - The colour of the horizontal bar tray.
+- `colour` - The background colour.
+- `horizontal-bar` - The colour of the horizontal bar tray.
 - `horizontal-bar.bar` - The colour of the horizontal bar.
 - `horizontal-bar.active` - The colour of the horizontal bar when held.
-- `vertical-bar.default` - The colour of the vertical bar tray.
+- `vertical-bar` - The colour of the vertical bar tray.
 - `vertical-bar.bar` - The colour of the vertical bar.
 - `vertical-bar.active` - The colour of the vertical bar when held.
 

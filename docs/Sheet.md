@@ -47,9 +47,9 @@ id `string`
 
 - The ID of the sheet.
 
-theme `Theme`
+style `Style`
 
-- The sheet's theme.
+- The sheet's style.
 
 parent `Sheet` or `View`
 
@@ -85,10 +85,10 @@ canvas `DrawingCanvas`
 
 - Sets the ID of the sheet.
 
-`setTheme( Theme theme, boolean children = false )`
+`setStyle( Style style, boolean children = false )`
 
-- Sets the theme of the sheet.
-- If `children` is true, it will set all child themes too.
+- Sets the style of the sheet.
+- If `children` is true, it will set all child styles too.
 
 `setCursorBlink( number x, number y, number colour = GREY )` returns `self`
 

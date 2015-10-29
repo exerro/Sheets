@@ -11,12 +11,12 @@ The Checkbox is a 1x1 clickable object that toggles a check (`"x"`) in its centr
 
 `Button( number x, number y, boolean checked = false )`
 
-#### Theme options
+#### Style options
 
-- `colour.default` - The background colour.
+- `colour` - The background colour.
 - `colour.checked` - The background colour when checked.
 - `colour.pressed` - The background colour when pressed.
-- `textColour.default` - The text colour.
+- `textColour` - The text colour.
 - `textColour.pressed` - The text colour when pressed.
 
 #### Callbacks

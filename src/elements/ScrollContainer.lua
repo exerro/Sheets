@@ -226,7 +226,7 @@ function ScrollContainer:handle( event )
 	if event:typeOf( MouseEvent ) then
 		local within = event:isWithinArea( 0, 0, self.width, self.height )
 		for i = #c, 1, -1 do
-			c[i]:handle( event:clone( c[i].x + self.scrollX, c[i].y + self.scrollY, within ) )
+			c[i]:handle( event:clone( c[i].x - self.scrollX, c[i].y - self.scrollY, within ) )
 		end
 	else
 		for i = #c, 1, -1 do
@@ -247,7 +247,7 @@ function ScrollContainer:handle( event )
 end
 
 function ScrollContainer:onPreDraw()
-	self.canvas:clear( self.theme:getField( self.class, "colour", "default" ) )
+	self.canvas:clear( self.style:getField( self.class, "colour", "default" ) )
 end
 
 function ScrollContainer:onPostDraw()
@@ -258,19 +258,19 @@ function ScrollContainer:onPostDraw()
 		local sx, sy = self:getScrollbarSizes( cWidth, cHeight, h, v )
 
 		if h then
-			local c1 = self.theme:getField( self.class, "horizontal-bar", "default" )
+			local c1 = self.style:getField( self.class, "horizontal-bar", "default" )
 			local c2 = self.heldScrollbar == "h" and
-					   self.theme:getField( self.class, "horizontal-bar", "active" )
-					or self.theme:getField( self.class, "horizontal-bar", "bar" )
+					   self.style:getField( self.class, "horizontal-bar", "active" )
+					or self.style:getField( self.class, "horizontal-bar", "bar" )
 
 			self.canvas:mapColour( self.canvas:getArea( GRAPHICS_AREA_HLINE, 0, self.height - 1, self:getDisplayWidth( h, v ) ), c1 )
 			self.canvas:mapColour( self.canvas:getArea( GRAPHICS_AREA_HLINE, px, self.height - 1, sx ), c2 )
 		end
 		if v then
-			local c1 = self.theme:getField( self.class, "vertical-bar", "default" )
+			local c1 = self.style:getField( self.class, "vertical-bar", "default" )
 			local c2 = self.heldScrollbar == "v" and
-					   self.theme:getField( self.class, "vertical-bar", "active" )
-					or self.theme:getField( self.class, "vertical-bar", "bar" )
+					   self.style:getField( self.class, "vertical-bar", "active" )
+					or self.style:getField( self.class, "vertical-bar", "bar" )
 
 			self.canvas:mapColour( self.canvas:getArea( GRAPHICS_AREA_VLINE, self.width - 1, 0, self.height ), c1 )
 			self.canvas:mapColour( self.canvas:getArea( GRAPHICS_AREA_VLINE, self.width - 1, py, sy ), c2 )
@@ -278,18 +278,12 @@ function ScrollContainer:onPostDraw()
 	end
 end
 
-Theme.addToTemplate( ScrollContainer, "colour", {
-	default = WHITE;
-} )
-
-Theme.addToTemplate( ScrollContainer, "horizontal-bar", {
-	default = GREY;
-	bar = LIGHTGREY;
-	active = LIGHTBLUE;
-} )
-
-Theme.addToTemplate( ScrollContainer, "vertical-bar", {
-	default = GREY;
-	bar = LIGHTGREY;
-	active = LIGHTBLUE;
+Style.addToTemplate( ScrollContainer, {
+	["colour"] = WHITE;
+	["horizontal-bar"] = GREY;
+	["horizontal-bar.bar"] = LIGHTGREY;
+	["horizontal-bar.active"] = LIGHTBLUE;
+	["vertical-bar"] = GREY;
+	["vertical-bar.bar"] = LIGHTGREY;
+	["vertical-bar.active"] = LIGHTBLUE;
 } )

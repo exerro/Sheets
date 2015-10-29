@@ -15,20 +15,13 @@ function Text:Text( x, y, width, height, text )
 end
 
 function Text:onPreDraw()
-	self.canvas:clear( self.theme:getField( self.class, "colour", "default" ) )
+	self.canvas:clear( self.style:getField( self.class, "colour", "default" ) )
 	self:drawText "default"
 end
 
-Theme.addToTemplate( Text, "colour", {
-	default = WHITE;
-} )
-Theme.addToTemplate( Text, "textColour", {
-	default = GREY;
-} )
-
-Theme.addToTemplate( Text, "horizontal-alignment", {
-	default = ALIGNMENT_LEFT;
-} )
-Theme.addToTemplate( Text, "vertical-alignment", {
-	default = ALIGNMENT_TOP;
+Style.addToTemplate( Text, {
+	["colour"] = WHITE;
+	["textColour"] = GREY;
+	["horizontal-alignment"] = ALIGNMENT_LEFT;
+	["vertical-alignment"] = ALIGNMENT_TOP;
 } )

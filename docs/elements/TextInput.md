@@ -11,15 +11,15 @@ The TextInput is a clickable object with word wrapped text (default centre align
 
 `TextInput( number x, number y, number width, number height, string text )`
 
-#### Theme options
+#### Style options
 
-- `colour.default` - The background colour.
+- `colour` - The background colour.
 - `colour.focussed` - The background colour when focussed.
 - `colour.highlighted` - The background colour of highlighted text.
-- `textColour.default` - The text colour.
+- `textColour` - The text colour.
 - `textColour.focussed` - The text colour when focussed.
 - `textColour.highlighted` - The text colour of highlighted text.
-- `mask.default` - The text masking.
+- `mask` - The text masking.
 - `mask.focussed` - The text masking when focussed.
 
 #### Callbacks
