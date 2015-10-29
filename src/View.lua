@@ -43,7 +43,7 @@ function View:draw()
 		local canvas = self.canvas
 		local cx, cy, cc
 
-		self:resetCursor()
+		self:resetCursorBlink()
 		canvas:clear( self.theme:getField( self.class, "colour", "default" ) )
 
 		for i = 1, #children do
@@ -57,7 +57,7 @@ function View:draw()
 		end
 
 		if cx then
-			self:setCursor( cx, cy, cc )
+			self:setCursorBlink( cx, cy, cc )
 		end
 
 		self.changed = false

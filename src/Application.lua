@@ -139,6 +139,48 @@ function Application:removeMonitor( side )
 	return self
 end
 
+function Application:positionChildrenInColumn( padding, order )
+	padding = padding or 0
+	order = order or "ascending"
+
+	if type( padding ) ~= "number" then return error( "expected number padding, got " .. class.type( padding ) ) end
+	if type( order ) ~= "string" then return error( "expected string order, got " .. class.type( order ) ) end
+	if order ~= "ascending" and order ~= "descending" then return error( "invalid order '" .. order .. "', expected 'ascending' or 'descending'" ) end
+
+	local children = self.children
+	local y = 0
+
+	for i = order == "ascending" and 1 or #children, order == "ascending" and #children or 1, order == "ascending" and 1 or -1 do
+		children[i].y = y
+		y = y + children[i].height + padding
+	end
+
+	self:setChanged()
+end
+
+function Application:positionChildrenInRow( padding, order )
+	padding = padding or 0
+	order = order or "ascending"
+
+	if type( padding ) ~= "number" then return error( "expected number padding, got " .. class.type( padding ) ) end
+	if type( order ) ~= "string" then return error( "expected string order, got " .. class.type( order ) ) end
+	if order ~= "ascending" and order ~= "descending" then return error( "invalid order '" .. order .. "', expected 'ascending' or 'descending'" ) end
+
+	local children = self.children
+	local x = 0
+
+	for i = order == "ascending" and 1 or #children, order == "ascending" and #children or 1, order == "ascending" and 1 or -1 do
+		children[i].x = x
+		x = x + children[i].width + padding
+	end
+
+	self:setChanged()
+end
+
+function Application:positionChildrenInGrid( hPadding, vPadding, order )
+	return error( "positionChildrenInGrid() not yet supported" )
+end
+
 function Application:event( event, ... )
 	local params = { ... }
 	local children = {}

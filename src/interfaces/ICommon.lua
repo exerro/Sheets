@@ -49,7 +49,7 @@ function ICommon:setTheme( theme, children )
 	return self
 end
 
-function ICommon:setCursor( x, y, colour )
+function ICommon:setCursorBlink( x, y, colour )
 	if type( x ) ~= "number" then return error( "expected number x, got " .. class.type( x ) ) end
 	if type( y ) ~= "number" then return error( "expected number y, got " .. class.type( y ) ) end
 	if colour and type( colour ) ~= "number" then return error( "expected number colour, got " .. class.type( colour ) ) end
@@ -58,8 +58,10 @@ function ICommon:setCursor( x, y, colour )
 	self.cursor_x = x
 	self.cursor_y = y
 	self.cursor_colour = colour or GREY
+	return self
 end
 
-function ICommon:resetCursor()
+function ICommon:resetCursorBlink()
 	self.cursor_active = false
+	return self
 end

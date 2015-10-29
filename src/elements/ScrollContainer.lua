@@ -113,7 +113,7 @@ function ScrollContainer:draw()
 		local cx, cy, cc
 		local ox, oy = self.scrollX, self.scrollY
 
-		self:resetCursor()
+		self:resetCursorBlink()
 
 		if self.onPreDraw then
 			self:onPreDraw()
@@ -130,7 +130,7 @@ function ScrollContainer:draw()
 		end
 
 		if cx then
-			self:setCursor( cx, cy, cc )
+			self:setCursorBlink( cx, cy, cc )
 		end
 
 		if self.onPostDraw then

@@ -61,34 +61,34 @@ function IPositionAnimator:animateHeight( to, time, easing )
 	return animateAttribute( self, "height", self.setHeight, self.height, to, time, easing )
 end
 
-function IPositionAnimator:animateInLeft( to, time )
-	return animateElementInOrOut( self, "in", false, self.x, to or 0, time )
+function IPositionAnimator:animateIn( side, to, time )
+	side = side or "top"
+	if type( side ) ~= "string" then return error( "expected string side, got " .. class.type( side ) ) end
+	if side == "top" then
+		return animateElementInOrOut( self, "in", true, self.y, to or 0, time )
+	elseif side == "left" then
+		return animateElementInOrOut( self, "in", false, self.x, to or 0, time )
+	elseif side == "right" then
+		return animateElementInOrOut( self, "in", false, self.x, to or self.parent.width - self.width, time )
+	elseif side == "bottom" then
+		return animateElementInOrOut( self, "in", true, self.y, to or self.parent.height - self.height, time )
+	else
+		return error( "invalid side '" .. side .. "', expected " .. '"left", "right", "top", or "bottom"' )
+	end
 end
 
-function IPositionAnimator:animateOutLeft( to, time )
-	return animateElementInOrOut( self, "out", false, self.x, to or -self.width, time )
-end
-
-function IPositionAnimator:animateInRight( to, time )
-	return animateElementInOrOut( self, "in", false, self.x, to or self.parent.width - self.width, time )
-end
-
-function IPositionAnimator:animateOutRight( to, time )
-	return animateElementInOrOut( self, "out", false, self.x, to or self.parent.width, time )
-end
-
-function IPositionAnimator:animateInTop( to, time )
-	return animateElementInOrOut( self, "in", true, self.y, to or 0, time )
-end
-
-function IPositionAnimator:animateOutTop( to, time )
-	return animateElementInOrOut( self, "out", true, self.y, to or -self.height, time )
-end
-
-function IPositionAnimator:animateInBottom( to, time )
-	return animateElementInOrOut( self, "in", true, self.y, to or self.parent.height - self.height, time )
-end
-
-function IPositionAnimator:animateOutBottom( to, time )
-	return animateElementInOrOut( self, "out", true, self.y, to or self.parent.height, time )
+function IPositionAnimator:animateOut( side, to, time )
+	side = side or "top"
+	if type( side ) ~= "string" then return error( "expected string side, got " .. class.type( side ) ) end
+	if side == "top" then
+		return animateElementInOrOut( self, "out", true, self.y, to or -self.height, time )
+	elseif side == "left" then
+		return animateElementInOrOut( self, "out", false, self.x, to or -self.width, time )
+	elseif side == "right" then
+		return animateElementInOrOut( self, "out", false, self.x, to or self.parent.width, time )
+	elseif side == "bottom" then
+		return animateElementInOrOut( self, "out", true, self.y, to or self.parent.height, time )
+	else
+		return error( "invalid side '" .. side .. "', expected " .. '"left", "right", "top", or "bottom"' )
+	end
 end

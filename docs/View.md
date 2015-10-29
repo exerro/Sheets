@@ -82,6 +82,14 @@ canvas `DrawingCanvas`
 - Sets the theme of the view.
 - If `children` is true, it will set all child themes too.
 
+`setCursorBlink( number x, number y, number colour = GREY )` returns `self`
+
+- Sets the view's internal cursor blink.
+
+`resetCursorBlink()` returns `self`
+
+- Resets (stops) the view's internal cursor blink.
+
 `setParent( Application parent )`
 
 - Sets the parent of the view.
@@ -151,37 +159,15 @@ canvas `DrawingCanvas`
 - Animates the view's `height` value.
 - Note that `easing` can also be `"transition"`, `"entrance"`, or `"exit"`.
 
-`animateInLeft( optional number to, number time = SHEETS_DEFAULT_TRANSITION_TIME = 0.3 )`
+`animateIn( string side, optional number to, number time = SHEETS_DEFAULT_TRANSITION_TIME = 0.3 )`
 
-- Animates the view in from the left side of the screen.
+- Animates the view in from the side of the screen given.
+- Valid sides are `"left"`, `"right"`, `"top"`, and `"bottom"`
 
-`animateOutLeft( optional number to, number time = SHEETS_DEFAULT_TRANSITION_TIME = 0.3 )`
+`animateOut( string side, optional number to, number time = SHEETS_DEFAULT_TRANSITION_TIME = 0.3 )`
 
-- Animates the view out from the left side of the screen.
-
-`animateInRight( optional number to, number time = SHEETS_DEFAULT_TRANSITION_TIME = 0.3 )`
-
-- Animates the view in from the right side of the screen.
-
-`animateOutRight( optional number to, number time = SHEETS_DEFAULT_TRANSITION_TIME = 0.3 )`
-
-- Animates the view out from the right side of the screen.
-
-`animateInTop( optional number to, number time = SHEETS_DEFAULT_TRANSITION_TIME = 0.3 )`
-
-- Animates the view in from the top side of the screen.
-
-`animateOutTop( optional number to, number time = SHEETS_DEFAULT_TRANSITION_TIME = 0.3 )`
-
-- Animates the view out from the top side of the screen.
-
-`animateInBottom( optional number to, number time = SHEETS_DEFAULT_TRANSITION_TIME = 0.3 )`
-
-- Animates the view in from the bottom side of the screen.
-
-`animateOutBottom( optional number to, number time = SHEETS_DEFAULT_TRANSITION_TIME = 0.3 )`
-
-- Animates the view out from the bottom side of the screen.
+- Animates the view out from the side of the screen given.
+- Valid sides are `"left"`, `"right"`, `"top"`, and `"bottom"`
 
 #### Metamethods
 

@@ -1,10 +1,10 @@
 Application:positionViewsInX( views, XX, XXX ) - not sure whether to add to IChildContainer...
-Add type checking to stuff.
 Document the cursor stuff.
 Document new elements.
 Add double click and ctrl-shift-left/right selection to TextInput.
 Make TextInput use clipboard.
 Fix bug with ScrollContainer bar positioning.
+Updating Theme selectors.
 Add masking to TextInput.
 Image class.
 Container class.

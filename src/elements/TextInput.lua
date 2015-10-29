@@ -33,7 +33,7 @@ function TextInput:setScroll( scroll )
 	return self:setChanged()
 end
 
-function TextInput:setCursorPosition( cursor )
+function TextInput:setCursor( cursor )
 	if type( cursor ) ~= "number" then return error( "expected number cursor, got " .. class.type( cursor ) ) end
 
 	self.cursor = math.min( math.max( cursor, 0 ), #self.text )
@@ -48,7 +48,7 @@ function TextInput:setCursorPosition( cursor )
 	self:setChanged()
 end
 
-function TextInput:setSelectionPosition( position )
+function TextInput:setSelection( position )
 	if type( position ) ~= "number" then return error( "expected number position, got " .. class.type( position ) ) end
 
 	self.selection = position
@@ -64,11 +64,11 @@ function TextInput:write( text )
 
 	if self.selection then
 		self.text = self.text:sub( 1, math.min( self.cursor, self.selection ) ) .. text .. self.text:sub( math.max( self.cursor, self.selection ) + 1 )
-		self:setCursorPosition( math.min( self.cursor, self.selection ) + #text )
+		self:setCursor( math.min( self.cursor, self.selection ) + #text )
 		self.selection = false
 	else
 		self.text = self.text:sub( 1, self.cursor ) .. text .. self.text:sub( self.cursor + 1 )
-		self:setCursorPosition( self.cursor + #text )
+		self:setCursor( self.cursor + #text )
 	end
 	self:setChanged()
 end
@@ -119,14 +119,14 @@ function TextInput:onPreDraw()
 	end
 	
 	if not self.selection and self.focussed and self.cursor - self.scroll >= 0 and self.cursor - self.scroll < self.width then
-		self:setCursor( self.cursor - self.scroll, 0, self.theme:getField( self.class, "textColour", self.focussed and "focussed" or "default" ) )
+		self:setCursorBlink( self.cursor - self.scroll, 0, self.theme:getField( self.class, "textColour", self.focussed and "focussed" or "default" ) )
 	end
 end
 
 function TextInput:onMouseEvent( event )
 	if self.down and event:is( SHEETS_EVENT_MOUSE_DRAG ) then
 		self.selection = self.selection or self.cursor
-		self:setCursorPosition( event.x - self.scroll + 1 )
+		self:setCursor( event.x - self.scroll + 1 )
 	elseif self.down and event:is( SHEETS_EVENT_MOUSE_UP ) then
 		self.down = false
 	end
@@ -141,7 +141,7 @@ function TextInput:onMouseEvent( event )
 	if event:is( SHEETS_EVENT_MOUSE_DOWN ) then
 		self:focus()
 		self.selection = nil
-		self:setCursorPosition( event.x - self.scroll )
+		self:setCursor( event.x - self.scroll )
 		self.down = true
 		event:handle()
 	elseif event:is( SHEETS_EVENT_MOUSE_CLICK ) or event:is( SHEETS_EVENT_MOUSE_HOLD ) then
@@ -156,17 +156,17 @@ function TextInput:onKeyboardEvent( event )
 		if self.selection then
 			if event:matches "left" then
 				if event:isHeld "leftShift" or event:isHeld "rightShift" then
-					self:setCursorPosition( self.cursor - 1 )
+					self:setCursor( self.cursor - 1 )
 				else
-					self:setCursorPosition( math.min( self.cursor, self.selection ) )
+					self:setCursor( math.min( self.cursor, self.selection ) )
 					self.selection = nil
 				end
 				event:handle()
 			elseif event:matches "right" then
 				if event:isHeld "leftShift" or event:isHeld "rightShift" then
-					self:setCursorPosition( self.cursor + 1 )
+					self:setCursor( self.cursor + 1 )
 				else
-					self:setCursorPosition( math.max( self.cursor, self.selection ) )
+					self:setCursor( math.max( self.cursor, self.selection ) )
 					self.selection = nil
 				end
 				event:handle()
@@ -179,17 +179,17 @@ function TextInput:onKeyboardEvent( event )
 				if event:isHeld "leftShift" or event:isHeld "rightShift" then
 					self.selection = self.cursor
 				end
-				self:setCursorPosition( self.cursor - 1 )
+				self:setCursor( self.cursor - 1 )
 				event:handle()
 			elseif event:matches "right" then
 				if event:isHeld "leftShift" or event:isHeld "rightShift" then
 					self.selection = self.cursor
 				end
-				self:setCursorPosition( self.cursor + 1 )
+				self:setCursor( self.cursor + 1 )
 				event:handle()
 			elseif event:matches "backspace" and self.cursor > 0 then
 				self.text = self.text:sub( 1, self.cursor - 1 ) .. self.text:sub( self.cursor + 1 )
-				self:setCursorPosition( self.cursor - 1 )
+				self:setCursor( self.cursor - 1 )
 				event:handle()
 			elseif event:matches "delete" then
 				self:setText( self.text:sub( 1, self.cursor ) .. self.text:sub( self.cursor + 2 ) )
@@ -202,14 +202,14 @@ function TextInput:onKeyboardEvent( event )
 			if self.selection > self.cursor then
 				self.selection, self.cursor = self.cursor, self.selection
 			end
-			self:addAnimation( "selection", self.setSelectionPosition, Animation():setRounded():addKeyFrame( self.selection, 0, .15 ) )
-			self:addAnimation( "cursor", self.setCursorPosition, Animation():setRounded():addKeyFrame( self.cursor, #self.text, .15 ) )
+			self:addAnimation( "selection", self.setSelection, Animation():setRounded():addKeyFrame( self.selection, 0, .15 ) )
+			self:addAnimation( "cursor", self.setCursor, Animation():setRounded():addKeyFrame( self.cursor, #self.text, .15 ) )
 			event:handle()
 		elseif event:matches "end" then
-			self:addAnimation( "cursor", self.setCursorPosition, Animation():setRounded():addKeyFrame( self.cursor, #self.text, .15 ) )
+			self:addAnimation( "cursor", self.setCursor, Animation():setRounded():addKeyFrame( self.cursor, #self.text, .15 ) )
 			event:handle()
 		elseif event:matches "home" then
-			self:addAnimation( "cursor", self.setCursorPosition, Animation():setRounded():addKeyFrame( self.cursor, 0, .15 ) )
+			self:addAnimation( "cursor", self.setCursor, Animation():setRounded():addKeyFrame( self.cursor, 0, .15 ) )
 			event:handle()
 		elseif event:matches "enter" then
 			self:unfocus()

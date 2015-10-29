@@ -55,7 +55,7 @@ function Sheet:draw()
 		local children = self.children
 		local cx, cy, cc
 
-		self:resetCursor()
+		self:resetCursorBlink()
 
 		if self.onPreDraw then
 			self:onPreDraw()
@@ -72,7 +72,7 @@ function Sheet:draw()
 		end
 
 		if cx then
-			self:setCursor( cx, cy, cc )
+			self:setCursorBlink( cx, cy, cc )
 		end
 
 		if self.onPostDraw then
