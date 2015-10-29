@@ -117,8 +117,7 @@ end
 
 function Application:addMonitor( side )
 	if peripheral.getType( side ) == "monitor" then
-		local r = term.redirect( side )
-		self.terminals[#self.terminals + 1] = r
+		self.terminals[#self.terminals + 1] = peripheral.wrap( side )
 		self.monitor_sides[side] = r
 		return self
 	else
@@ -262,9 +261,10 @@ function Application:draw()
 			end
 		end
 
+		screen:drawToTerminals( self.terminals )
+
 		self.changed = false
 		for i = 1, #self.terminals do
-			screen:drawToTerminal( self.terminals[i] )
 			if cx then
 				self.terminals[i].setCursorPos( cx + 1, cy + 1 )
 				self.terminals[i].setTextColour( cc )

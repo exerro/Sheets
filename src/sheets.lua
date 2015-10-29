@@ -9,6 +9,16 @@
  -- @defineifndef SHEETS_DEFAULT_TRANSITION_TIME .3
  -- @defineifndef SHEETS_DEFAULT_TRANSITION_EASING "transition"
 
+ -- @if SHEETS_CORE_ELEMENTS
+	 -- @define SHEETS_BUTTON
+	 -- @define SHEETS_CHECKBOX
+	 -- @define SHEETS_DRAGGABLE
+	 -- @define SHEETS_PANEL
+	 -- @define SHEETS_SCROLLCONTAINER
+	 -- @define SHEETS_TEXT
+	 -- @define SHEETS_TEXTINPUT
+ -- @endif
+
  -- @if SHEETS_LOWRES
 	 -- @define GRAPHICS_NO_TEXT false
  -- @else
@@ -16,9 +26,9 @@
  -- @endif
 
  -- @if SHEETS_WRAP
-	local sheets = setmetatable( {}, { __index = _ENV } )
+	local env = setmetatable( {}, { __index = _ENV } )
 	local function f()
-		local _ENV = sheets
+		local _ENV = env
  -- @endif
 
  -- @once
@@ -72,6 +82,7 @@ alignment = {
  -- @include graphics
 
  -- @require sheets.timer
+ -- @require sheets.clipboard
 
  -- @require sheets.interfaces.IAnimation
  -- @require sheets.interfaces.IChildContainer
@@ -106,29 +117,35 @@ alignment = {
  -- @require sheets.Sheet
  -- @require sheets.View
 
---[[
-SMLDocument:setVariable( "transparent", TRANSPARENT )
-SMLDocument:setVariable( "white", WHITE )
-SMLDocument:setVariable( "orange", ORANGE )
-SMLDocument:setVariable( "magenta", MAGENTA )
-SMLDocument:setVariable( "lightBlue", LIGHTBLUE )
-SMLDocument:setVariable( "yellow", YELLOW )
-SMLDocument:setVariable( "lime", LIME )
-SMLDocument:setVariable( "pink", PINK )
-SMLDocument:setVariable( "grey", GREY )
-SMLDocument:setVariable( "lightGrey", LIGHTGREY )
-SMLDocument:setVariable( "cyan", CYAN )
-SMLDocument:setVariable( "purple", PURPLE )
-SMLDocument:setVariable( "blue", BLUE )
-SMLDocument:setVariable( "brown", BROWN )
-SMLDocument:setVariable( "green", GREEN )
-SMLDocument:setVariable( "red", RED )
-SMLDocument:setVariable( "black", BLACK )
-]]
+ -- @if SHEETS_BUTTON
+	 -- @require sheets.elements.Button
+ -- @endif
+ -- @if SHEETS_CHECKBOX
+	 -- @require sheets.elements.Checkbox
+ -- @endif
+ -- @if SHEETS_DRAGGABLE
+	 -- @require sheets.elements.Draggable
+ -- @endif
+ -- @if SHEETS_PANEL
+	 -- @require sheets.elements.Panel
+ -- @endif
+ -- @if SHEETS_SCROLLCONTAINER
+	 -- @require sheets.elements.ScrollContainer
+ -- @endif
+ -- @if SHEETS_TEXT
+	 -- @require sheets.elements.Text
+ -- @endif
+ -- @if SHEETS_TEXTINPUT
+	 -- @require sheets.elements.TextInput
+ -- @endif
 
  -- @if SHEETS_WRAP
 	end
 	f()
+	local sheets = {}
+	for k, v in pairs( env ) do
+		sheets[k] = v
+	end
  -- @endif
  -- @if SHEETS_EXTERNAL
  	return sheets

@@ -2,10 +2,10 @@
  -- @once
 
  -- @ifndef __INCLUDE_sheets
-	-- @error 'sheets' must be included before including 'sheets.Button'
+	-- @error 'sheets' must be included before including 'sheets.elements.Button'
  -- @endif
 
- -- @print Including sheets.Button
+ -- @print Including sheets.elements.Button
 
 class "Button" extends "Sheet" implements (IHasText) {
 	down = false;

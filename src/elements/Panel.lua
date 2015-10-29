@@ -1,4 +1,12 @@
 
+ -- @once
+
+ -- @ifndef __INCLUDE_sheets
+	-- @error 'sheets' must be included before including 'test.elements.Panel'
+ -- @endif
+
+ -- @print Including test.elements.Panel
+
 class "Panel" extends "Sheet" {}
 
 function Panel:onPreDraw()

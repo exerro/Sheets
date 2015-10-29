@@ -1,2 +1,14 @@
 Application:positionViewsInX( views, XX, XXX ) - not sure whether to add to IChildContainer...
 Add type checking to stuff.
+Document the cursor stuff.
+Document new elements.
+Add double click and ctrl-shift-left/right selection to TextInput.
+Make TextInput use clipboard.
+Image class.
+Container class.
+ColourSelector class.
+Label class.
+RadioButton class.
+Tabs class.
+Toggle class.
+Window class.

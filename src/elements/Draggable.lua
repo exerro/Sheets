@@ -2,10 +2,10 @@
  -- @once
 
  -- @ifndef __INCLUDE_sheets
-	-- @error 'sheets' must be included before including 'test.Draggable'
+	-- @error 'sheets' must be included before including 'test.elements.Draggable'
  -- @endif
 
- -- @print Including test.Draggable
+ -- @print Including test.elements.Draggable
 
 class "Draggable" extends "Sheet" implements (IHasText) {
 	down = false;
