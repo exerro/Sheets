@@ -30,6 +30,7 @@ function IAnimation:addAnimation( label, setter, animation )
 end
 
 function IAnimation:stopAnimation( label )
+ 	if type( label ) ~= "string" then return error( "expected string label, got " .. class.type( label ) ) end
 	local a = self.animations[label]
 	self.animations[label] = nil
 	return a

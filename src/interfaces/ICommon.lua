@@ -50,6 +50,10 @@ function ICommon:setTheme( theme, children )
 end
 
 function ICommon:setCursor( x, y, colour )
+	if type( x ) ~= "number" then return error( "expected number x, got " .. class.type( x ) ) end
+	if type( y ) ~= "number" then return error( "expected number y, got " .. class.type( y ) ) end
+	if colour and type( colour ) ~= "number" then return error( "expected number colour, got " .. class.type( colour ) ) end
+
 	self.cursor_active = true
 	self.cursor_x = x
 	self.cursor_y = y

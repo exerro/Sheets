@@ -97,6 +97,9 @@ function IChildContainer:getChildrenById( id )
 end
 
 function IChildContainer:getChildrenAt( x, y )
+	if type( x ) ~= "number" then return error( "expected number x, got " .. class.type( x ) ) end
+	if type( y ) ~= "number" then return error( "expected number y, got " .. class.type( y ) ) end
+
 	local c = {}
 	local children = self.children
 	for i = 1, #children do
@@ -113,6 +116,7 @@ function IChildContainer:getChildrenAt( x, y )
 end
 
 function IChildContainer:isChildVisible( child )
+	if not class.typeOf( child, Sheet ) then return error( "expected Sheet child, got " .. class.type( child ) ) end
 	return child.x + child.width > 0 and child.y + child.height > 0 and child.x < self.width and child.y < self.height
 end
 

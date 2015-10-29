@@ -22,16 +22,20 @@ function TextInput:TextInput( x, y, width )
 end
 
 function TextInput:setText( text )
-	self.text = text
+	self.text = tostring( text )
 	return self:setChanged()
 end
 
 function TextInput:setScroll( scroll )
+	if type( scroll ) ~= "number" then return error( "expected number scroll, got " .. class.type( scroll ) ) end
+
 	self.scroll = scroll
 	return self:setChanged()
 end
 
 function TextInput:setCursorPosition( cursor )
+	if type( cursor ) ~= "number" then return error( "expected number cursor, got " .. class.type( cursor ) ) end
+
 	self.cursor = math.min( math.max( cursor, 0 ), #self.text )
 	if self.cursor == self.selection then
 		self.selection = nil
@@ -45,6 +49,8 @@ function TextInput:setCursorPosition( cursor )
 end
 
 function TextInput:setSelectionPosition( position )
+	if type( position ) ~= "number" then return error( "expected number position, got " .. class.type( position ) ) end
+
 	self.selection = position
 	self:setChanged()
 end
@@ -54,6 +60,8 @@ function TextInput:getSelectedText()
 end
 
 function TextInput:write( text )
+	text = tostring( text )
+
 	if self.selection then
 		self.text = self.text:sub( 1, math.min( self.cursor, self.selection ) ) .. text .. self.text:sub( math.max( self.cursor, self.selection ) + 1 )
 		self:setCursorPosition( math.min( self.cursor, self.selection ) + #text )

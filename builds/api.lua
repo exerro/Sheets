@@ -1592,6 +1592,8 @@ local timerID = 0\
 local t, lt = os.clock()\
 \
 function timer.new( n )\
+if type( n ) ~= \"number\" then return error( \"expected number time, got \" .. class.type( n ) ) end\
+\
 local finish, ID = t + n, false -- avoids duplicating timer events\
 for i = 1, #timers do\
 if timers[i].time == finish then\
@@ -1603,10 +1605,8 @@ return ID or os.startTimer( n )\
 end\
 \
 function timer.queue( n, response )\
-\
-\
-\
-\
+if type( n ) ~= \"number\" then return error( \"expected number time, got \" .. class.type( n ) ) end\
+if type( response ) ~= \"function\" then return error( \"expected function response, got \" .. class.type( response ) ) end\
 \
 local finish, ID = t + n, false -- avoids duplicating timer events\
 for i = 1, #timers do\
@@ -1622,8 +1622,7 @@ return timerID\
 end\
 \
 function timer.cancel( ID )\
-\
-\
+if type( ID ) ~= \"number\" then return error( \"expected number ID, got \" .. class.type( ID ) ) end\
 \
 for i = #timers, 1, -1 do\
 if timers[i].ID == ID then\
@@ -1660,10 +1659,12 @@ local c = {}\
 clipboard = {}\
 \
 function clipboard.put( modes )\
+if type( modes ) ~= \"table\" then return error( \"expected table modes, got \" .. class.type( modes ) ) end\
 c = modes\
 end\
 \
 function clipboard.get( mode )\
+if type( mode ) ~= \"string\" then return error( \"expected string mode, got \" .. class.type( mode ) ) end\
 return c[mode]\
 end\
 \
@@ -1703,6 +1704,7 @@ return animation\
 end\
 \
 function IAnimation:stopAnimation( label )\
+if type( label ) ~= \"string\" then return error( \"expected string label, got \" .. class.type( label ) ) end\
 local a = self.animations[label]\
 self.animations[label] = nil\
 return a\
@@ -1833,6 +1835,9 @@ return t\
 end\
 \
 function IChildContainer:getChildrenAt( x, y )\
+if type( x ) ~= \"number\" then return error( \"expected number x, got \" .. class.type( x ) ) end\
+if type( y ) ~= \"number\" then return error( \"expected number y, got \" .. class.type( y ) ) end\
+\
 local c = {}\
 local children = self.children\
 for i = 1, #children do\
@@ -1849,6 +1854,7 @@ return elements\
 end\
 \
 function IChildContainer:isChildVisible( child )\
+if not class.typeOf( child, Sheet ) then return error( \"expected Sheet child, got \" .. class.type( child ) ) end\
 return child.x + child.width > 0 and child.y + child.height > 0 and child.x < self.width and child.y < self.height\
 end\
 \
@@ -1925,6 +1931,10 @@ return self\
 end\
 \
 function ICommon:setCursor( x, y, colour )\
+if type( x ) ~= \"number\" then return error( \"expected number x, got \" .. class.type( x ) ) end\
+if type( y ) ~= \"number\" then return error( \"expected number y, got \" .. class.type( y ) ) end\
+if colour and type( colour ) ~= \"number\" then return error( \"expected number colour, got \" .. class.type( colour ) ) end\
+\
 self.cursor_active = true\
 self.cursor_x = x\
 self.cursor_y = y\
@@ -2520,8 +2530,10 @@ return self\
 end\
 \
 function Application:addMonitor( side )\
+if type( side ) ~= \"string\" then return error( \"expected string side, got \" .. class.type( side ) ) end\
 if peripheral.getType( side ) == \"monitor\" then\
-self.terminals[#self.terminals + 1] = peripheral.wrap( side )\
+local r = peripheral.wrap( side )\
+self.terminals[#self.terminals + 1] = r\
 self.monitor_sides[side] = r\
 return self\
 else\
@@ -2530,6 +2542,7 @@ end\
 end\
 \
 function Application:removeMonitor( side )\
+if type( side ) ~= \"string\" then return error( \"expected string side, got \" .. class.type( side ) ) end\
 for i = #self.terminals, 1, -1 do\
 if self.terminals[i] == self.monitor_sides[side] then\
 table.remove( self.terminals, i )\
@@ -2922,56 +2935,7 @@ return self.elements[cls][field].default\
 end\
 end\
 end\
-end\
-\
---[[\
-local decoder = SMLNodeDecoder \"theme\"\
-\
-decoder.isBodyAllowed = true\
-decoder.isBodyNecessary = true\
-\
-function decoder:init()\
-return Theme()\
-end\
-\
-function decoder:attribute_name( name )\
-SMLDocument.current():setTheme( name, self )\
-end\
-\
-function decoder:decodeBody( body )\
-local doc = SMLDocument.current()\
-for i = 1, #body do\
-\
-local element = doc:getElement( body[i].nodetype )\
-if not element then\
-error( \"[\" .. body[i].position.line .. \", \" .. body[i].position.character .. \"] : unknown element '\" .. body[i].nodetype .. \"'\", 0 )\
-end\
-\
-local fields = body[i].body\
-if not fields then\
-error( \"[\" .. body[i].position.line .. \", \" .. body[i].position.character .. \"] : element has no body for fields\", 0 )\
-end\
-\
-for i = 1, #fields do\
-local field = fields[i]\
-\
-if fields[i].body then\
-error( \"[\" .. fields[i].position.line .. \", \" .. fields[i].position.character .. \"] : field '\" .. fields[i].nodetype .. \"' has body\", 0 )\
-end\
-\
-for n = 1, #field.attributes do\
-local k, v = field.attributes[n][1], field.attributes[n][2]\
-if doc:getVariable( v ) ~= nil then\
-v = doc:getVariable( v )\
-end\
-self:setField( element, fields[i].nodetype, k, v )\
-end\
-end\
-end\
-end\
-\
-SMLDocument:setDecoder( \"theme\", decoder )\
-]]","sheets.Theme",nil,_ENV)if not __f then error(__err,0)end __f()
+end","sheets.Theme",nil,_ENV)if not __f then error(__err,0)end __f()
 
 local __f,__err=load("\
 \
@@ -3483,11 +3447,15 @@ end\
 end\
 \
 function ScrollContainer:setScrollX( scroll )\
+if type( scroll ) ~= \"number\" then return error( \"expected number scroll, got \" .. class.type( scroll ) ) end\
+\
 self.scrollX = scroll\
 self:setChanged()\
 end\
 \
 function ScrollContainer:setScrollY( scroll )\
+if type( scroll ) ~= \"number\" then return error( \"expected number scroll, got \" .. class.type( scroll ) ) end\
+\
 self.scrollY = scroll\
 self:setChanged()\
 end\
@@ -3785,16 +3753,20 @@ return self:Sheet( x, y, width, 1 )\
 end\
 \
 function TextInput:setText( text )\
-self.text = text\
+self.text = tostring( text )\
 return self:setChanged()\
 end\
 \
 function TextInput:setScroll( scroll )\
+if type( scroll ) ~= \"number\" then return error( \"expected number scroll, got \" .. class.type( scroll ) ) end\
+\
 self.scroll = scroll\
 return self:setChanged()\
 end\
 \
 function TextInput:setCursorPosition( cursor )\
+if type( cursor ) ~= \"number\" then return error( \"expected number cursor, got \" .. class.type( cursor ) ) end\
+\
 self.cursor = math.min( math.max( cursor, 0 ), #self.text )\
 if self.cursor == self.selection then\
 self.selection = nil\
@@ -3808,6 +3780,8 @@ self:setChanged()\
 end\
 \
 function TextInput:setSelectionPosition( position )\
+if type( position ) ~= \"number\" then return error( \"expected number position, got \" .. class.type( position ) ) end\
+\
 self.selection = position\
 self:setChanged()\
 end\
@@ -3817,6 +3791,8 @@ return self.selection and self.text:sub( math.min( self.cursor, self.selection )
 end\
 \
 function TextInput:write( text )\
+text = tostring( text )\
+\
 if self.selection then\
 self.text = self.text:sub( 1, math.min( self.cursor, self.selection ) ) .. text .. self.text:sub( math.max( self.cursor, self.selection ) + 1 )\
 self:setCursorPosition( math.min( self.cursor, self.selection ) + #text )\

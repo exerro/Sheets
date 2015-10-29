@@ -116,8 +116,10 @@ function Application:removeTerminal( t )
 end
 
 function Application:addMonitor( side )
+	if type( side ) ~= "string" then return error( "expected string side, got " .. class.type( side ) ) end
 	if peripheral.getType( side ) == "monitor" then
-		self.terminals[#self.terminals + 1] = peripheral.wrap( side )
+		local r = peripheral.wrap( side )
+		self.terminals[#self.terminals + 1] = r
 		self.monitor_sides[side] = r
 		return self
 	else
@@ -126,6 +128,7 @@ function Application:addMonitor( side )
 end
 
 function Application:removeMonitor( side )
+	if type( side ) ~= "string" then return error( "expected string side, got " .. class.type( side ) ) end
 	for i = #self.terminals, 1, -1 do
 		if self.terminals[i] == self.monitor_sides[side] then
 			table.remove( self.terminals, i )

@@ -6,6 +6,8 @@ local timerID = 0
 local t, lt = os.clock()
 
 function timer.new( n )
+	if type( n ) ~= "number" then return error( "expected number time, got " .. class.type( n ) ) end
+
 	local finish, ID = t + n, false -- avoids duplicating timer events
 	for i = 1, #timers do
 		if timers[i].time == finish then
@@ -17,10 +19,8 @@ function timer.new( n )
 end
 
 function timer.queue( n, response )
-	-- @if SHEETS_TYPE_CHECK
-		if type( n ) ~= "number" then return error( "expected number time, got " .. class.type( n ) ) end
-		if type( response ) ~= "function" then return error( "expected function response, got " .. class.type( response ) ) end
-	-- @endif
+	if type( n ) ~= "number" then return error( "expected number time, got " .. class.type( n ) ) end
+	if type( response ) ~= "function" then return error( "expected function response, got " .. class.type( response ) ) end
 
 	local finish, ID = t + n, false -- avoids duplicating timer events
 	for i = 1, #timers do
@@ -36,9 +36,8 @@ function timer.queue( n, response )
 end
 
 function timer.cancel( ID )
-	-- @if SHEETS_TYPE_CHECK
-		if type( ID ) ~= "number" then return error( "expected number ID, got " .. class.type( ID ) ) end
-	-- @endif
+	if type( ID ) ~= "number" then return error( "expected number ID, got " .. class.type( ID ) ) end
+
 	for i = #timers, 1, -1 do
 		if timers[i].ID == ID then
 			return table.remove( timers, i ).time - t

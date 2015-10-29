@@ -42,11 +42,15 @@ function ScrollContainer:ScrollContainer( x, y, width, height, element )
 end
 
 function ScrollContainer:setScrollX( scroll )
+	if type( scroll ) ~= "number" then return error( "expected number scroll, got " .. class.type( scroll ) ) end
+
 	self.scrollX = scroll
 	self:setChanged()
 end
 
 function ScrollContainer:setScrollY( scroll )
+	if type( scroll ) ~= "number" then return error( "expected number scroll, got " .. class.type( scroll ) ) end
+
 	self.scrollY = scroll
 	self:setChanged()
 end
