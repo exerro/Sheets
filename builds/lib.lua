@@ -28,6 +28,9 @@
 local env = setmetatable( {}, { __index = _ENV } )
 local function f()
 local _ENV = env
+if setfenv then
+setfenv( 1, env )
+end
 
 
 
@@ -3751,10 +3754,10 @@ self:drawText \"default\"\
 end\
 \
 Theme.addToTemplate( Text, \"colour\", {\
-default = 512;\
+default = 1;\
 } )\
 Theme.addToTemplate( Text, \"textColour\", {\
-default = 1;\
+default = 128;\
 } )","sheets.elements.Text",nil,_ENV)if not __f then error(__err,0)end __f()
 
 

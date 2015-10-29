@@ -4,6 +4,8 @@ Document the cursor stuff.
 Document new elements.
 Add double click and ctrl-shift-left/right selection to TextInput.
 Make TextInput use clipboard.
+Fix bug with ScrollContainer bar positioning.
+Add masking to TextInput.
 Image class.
 Container class.
 ColourSelector class.

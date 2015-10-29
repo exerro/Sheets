@@ -20,8 +20,8 @@ function Text:onPreDraw()
 end
 
 Theme.addToTemplate( Text, "colour", {
-	default = CYAN;
+	default = WHITE;
 } )
 Theme.addToTemplate( Text, "textColour", {
-	default = WHITE;
+	default = GREY;
 } )

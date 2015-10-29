@@ -28,6 +28,16 @@
 
 
 
+local env = setmetatable( {}, { __index = _ENV } )
+local function f()
+local _ENV = env
+if setfenv then
+setfenv( 1, env )
+end
+
+
+
+
 
 
 
@@ -57,13 +67,12 @@ mouse_click = 2;
 mouse_hold = 3;
 mouse_drag = 4;
 mouse_scroll = 5;
-key_down = 6;
-key_up = 7;
-text = 8;
-voice = 9;
-timer = 10;
+mouse_ping = 6;
+key_down = 7;
+key_up = 8;
+text = 9;
+voice = 10;
 paste = 11;
-mouse_ping = 12;
 }
 
 alignment = {
@@ -92,274 +101,6 @@ bottom = 4;
 
 
 
-
-
-
-
-
-
-
-
-class = {}
-local classobj = setmetatable( {}, { __index = class } )
-local names = {}
-local last_created
-
-local supportedMetaMethods = {
-__add = true;
-__sub = true;
-__mul = true;
-__div = true;
-__mod = true;
-__pow = true;
-__unm = true;
-__len = true;
-__eq = true;
-__lt = true;
-__lte = true;
-__tostring = true;
-__concat = true;
-}
-
-local function _tostring( self )
-return "[Class] " .. self:type()
-end
-local function _concat( a, b )
-return tostring( a ) .. tostring( b )
-end
-
-local function newSuper( object, super )
-
-local superProxy = {}
-
-if super.super then
-superProxy.super = newSuper( object, super.super )
-end
-
-setmetatable( superProxy, { __index = function( t, k )
-
-if type( super[k] ) == "function" then
-return function( self, ... )
-
-if self == superProxy then
-self = object
-end
-object.super = superProxy.super
-local v = { super[k]( self, ... ) }
-object.super = superProxy
-return unpack( v )
-
-end
-else
-return super[k]
-end
-
-end, __newindex = super, __tostring = function( self )
-return "[Super] " .. tostring( super ) .. " of " .. tostring( object )
-end } )
-
-return superProxy
-
-end
-
-function classobj:new( ... )
-
-local mt = { __index = self, __INSTANCE = true }
-local instance = setmetatable( { class = self, meta = mt }, mt )
-
-if self.super then
-instance.super = newSuper( instance, self.super )
-end
-
-for k, v in pairs( self.meta ) do
-if supportedMetaMethods[k] then
-mt[k] = v
-end
-end
-
-if mt.__tostring == _tostring then
-function mt:__tostring()
-return self:tostring()
-end
-end
-
-function instance:type()
-return self.class:type()
-end
-
-function instance:typeOf( class )
-return self.class:typeOf( class )
-end
-
-if not self.tostring then
-function instance:tostring()
-return "[Instance] " .. self:type()
-end
-end
-
-local ob = self
-while ob do
-if ob[ob.meta.__type] then
-ob[ob.meta.__type]( instance, ... )
-break
-end
-ob = ob.super
-end
-
-return instance
-
-end
-
-function classobj:extends( super )
-self.super = super
-self.meta.__index = super
-end
-
-function classobj:type()
-return tostring( self.meta.__type )
-end
-
-function classobj:typeOf( super )
-return super == self or ( self.super and self.super:typeOf( super ) ) or false
-end
-
-function classobj:implement( t )
-if type( t ) ~= "table" then
-return error( "cannot implement non-table" )
-end
-for k, v in pairs( t ) do
-self[k] = v
-end
-return self
-end
-
-function classobj:implements( t )
-if type( t ) ~= "table" then
-return error( "cannot compare non-table" )
-end
-for k, v in pairs( t ) do
-if type( self[k] ) ~= type( v ) then
-return false
-end
-end
-return true
-end
-
-function class:new( name )
-
-if type( name or self ) ~= "string" then
-return error( "expected string class name, got " .. type( name or self ) )
-end
-
-local mt = { __index = classobj, __CLASS = true, __tostring = _tostring, __concat = _concat, __call = classobj.new, __type = name or self }
-local obj = setmetatable( { meta = mt }, mt )
-
-names[name] = obj
-last_created = obj
-
-_ENV[name] = obj
-
-return function( t )
-if not last_created then
-return error "no class to define"
-end
-
-for k, v in pairs( t ) do
-last_created[k] = v
-end
-last_created = nil
-end
-
-end
-
-function class.type( object )
-local _type = type( object )
-
-if _type == "table" then
-pcall( function()
-local mt = getmetatable( object )
-_type = ( ( mt.__CLASS or mt.__INSTANCE ) and object:type() ) or _type
-end )
-end
-
-return _type
-end
-
-function class.typeOf( object, class )
-if type( object ) == "table" then
-local ok, v = pcall( function() return getmetatable( object ).__CLASS or getmetatable( object ).__INSTANCE or error() end )
-return ok and object:typeOf( class )
-end
-
-return false
-end
-
-function class.isClass( object )
-return pcall( function() if not getmetatable( object ).__CLASS then error() end end ), nil
-end
-
-function class.isInstance( object )
-return pcall( function() if not getmetatable( object ).__INSTANCE then error() end end ), nil
-end
-
-setmetatable( class, {
-__call = class.new;
-} )
-
-function extends( name )
-
-if not last_created then
-return error "no class to extend"
-end
-
-if not names[name] then
-return error( "no such class '" .. tostring( name ) .. "'" )
-end
-
-last_created:extends( names[name] )
-
-return function( t )
-if not last_created then
-return error "no class to define"
-end
-
-for k, v in pairs( t ) do
-last_created[k] = v
-end
-last_created = nil
-end
-
-end
-
-function implements( name )
-
-if not last_created then
-return error "no class to modify"
-end
-
-if type( name ) == "string" then
-if not names[name] then
-return error( "no such class '" .. tostring( name ) .. "'" )
-end
-last_created:implement( names[name] )
-elseif type( name ) == "table" then
-last_created:implement( name )
-else
-return error( "Cannot implement type (" .. class.type( name ) .. ")" )
-end
-
-return function( t )
-if not last_created then
-return error "no class to define"
-end
-
-for k, v in pairs( t ) do
-last_created[k] = v
-end
-last_created = nil
-end
-
-end
 
 
 
@@ -400,11 +141,269 @@ green = 8192;
 red = 16384;
 black = 32768;
 }
-
-
-
-
-
+local __f,__err=load("\
+\
+\
+class = {}\
+local classobj = setmetatable( {}, { __index = class } )\
+local names = {}\
+local last_created\
+\
+local supportedMetaMethods = {\
+__add = true;\
+__sub = true;\
+__mul = true;\
+__div = true;\
+__mod = true;\
+__pow = true;\
+__unm = true;\
+__len = true;\
+__eq = true;\
+__lt = true;\
+__lte = true;\
+__tostring = true;\
+__concat = true;\
+}\
+\
+local function _tostring( self )\
+return \"[Class] \" .. self:type()\
+end\
+local function _concat( a, b )\
+return tostring( a ) .. tostring( b )\
+end\
+\
+local function newSuper( object, super )\
+\
+local superProxy = {}\
+\
+if super.super then\
+superProxy.super = newSuper( object, super.super )\
+end\
+\
+setmetatable( superProxy, { __index = function( t, k )\
+\
+if type( super[k] ) == \"function\" then\
+return function( self, ... )\
+\
+if self == superProxy then\
+self = object\
+end\
+object.super = superProxy.super\
+local v = { super[k]( self, ... ) }\
+object.super = superProxy\
+return unpack( v )\
+\
+end\
+else\
+return super[k]\
+end\
+\
+end, __newindex = super, __tostring = function( self )\
+return \"[Super] \" .. tostring( super ) .. \" of \" .. tostring( object )\
+end } )\
+\
+return superProxy\
+\
+end\
+\
+function classobj:new( ... )\
+\
+local mt = { __index = self, __INSTANCE = true }\
+local instance = setmetatable( { class = self, meta = mt }, mt )\
+\
+if self.super then\
+instance.super = newSuper( instance, self.super )\
+end\
+\
+for k, v in pairs( self.meta ) do\
+if supportedMetaMethods[k] then\
+mt[k] = v\
+end\
+end\
+\
+if mt.__tostring == _tostring then\
+function mt:__tostring()\
+return self:tostring()\
+end\
+end\
+\
+function instance:type()\
+return self.class:type()\
+end\
+\
+function instance:typeOf( class )\
+return self.class:typeOf( class )\
+end\
+\
+if not self.tostring then\
+function instance:tostring()\
+return \"[Instance] \" .. self:type()\
+end\
+end\
+\
+local ob = self\
+while ob do\
+if ob[ob.meta.__type] then\
+ob[ob.meta.__type]( instance, ... )\
+break\
+end\
+ob = ob.super\
+end\
+\
+return instance\
+\
+end\
+\
+function classobj:extends( super )\
+self.super = super\
+self.meta.__index = super\
+end\
+\
+function classobj:type()\
+return tostring( self.meta.__type )\
+end\
+\
+function classobj:typeOf( super )\
+return super == self or ( self.super and self.super:typeOf( super ) ) or false\
+end\
+\
+function classobj:implement( t )\
+if type( t ) ~= \"table\" then\
+return error( \"cannot implement non-table\" )\
+end\
+for k, v in pairs( t ) do\
+self[k] = v\
+end\
+return self\
+end\
+\
+function classobj:implements( t )\
+if type( t ) ~= \"table\" then\
+return error( \"cannot compare non-table\" )\
+end\
+for k, v in pairs( t ) do\
+if type( self[k] ) ~= type( v ) then\
+return false\
+end\
+end\
+return true\
+end\
+\
+function class:new( name )\
+\
+if type( name or self ) ~= \"string\" then\
+return error( \"expected string class name, got \" .. type( name or self ) )\
+end\
+\
+local mt = { __index = classobj, __CLASS = true, __tostring = _tostring, __concat = _concat, __call = classobj.new, __type = name or self }\
+local obj = setmetatable( { meta = mt }, mt )\
+\
+names[name] = obj\
+last_created = obj\
+\
+_ENV[name] = obj\
+\
+return function( t )\
+if not last_created then\
+return error \"no class to define\"\
+end\
+\
+for k, v in pairs( t ) do\
+last_created[k] = v\
+end\
+last_created = nil\
+end\
+\
+end\
+\
+function class.type( object )\
+local _type = type( object )\
+\
+if _type == \"table\" then\
+pcall( function()\
+local mt = getmetatable( object )\
+_type = ( ( mt.__CLASS or mt.__INSTANCE ) and object:type() ) or _type\
+end )\
+end\
+\
+return _type\
+end\
+\
+function class.typeOf( object, class )\
+if type( object ) == \"table\" then\
+local ok, v = pcall( function() return getmetatable( object ).__CLASS or getmetatable( object ).__INSTANCE or error() end )\
+return ok and object:typeOf( class )\
+end\
+\
+return false\
+end\
+\
+function class.isClass( object )\
+return pcall( function() if not getmetatable( object ).__CLASS then error() end end ), nil\
+end\
+\
+function class.isInstance( object )\
+return pcall( function() if not getmetatable( object ).__INSTANCE then error() end end ), nil\
+end\
+\
+setmetatable( class, {\
+__call = class.new;\
+} )\
+\
+function extends( name )\
+\
+if not last_created then\
+return error \"no class to extend\"\
+end\
+\
+if not names[name] then\
+return error( \"no such class '\" .. tostring( name ) .. \"'\" )\
+end\
+\
+last_created:extends( names[name] )\
+\
+return function( t )\
+if not last_created then\
+return error \"no class to define\"\
+end\
+\
+for k, v in pairs( t ) do\
+last_created[k] = v\
+end\
+last_created = nil\
+end\
+\
+end\
+\
+function implements( name )\
+\
+if not last_created then\
+return error \"no class to modify\"\
+end\
+\
+if type( name ) == \"string\" then\
+if not names[name] then\
+return error( \"no such class '\" .. tostring( name ) .. \"'\" )\
+end\
+last_created:implement( names[name] )\
+elseif type( name ) == \"table\" then\
+last_created:implement( name )\
+else\
+return error( \"Cannot implement type (\" .. class.type( name ) .. \")\" )\
+end\
+\
+return function( t )\
+if not last_created then\
+return error \"no class to define\"\
+end\
+\
+for k, v in pairs( t ) do\
+last_created[k] = v\
+end\
+last_created = nil\
+end\
+\
+end","class",nil,_ENV)if not __f then error(__err,0)end __f()
 
 
 
@@ -539,8 +538,6 @@ function shader.inverse( col, ... )
 return shader_inverse_lookup[col] or col, ...
 end
 local __f,__err=load("\
--- drawTo() not false compatible, uses drawPixels()\
-\
 \
 \
 \
@@ -703,13 +700,13 @@ end\\\
 return areamt( t )\\\
 end\\\
 \\\
-function area.correct_circle( x, y, radius )\\\
+function area.correctedCircle( x, y, radius )\\\
 local radius2 = radius * radius\\\
 local t = {}\\\
 local i = 1\\\
 \\\
-for yy = math.floor( y - radius ), math.ceil( y + radius ) do\\\
-if yy > 0 and yy < height then\\\
+for yy = math.floor( y - radius + 1 ), math.ceil( y + radius - 1 ) do\\\
+if yy >= 0 and yy < height then\\\
 local diff = y - yy\\\
 local xdiff = ( radius2 - diff * diff ) ^ .5 * 1.5\\\
 \\\
@@ -800,27 +797,28 @@ end\\\
 \\\
 return area\",\"area\",nil,_ENV)if not __f then error(__err,0)end local area=__f()\
 \
---[[\
+--[[ Need to do\
+Image\
 load\
 loadString\
 save\
 saveString\
-getTerm\
-drawRoundRect\
-drawRoundedRect\
-fillRoundRect\
-fillRoundedRect\
-drawTriangle\
-fillTriangle\
+\
+area.lua\
+area.triangle implemented\
+\
+DrawingCanvas\
 drawEllipse\
-fillEllipse\
 drawArc\
-drawPie\
-fillPie\
+\
 floodFill\
+\
 drawSurfacePart\
 drawSurfaceScaled\
 drawSurfaceRotated\
+\
+TermCanvas\
+getRedirect\
 ]]\
 \
 local function range( a, b, c, d )\
@@ -1111,9 +1109,11 @@ function Canvas:drawPixels( coords, pixels )\
 if type( coords ) ~= \"table\" then return error( \"expected table coords, got \" .. class.type( coords ) ) end\
 if type( pixels ) ~= \"table\" then return error( \"expected table pixels, got \" .. class.type( pixels ) ) end\
 \
+local l = #pixels\
 local pxls = self.pixels\
+local modNeeded = l < #coords\
 for i = 1, #coords do\
-local px = pixels[i]\
+local px = modNeeded and pixels[( i - 1 ) % l + 1] or pixels[i]\
 local bc, tc, char = px[1], px[2], px[3]\
 local cpx\
 if bc == 0 then\
@@ -1196,7 +1196,11 @@ end\
 end\
 end\
 \
+\
+\
+\
 canvas:drawPixels( toDrawCoords, toDrawPixels )\
+\
 end\
 \
 function Canvas:getArea( mode, a, b, c, d )\
@@ -1252,7 +1256,7 @@ if type( a ) ~= \"number\" then return error( \"expected number x, got \" .. cla
 if type( b ) ~= \"number\" then return error( \"expected number y, got \" .. class.type( b ) ) end\
 if type( c ) ~= \"number\" then return error( \"expected number radius, got \" .. class.type( c ) ) end\
 \
-return area.correct_circle( a, b, c )\
+return area.correctedCircle( a, b, c )\
 else\
 return error( \"unexpected mode: \" .. tostring( mode ) )\
 end\
@@ -1426,9 +1430,9 @@ if y < 0 or y >= self.height then return end -- no pixels to draw\
 \
 local sWidth = self.width\
 local ypos = y * sWidth + ( x > 0 and x or 0 )\
-local diff = x > 0 and 0 or -x\
+local diff = x >= 0 and 0 or -x\
 local t, p = {}, {}\
-local w, w2 = sWidth - x, #text - diff\
+local w, w2 = sWidth - ( x > 0 and x or 0 ), #text - diff\
 \
 for i = 1, w < w2 and w or w2 do\
 t[i] = { colour, textColour, text:sub( i + diff, i + diff ) }\
@@ -1470,12 +1474,68 @@ if type( width ) ~= \"number\" then return error( \"element attribute #1 'width'
 if type( height ) ~= \"number\" then return error( \"element attribute #2 'height' not a number (\" .. class.type( height ) .. \")\", 2 ) end\
 \
 \
+local t = {}\
+\
 self.last = {}\
 for i = 1, width * height do\
-self.last[i] = {}\
+self.last[i] = t\
 end\
 \
 return self:Canvas( width, height )\
+end\
+\
+function ScreenCanvas:reset()\
+local t = {}\
+for i = 1, width * height do\
+self.last[i] = t\
+end\
+end\
+\
+function ScreenCanvas:drawToTerminals( terminals, sx, sy )\
+sx = sx or 0\
+sy = sy or 0\
+\
+if type( terminals ) ~= \"table\" then\
+return error( \"expected table terminals, got \" .. class.type( terminals ) )\
+end\
+if type( sx ) ~= \"number\" then return error( \"expected number x, got \" .. class.type( sx ) ) end\
+if type( sy ) ~= \"number\" then return error( \"expected number y, got \" .. class.type( sy ) ) end\
+\
+\
+local i = 1\
+local pixels, last = self.pixels, self.last\
+local sWidth = self.width\
+\
+for y = 1, self.height do\
+local changed = false\
+for x = 1, sWidth do\
+\
+local px = pixels[i]\
+local ltpx = last[i]\
+if px[1] ~= ltpx[1] or px[2] ~= ltpx[2] or px[3] ~= ltpx[3] then\
+changed = true\
+last[i] = px\
+end\
+\
+i = i + 1\
+end\
+\
+if changed then\
+local bc, tc, s = {}, {}, {}\
+i = i - sWidth\
+for x = 1, sWidth do\
+local px = pixels[i]\
+bc[x] = hex[px[1]]\
+tc[x] = hex[px[2]]\
+s[x] = px[3] == \"\" and \" \" or px[3]\
+i = i + 1\
+end\
+for i = 1, #terminals do\
+terminals[i].setCursorPos( sx + 1, sy + y )\
+terminals[i].blit( table.concat( s ), table.concat( tc ), table.concat( bc ) )\
+end\
+end\
+end\
 end\
 \
 function ScreenCanvas:drawToTerminal( term, sx, sy )\
@@ -1499,14 +1559,10 @@ for x = 1, sWidth do\
 \
 local px = pixels[i]\
 local ltpx = last[i]\
-\
-\
-\
 if px[1] ~= ltpx[1] or px[2] ~= ltpx[2] or px[3] ~= ltpx[3] then\
 changed = true\
 last[i] = px\
 end\
-\
 \
 i = i + 1\
 end\
@@ -1601,6 +1657,22 @@ return updated\
 end\
 \
 timer.step()","sheets.timer",nil,_ENV)if not __f then error(__err,0)end __f()
+local __f,__err=load("\
+local c = {}\
+\
+clipboard = {}\
+\
+function clipboard.put( modes )\
+c = modes\
+end\
+\
+function clipboard.get( mode )\
+return c[mode]\
+end\
+\
+function clipboard.clear()\
+c = {}\
+end","sheets.clipboard",nil,_ENV)if not __f then error(__err,0)end __f()
 
 local __f,__err=load("\
 \
@@ -1629,6 +1701,14 @@ animation = animation;\
 if animation.value then\
 setter( self, animation.value )\
 end\
+\
+return animation\
+end\
+\
+function IAnimation:stopAnimation( label )\
+local a = self.animations[label]\
+self.animations[label] = nil\
+return a\
 end\
 \
 function IAnimation:updateAnimations( dt )\
@@ -1639,15 +1719,14 @@ local animations = self.animations\
 local k, v = next( animations )\
 \
 while animations[k] do\
-v.animation:update( dt )\
-if v.animation.value then\
-v.setter( self, v.animation.value )\
+\
+local animation = v.animation\
+animation:update( dt )\
+if animation.value then\
+v.setter( self, animation.value )\
 end\
 \
-if v.animation:finished() then\
-if type( v.animation.onFinish ) == \"function\" then\
-v.animation:onFinish()\
-end\
+if animation:finished() then\
 finished[#finished + 1] = k\
 end\
 \
@@ -1659,17 +1738,9 @@ self.animations[finished[i]] = nil\
 end\
 end","sheets.interfaces.IAnimation",nil,_ENV)if not __f then error(__err,0)end __f()
 local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
-IChildContainer = {}\
-\
-IChildContainer.children = {}\
+IChildContainer = {\
+children = {}\
+}\
 \
 function IChildContainer:IChildContainer()\
 self.children = {}\
@@ -1685,26 +1756,52 @@ end\
 function IChildContainer:addChild( child )\
 if not class.typeOf( child, Sheet ) then return error( \"expected Sheet child, got \" .. class.type( child ) ) end\
 \
+local children = self.children\
+\
 if child.parent then\
 child.parent:removeChild( child )\
 end\
 \
-self:setChanged( true )\
 child.parent = self\
-if child.theme == default_theme then\
-child:setTheme( self.theme )\
+self:setChanged()\
+\
+for i = 1, #children do\
+if children[i].z > child.z then\
+table.insert( children, i, child )\
+return child\
 end\
-self.children[#self.children + 1] = child\
+end\
+\
+children[#children + 1] = child\
 return child\
 end\
 \
 function IChildContainer:removeChild( child )\
-for i = #self.children, 1, -1 do\
+for i = 1, #self.children do\
 if self.children[i] == child then\
-self:setChanged( true )\
 child.parent = nil\
-\
+self:setChanged()\
 return table.remove( self.children, i )\
+end\
+end\
+end\
+\
+function IChildContainer:repositionChildZIndex( child )\
+local children = self.children\
+\
+for i = 1, #children do\
+if children[i] == child then\
+while children[i-1] and children[i-1].z > child.z do\
+children[i-1], children[i] = child, children[i-1]\
+i = i - 1\
+end\
+while children[i+1] and children[i+1].z < child.z do\
+children[i+1], children[i] = child, children[i+1]\
+i = i + 1\
+end\
+\
+self:setChanged()\
+break\
 end\
 end\
 end\
@@ -1727,7 +1824,7 @@ if type( id ) ~= \"string\" then return error( \"expected string id, got \" .. c
 \
 local t = {}\
 for i = #self.children, 1, -1 do\
-local subt = self.children[i]:getChildById( id )\
+local subt = self.children[i]:getChildrenById( id )\
 for i = 1, #subt do\
 t[#t + 1] = subt[i]\
 end\
@@ -1738,35 +1835,47 @@ end\
 return t\
 end\
 \
+function IChildContainer:getChildrenAt( x, y )\
+local c = {}\
+local children = self.children\
+for i = 1, #children do\
+c[i] = children[i]\
+end\
+\
+local elements = {}\
+\
+for i = #c, 1, -1 do\
+c[i]:handle( MouseEvent( EVENT_MOUSE_PING, x - c[i].x, y - c[i].y, elements, true ) )\
+end\
+\
+return elements\
+end\
+\
 function IChildContainer:isChildVisible( child )\
 return child.x + child.width > 0 and child.y + child.height > 0 and child.x < self.width and child.y < self.height\
-end","sheets.interfaces.IChildContainer",nil,_ENV)if not __f then error(__err,0)end __f()
-local __f,__err=load("\
+end\
 \
+function IChildContainer:update( dt )\
+if type( dt ) ~= \"number\" then return error( \"expected number dt, got \" .. class.type( dt ) ) end\
 \
-\
-\
-\
-\
-\
-\
-IChildDecoder = {}\
-\
-function IChildDecoder:decodeChildren( body )\
-local document = SMLDocument.current()\
 local c = {}\
+local children = self.children\
 \
-for i = 1, #body do\
-local object, err = document:loadSMLNode( body[i], self )\
-if object then\
-c[i] = object\
-else\
-return error( err, 0 )\
-end\
+self:updateAnimations( dt )\
+\
+if self.onUpdate then\
+self:onUpdate( dt )\
 end\
 \
-return c\
-end","sheets.interfaces.IChildDecoder",nil,_ENV)if not __f then error(__err,0)end __f()
+for i = 1, #children do\
+c[i] = children[i]\
+end\
+\
+for i = #c, 1, -1 do\
+c[i]:update( dt )\
+end\
+end","sheets.interfaces.IChildContainer",nil,_ENV)if not __f then error(__err,0)end __f()
+--/ @require sheets.interfaces.IChildDecoder
 local __f,__err=load("\
 \
 \
@@ -1778,7 +1887,17 @@ local __f,__err=load("\
 \
 ICommon = {\
 changed = true;\
+id = \"ID\";\
+theme = nil;\
+cursor_x = 0;\
+cursor_y = 0;\
+cursor_colour = 0;\
+cursor_active = false;\
 }\
+\
+function ICommon:ICommon()\
+self.theme = Theme()\
+end\
 \
 function ICommon:setChanged( state )\
 self.changed = state ~= false\
@@ -1786,6 +1905,37 @@ if state ~= false and self.parent and not self.parent.changed then\
 self.parent:setChanged( true )\
 end\
 return self\
+end\
+\
+function ICommon:setID( id )\
+self.id = tostring( id )\
+return self\
+end\
+\
+function ICommon:setTheme( theme, children )\
+if not class.typeOf( theme, Theme ) then return error( \"expected Theme theme, got \" .. type( theme ) ) end\
+\
+self.theme = theme\
+\
+if children and self.children then\
+for i = 1, #self.children do\
+self.children[i]:setTheme( theme, true )\
+end\
+end\
+\
+self:setChanged( true )\
+return self\
+end\
+\
+function ICommon:setCursor( x, y, colour )\
+self.cursor_active = true\
+self.cursor_x = x\
+self.cursor_y = y\
+self.cursor_colour = colour or 128\
+end\
+\
+function ICommon:resetCursor()\
+self.cursor_active = false\
 end","sheets.interfaces.ICommon",nil,_ENV)if not __f then error(__err,0)end __f()
 local __f,__err=load("\
 \
@@ -1821,26 +1971,9 @@ local __f,__err=load("\
 \
 \
 \
-IHasID = {\
-id = \"ID\";\
+IHasParent = {\
+parent = nil;\
 }\
-\
-function IHasID:setID( id )\
-self.id = id\
-return self\
-end","sheets.interfaces.IHasID",nil,_ENV)if not __f then error(__err,0)end __f()
-local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
-IHasParent = {}\
-\
-IHasParent.parent = nil\
 \
 function IHasParent:setParent( parent )\
 if parent and ( not class.isInstance( parent ) or not parent:implements( IChildContainer ) ) then return error( \"expected IChildContainer parent, got \" .. class.type( parent ) ) end\
@@ -1861,6 +1994,10 @@ end\
 \
 function IHasParent:isVisible()\
 return self.parent and self.parent:isChildVisible( self )\
+end\
+\
+function IHasParent:bringToFront()\
+return self:setParent( self.parent )\
 end","sheets.interfaces.IHasParent",nil,_ENV)if not __f then error(__err,0)end __f()
 local __f,__err=load("\
 \
@@ -1875,8 +2012,6 @@ local wrapline, wrap\
 \
 IHasText = {\
 text = \"\";\
-horizontal_alignment = 0;\
-vertical_alignment = 3;\
 text_lines = {};\
 }\
 \
@@ -1889,26 +2024,6 @@ self:setChanged()\
 return self\
 end\
 \
-function IHasText:setVerticalAlignment( alignment )\
-if alignment ~= 3 and alignment ~= 1 and alignment ~= 4 then return error( \"invalid alignment\" ) end\
-\
-self.vertical_alignment = alignment\
-self:wrapText()\
-self:setChanged()\
-\
-return self\
-end\
-\
-function IHasText:setHorizontalAlignment( alignment )\
-if alignment ~= 0 and alignment ~= 1 and alignment ~= 2 then return error( \"invalid alignment\" ) end\
-\
-self.horizontal_alignment = alignment\
-self:wrapText()\
-self:setChanged()\
-\
-return self\
-end\
-\
 function IHasText:wrapText()\
 self.lines = wrap( self.text, self.width, self.height )\
 end\
@@ -1917,28 +2032,31 @@ function IHasText:drawText( mode )\
 local offset, lines = 0, self.lines\
 mode = mode or \"default\"\
 \
+local horizontal_alignment = self.theme:getField( self.class, \"horizontal-alignment\", mode )\
+local vertical_alignment = self.theme:getField( self.class, \"vertical-alignment\", mode )\
+\
 if not lines then\
 self:wrapText()\
 lines = self.lines\
 end\
 \
-if self.vertical_alignment == 1 then\
+if vertical_alignment == 1 then\
 offset = math.floor( self.height / 2 - #lines / 2 + .5 )\
-elseif self.vertical_alignment == 4 then\
+elseif vertical_alignment == 4 then\
 offset = self.height - #lines\
 end\
 \
 for i = 1, #lines do\
 \
 local xOffset = 0\
-if self.horizontal_alignment == 1 then\
+if horizontal_alignment == 1 then\
 xOffset = math.floor( self.width / 2 - #lines[i] / 2 + .5 )\
-elseif self.horizontal_alignment == 2 then\
+elseif horizontal_alignment == 2 then\
 xOffset = self.width - #lines[i]\
 end\
 \
 self.canvas:drawText( xOffset, offset + i - 1, lines[i], {\
-colour = self.theme:getField( self.class, \"colour\", mode );\
+colour = 0;\
 textColour = self.theme:getField( self.class, \"textColour\", mode );\
 } )\
 \
@@ -1981,39 +2099,14 @@ local __f,__err=load("\
 \
 \
 \
-IHasTheme = {\
-theme = nil;\
+IPosition = {\
+x = 0;\
+y = 0;\
+z = 0;\
+\
+width = 0;\
+height = 0;\
 }\
-\
-function IHasTheme:setTheme( theme, children )\
-if not class.typeOf( theme, Theme ) then return error( \"expected Theme theme, got \" .. type( theme ) ) end\
-\
-self.theme = theme\
-\
-if children and self.children then\
-for i = 1, #self.children do\
-self.children[i]:setTheme( theme, true )\
-end\
-end\
-\
-self:setChanged( true )\
-return self\
-end","sheets.interfaces.IHasTheme",nil,_ENV)if not __f then error(__err,0)end __f()
-local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
-IPosition = {}\
-\
-IPosition.x = 0\
-IPosition.y = 0\
-IPosition.width = 0\
-IPosition.height = 0\
 \
 function IPosition:IPosition( x, y, width, height )\
 self.x = x\
@@ -2023,8 +2116,7 @@ self.height = height\
 end\
 \
 function IPosition:setX( x )\
-\
-\
+if type( x ) ~= \"number\" then return error( \"expected number x, got \" .. class.type( x ) ) end\
 \
 if self.x ~= x then\
 self.x = x\
@@ -2034,8 +2126,7 @@ return self\
 end\
 \
 function IPosition:setY( y )\
-\
-\
+if type( y ) ~= \"number\" then return error( \"expected number y, got \" .. class.type( y ) ) end\
 \
 if self.y ~= y then\
 self.y = y\
@@ -2044,9 +2135,18 @@ end\
 return self\
 end\
 \
+function IPosition:setZ( z )\
+if type( z ) ~= \"number\" then return error( \"expected number z, got \" .. class.type( z ) ) end\
+\
+if self.z ~= z then\
+self.z = z\
+if self.parent then self.parent:repositionChildZIndex( self ) end\
+end\
+return self\
+end\
+\
 function IPosition:setWidth( width )\
-\
-\
+if type( width ) ~= \"number\" then return error( \"expected number width, got \" .. class.type( width ) ) end\
 \
 if self.width ~= width then\
 self.width = width\
@@ -2060,8 +2160,7 @@ return self\
 end\
 \
 function IPosition:setHeight( height )\
-\
-\
+if type( height ) ~= \"number\" then return error( \"expected number height, got \" .. class.type( height ) ) end\
 \
 if self.height ~= height then\
 self.height = height\
@@ -2082,343 +2181,96 @@ local __f,__err=load("\
 \
 \
 \
+local function animateAttribute( self, label, setter, from, to, time, easing )\
+if type( to ) ~= \"number\" then return error( \"expected number to, got \" .. class.type( to ) ) end\
+if time and type( time ) ~= \"number\" then return error( \"expected number time, got \" .. class.type( time ) ) end\
+\
+local a = Animation():setRounded()\
+:addKeyFrame( from, to, time or .3, easing or \"transition\" )\
+self:addAnimation( label, setter, a )\
+return a\
+end\
+\
+local function animateElementInOrOut( self, mode, vertical, current, to, time )\
+if time and type( time ) ~= \"number\" then return error( \"expected number time, got \" .. class.type( time ) ) end\
+if to and type( to ) ~= \"number\" then return error( \"expected number to, got \" .. class.type( to ) ) end\
+\
+if not self.parent then\
+return error( tostring( self ) .. \" has no parent, cannot animate \" .. mode )\
+end\
+\
+local a = Animation():setRounded():addKeyFrame( current, to, time or .3, mode == \"in\" and \"entrance\" or \"exit\" )\
+\
+if vertical then\
+self:addAnimation( \"y\", self.setY, a )\
+else\
+self:addAnimation( \"x\", self.setX, a )\
+end\
+if mode == \"exit\" then\
+function a.onFinish() self:remove() end\
+end\
+\
+return a\
+end\
+\
 IPositionAnimator = {}\
 \
-function IPositionAnimator:transitionX( to, time, easing )\
-if type( to ) ~= \"number\" then return error( \"expected number to, got \" .. class.type( to ) ) end\
-if time and type( time ) ~= \"number\" then return error( \"expected number time, got \" .. class.type( time ) ) end\
-if easing and type( easing ) ~= \"function\" and easing ~= 2 and easing ~= 0 and easing ~= 1 then return error( \"expected function easing, got \" .. class.type( easing ) ) end\
-\
-local a = Animation():setRounded()\
-:addKeyFrame( self.x, to, time or .3, easing or 2 )\
-self:addAnimation( \"x\", self.setX, a )\
-return a\
+function IPositionAnimator:animateX( to, time, easing )\
+return animateAttribute( self, \"x\", self.setX, self.x, to, time, easing )\
 end\
 \
-function IPositionAnimator:transitionY( to, time, easing )\
-if type( to ) ~= \"number\" then return error( \"expected number to, got \" .. class.type( to ) ) end\
-if time and type( time ) ~= \"number\" then return error( \"expected number time, got \" .. class.type( time ) ) end\
-if easing and type( easing ) ~= \"function\" and easing ~= 2 and easing ~= 0 and easing ~= 1 then return error( \"expected function easing, got \" .. class.type( easing ) ) end\
-\
-local a = Animation():setRounded()\
-:addKeyFrame( self.y, to, time or .3, easing or 2 )\
-self:addAnimation( \"y\", self.setY, a )\
-return a\
+function IPositionAnimator:animateY( to, time, easing )\
+return animateAttribute( self, \"y\", self.setY, self.y, to, time, easing )\
 end\
 \
-function IPositionAnimator:transitionWidth( to, time, easing )\
-if type( to ) ~= \"number\" then return error( \"expected number to, got \" .. class.type( to ) ) end\
-if time and type( time ) ~= \"number\" then return error( \"expected number time, got \" .. class.type( time ) ) end\
-if easing and type( easing ) ~= \"function\" and easing ~= 2 and easing ~= 0 and easing ~= 1 then return error( \"expected function easing, got \" .. class.type( easing ) ) end\
-\
-local a = Animation():setRounded()\
-:addKeyFrame( self.width, to, time or .3, easing or 2 )\
-self:addAnimation( \"width\", self.setWidth, a )\
-return a\
+function IPositionAnimator:animateZ( to, time, easing )\
+return animateAttribute( self, \"z\", self.setZ, self.z, to, time, easing )\
 end\
 \
-function IPositionAnimator:transitionHeight( to, time, easing )\
-if type( to ) ~= \"number\" then return error( \"expected number to, got \" .. class.type( to ) ) end\
-if time and type( time ) ~= \"number\" then return error( \"expected number time, got \" .. class.type( time ) ) end\
-if easing and type( easing ) ~= \"function\" and easing ~= 2 and easing ~= 0 and easing ~= 1 then return error( \"expected function easing, got \" .. class.type( easing ) ) end\
-\
-local a = Animation():setRounded()\
-:addKeyFrame( self.height, to, time or .3, easing or 2 )\
-self:addAnimation( \"height\", self.setHeight, a )\
-return a\
+function IPositionAnimator:animateWidth( to, time, easing )\
+return animateAttribute( self, \"width\", self.setWidth, self.width, to, time, easing )\
 end\
 \
-function IPositionAnimator:transitionInLeft( to, time )\
-if time and type( time ) ~= \"number\" then return error( \"expected number time, got \" .. class.type( time ) ) end\
-if to and type( to ) ~= \"number\" then return error( \"expected number to, got \" .. class.type( to ) ) end\
-\
-if not self.parent then\
-return error( tostring( self ) .. \" has no parent, cannot transition in\" )\
-end\
-local a = Animation():setRounded()\
-:addKeyFrame( self.x, to or 0, time or .3, 1 )\
-self:addAnimation( \"x\", self.setX, a )\
-\
-return a\
+function IPositionAnimator:animateHeight( to, time, easing )\
+return animateAttribute( self, \"height\", self.setHeight, self.height, to, time, easing )\
 end\
 \
-function IPositionAnimator:transitionOutLeft( to, time )\
-if time and type( time ) ~= \"number\" then return error( \"expected number time, got \" .. class.type( time ) ) end\
-if to and type( to ) ~= \"number\" then return error( \"expected number to, got \" .. class.type( to ) ) end\
-\
-if not self.parent then\
-return error( tostring( self ) .. \" has no parent, cannot transition out\" )\
-end\
-local a = Animation():setRounded()\
-:addKeyFrame( self.x, to or -self.width, time or .3, 0 )\
-\
-local f = a:getLastAdded()\
-\
-self:addAnimation( \"x\", self.setX, a )\
-\
-function f.onFinish()\
-self:remove()\
+function IPositionAnimator:animateInLeft( to, time )\
+return animateElementInOrOut( self, \"in\", false, self.x, to or 0, time )\
 end\
 \
-return a\
+function IPositionAnimator:animateOutLeft( to, time )\
+return animateElementInOrOut( self, \"out\", false, self.x, to or -self.width, time )\
 end\
 \
-function IPositionAnimator:transitionInRight( to, time )\
-if time and type( time ) ~= \"number\" then return error( \"expected number time, got \" .. class.type( time ) ) end\
-if to and type( to ) ~= \"number\" then return error( \"expected number to, got \" .. class.type( to ) ) end\
-\
-if not self.parent then\
-return error( tostring( self ) .. \" has no parent, cannot transition in\" )\
-end\
-local a = Animation():setRounded()\
-:addKeyFrame( self.x, to or self.parent.width - self.width, time or .3, 1 )\
-self:addAnimation( \"x\", self.setX, a )\
-\
-return a\
+function IPositionAnimator:animateInRight( to, time )\
+return animateElementInOrOut( self, \"in\", false, self.x, to or self.parent.width - self.width, time )\
 end\
 \
-function IPositionAnimator:transitionOutRight( to, time )\
-if time and type( time ) ~= \"number\" then return error( \"expected number time, got \" .. class.type( time ) ) end\
-if to and type( to ) ~= \"number\" then return error( \"expected number to, got \" .. class.type( to ) ) end\
-\
-if not self.parent then\
-return error( tostring( self ) .. \" has no parent, cannot transition out\" )\
-end\
-local a = Animation():setRounded()\
-:addKeyFrame( self.x, to or self.parent.width, time or .3, 0 )\
-\
-local f = a:getLastAdded()\
-\
-self:addAnimation( \"x\", self.setX, a )\
-\
-function f.onFinish()\
-self:remove()\
+function IPositionAnimator:animateOutRight( to, time )\
+return animateElementInOrOut( self, \"out\", false, self.x, to or self.parent.width, time )\
 end\
 \
-return a\
+function IPositionAnimator:animateInTop( to, time )\
+return animateElementInOrOut( self, \"in\", true, self.y, to or 0, time )\
 end\
 \
-function IPositionAnimator:transitionInTop( to, time )\
-if time and type( time ) ~= \"number\" then return error( \"expected number time, got \" .. class.type( time ) ) end\
-if to and type( to ) ~= \"number\" then return error( \"expected number to, got \" .. class.type( to ) ) end\
-\
-if not self.parent then\
-return error( tostring( self ) .. \" has no parent, cannot transition in\" )\
-end\
-local a = Animation():setRounded()\
-:addKeyFrame( self.y, to or 0, time or .3, 1 )\
-self:addAnimation( \"y\", self.setY, a )\
-\
-return a\
+function IPositionAnimator:animateOutTop( to, time )\
+return animateElementInOrOut( self, \"out\", true, self.y, to or -self.height, time )\
 end\
 \
-function IPositionAnimator:transitionOutTop( to, time )\
-if time and type( time ) ~= \"number\" then return error( \"expected number time, got \" .. class.type( time ) ) end\
-if to and type( to ) ~= \"number\" then return error( \"expected number to, got \" .. class.type( to ) ) end\
-\
-if not self.parent then\
-return error( tostring( self ) .. \" has no parent, cannot transition out\" )\
-end\
-local a = Animation():setRounded()\
-:addKeyFrame( self.y, to or -self.height, time or .3, 0 )\
-\
-local f = a:getLastAdded()\
-\
-self:addAnimation( \"y\", self.setY, a )\
-\
-function f.onFinish()\
-self:remove()\
+function IPositionAnimator:animateInBottom( to, time )\
+return animateElementInOrOut( self, \"in\", true, self.y, to or self.parent.height - self.height, time )\
 end\
 \
-return a\
-end\
-\
-function IPositionAnimator:transitionInBottom( to, time )\
-if time and type( time ) ~= \"number\" then return error( \"expected number time, got \" .. class.type( time ) ) end\
-if to and type( to ) ~= \"number\" then return error( \"expected number to, got \" .. class.type( to ) ) end\
-\
-if not self.parent then\
-return error( tostring( self ) .. \" has no parent, cannot transition in\" )\
-end\
-local a = Animation():setRounded()\
-:addKeyFrame( self.y, to or self.parent.height - self.height, time or .3, 1 )\
-self:addAnimation( \"y\", self.setY, a )\
-\
-return a\
-end\
-\
-function IPositionAnimator:transitionOutBottom( to, time )\
-if time and type( time ) ~= \"number\" then return error( \"expected number time, got \" .. class.type( time ) ) end\
-if to and type( to ) ~= \"number\" then return error( \"expected number to, got \" .. class.type( to ) ) end\
-\
-if not self.parent then\
-return error( tostring( self ) .. \" has no parent, cannot transition out\" )\
-end\
-local a = Animation():setRounded()\
-:addKeyFrame( self.y, to or self.parent.height, time or .3, 0 )\
-\
-local f = a:getLastAdded()\
-\
-self:addAnimation( \"y\", self.setY, a )\
-\
-function f.onFinish()\
-self:remove()\
-end\
-\
-return a\
+function IPositionAnimator:animateOutBottom( to, time )\
+return animateElementInOrOut( self, \"out\", true, self.y, to or self.parent.height, time )\
 end","sheets.interfaces.IPositionAnimator",nil,_ENV)if not __f then error(__err,0)end __f()
-local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
-IAnimatedPositionAttributes = {}\
-\
-function IAnimatedPositionAttributes:attribute_targetX( value, node )\
-if type( value ) ~= \"number\" then\
-error( \"[\" .. node.position.line .. \", \" .. node.position.character .. \"]: expected number for 'targetX' attribute\" )\
-end\
-self:transitionX( value )\
-end\
-\
-function IAnimatedPositionAttributes:attribute_targetY( value, node )\
-if type( value ) ~= \"number\" then\
-error( \"[\" .. node.position.line .. \", \" .. node.position.character .. \"]: expected number for 'targetY' attribute\" )\
-end\
-self:transitionY( value )\
-end\
-\
-function IAnimatedPositionAttributes:attribute_targetWidth( value, node )\
-if type( value ) ~= \"number\" then\
-error( \"[\" .. node.position.line .. \", \" .. node.position.character .. \"]: expected number for 'targetWidth' attribute\" )\
-end\
-self:transitionWidth( value )\
-end\
-\
-function IAnimatedPositionAttributes:attribute_targetHeight( value, node )\
-if type( value ) ~= \"number\" then\
-error( \"[\" .. node.position.line .. \", \" .. node.position.character .. \"]: expected number for 'targetHeight' attribute\" )\
-end\
-self:transitionHeight( value )\
-end","sheets.interfaces.attributes.IAnimatedPositionAttributes",nil,_ENV)if not __f then error(__err,0)end __f()
-local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
-ICommonAttributes = {}\
-\
-function ICommonAttributes:attribute_id( id )\
-self:setID( id )\
-end","sheets.interfaces.attributes.ICommonAttributes",nil,_ENV)if not __f then error(__err,0)end __f()
-local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
-IPositionAttributes = {}\
-\
-function IPositionAttributes:attribute_x( x, node )\
-if type( x ) == \"number\" then\
-return self:setX( x )\
-else\
-error( \"[\" .. node.position.line .. \", \" .. node.position.character .. \"]: attribute 'x' is not a number (\" .. type( x ) .. \")\", 0 )\
-end\
-end\
-\
-function IPositionAttributes:attribute_y( y, node )\
-if type( y ) == \"number\" then\
-return self:setY( y )\
-else\
-error( \"[\" .. node.position.line .. \", \" .. node.position.character .. \"]: attribute 'y' is not a number (\" .. type( y ) .. \")\", 0 )\
-end\
-end\
-\
-function IPositionAttributes:attribute_width( width, node )\
-if type( width ) == \"number\" then\
-return self:setWidth( width )\
-else\
-error( \"[\" .. node.position.line .. \", \" .. node.position.character .. \"]: attribute 'width' is not a number (\" .. type( width ) .. \")\", 0 )\
-end\
-end\
-\
-function IPositionAttributes:attribute_height( height, node )\
-if type( height ) == \"number\" then\
-return self:setHeight( height )\
-else\
-error( \"[\" .. node.position.line .. \", \" .. node.position.character .. \"]: attribute 'height' is not a number (\" .. type( height ) .. \")\", 0 )\
-end\
-end","sheets.interfaces.attributes.IPositionAttributes",nil,_ENV)if not __f then error(__err,0)end __f()
-local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
-local a = {\
-left = 0;\
-centre = 1;\
-center = 1;\
-right = 2;\
-top = 3;\
-bottom = 4;\
-}\
-\
-ITextAttributes = {}\
-\
-function ITextAttributes:attribute_text( text )\
-self:setText( tostring( text ) )\
-end\
-\
-function ITextAttributes:attribute_horizontalAlignment( alignment, node )\
-if alignment == \"left\" or alignment == \"centre\" or alignment == \"center\" or alignment == \"right\" then\
-return self:setHorizontalAlignment( a[alignment] )\
-else\
-error( \"[\" .. node.position.line .. \", \" .. node.position.character .. \"]: attribute 'horizonalAlignment' is invalid\", 0 )\
-end\
-end\
-\
-function ITextAttributes:attribute_verticalAlignment( alignment, node )\
-if alignment == \"top\" or alignment == \"centre\" or alignment == \"center\" or alignment == \"bottom\" then\
-return self:setVerticalAlignment( a[alignment] )\
-else\
-error( \"[\" .. node.position.line .. \", \" .. node.position.character .. \"]: attribute 'verticalAlignment' is invalid\", 0 )\
-end\
-end","sheets.interfaces.attributes.ITextAttributes",nil,_ENV)if not __f then error(__err,0)end __f()
-local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
-IThemeAttribute = {}\
-\
-function IThemeAttribute:attribute_theme( theme, node )\
-local themeobj = SMLDocument.current():getTheme( theme )\
-if themeobj then\
-self:setTheme( themeobj )\
-else\
-return error( \"[\" .. node.position.line .. \", \" .. node.position.character .. \"]: no such theme '\" .. tostring( theme ) .. \"'\", 0 )\
-end\
-end","sheets.interfaces.attributes.IThemeAttribute",nil,_ENV)if not __f then error(__err,0)end __f()
+--/ @require sheets.interfaces.attributes.IAnimatedPositionAttributes
+--/ @require sheets.interfaces.attributes.ICommonAttributes
+--/ @require sheets.interfaces.attributes.IPositionAttributes
+--/ @require sheets.interfaces.attributes.ITextAttributes
+--/ @require sheets.interfaces.attributes.IThemeAttribute
 
 local __f,__err=load("\
 \
@@ -2429,761 +2281,7 @@ local __f,__err=load("\
 \
 \
 \
-class \"SMLNode\" {\
-nodetype = \"blank\";\
-attributes = {};\
-body = nil;\
-position = { line = 0, character = 0 };\
-}\
-\
-function SMLNode:SMLNode( type, attributes, body, position )\
-self.nodetype = type\
-self.attributes = attributes\
-self.body = body\
-self.position = position\
-end\
-\
-function SMLNode:set( attribute, value )\
-for i = 1, #self.attributes do\
-if self.attributes[i][1] == attribute then\
-self.attributes[i][2] = value\
-end\
-end\
-end\
-\
-function SMLNode:get( attribute )\
-for i = 1, #self.attributes do\
-if self.attributes[i][1] == attribute then\
-return self.attributes[i][2]\
-end\
-end\
-end\
-\
-function SMLNode:tostring( indent )\
-local whitespace = (\"  \"):rep( indent or 0 )\
-local a, b = \"\", {}\
-\
-for k, v in pairs( self.attributes ) do\
-if v == true then\
-a = a .. \" \" .. k\
-else\
-pcall( function()\
-a = a .. \" \" .. k .. \"=\" .. textutils.serialize( v )\
-end )\
-end\
-end\
-\
-if self.body then\
-for i = 1, #self.body do\
-b[i] = whitespace .. \"  \" .. self.body[i]:tostring( ( indent or 0 ) + 1 )\
-end\
-\
-return \"<\" .. self.nodetype .. a .. \">\\n\\n\" .. table.concat( b, \"\\n\" ) .. \"\\n\\n\" .. whitespace .. \"</\" .. self.nodetype .. \">\"\
-else\
-return \"<\" .. self.nodetype .. a .. \"/>\"\
-end\
-end","sheets.sml.SMLNode",nil,_ENV)if not __f then error(__err,0)end __f()
-local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-local type_lookup = {\
-[0] = \"string\";\
-[1] = \"equals\";\
-[2] = \"opening bracket\";\
-[3] = \"closing bracket\";\
-[4] = \"slash\";\
-[5] = \"number\";\
-[6] = \"boolean\";\
-[7] = \"identifier\";\
-[8] = \"symbol\";\
-[9] = \"EOF\";\
-}\
-\
-local stringlookupt = setmetatable( { n = \"\\n\", r = \"\\r\", [\"0\"] = \"\\0\" }, { __index = function( t, k ) return k end } )\
-\
-local function matches( self, type, value )\
-return self.type == type and ( value == nil or self.value == value )\
-end\
-\
-local function Token( type, value, line, char )\
-return { type = type, value = value, line = line, character = char, matches = matches }\
-end\
-\
-local function tType( type )\
-return type_lookup[type]\
-end\
-\
-class \"SMLParser\" {\
-text = \"\";\
-char = 1;\
-marker = 1;\
-character = 1;\
-line = 1;\
-token = nil;\
-peeking = {};\
-}\
-\
-function SMLParser:SMLParser( str )\
-self.text = str\
-self.peeking = {}\
-end\
-\
-function SMLParser:begin()\
-if not self.token then\
-self:next()\
-end\
-end\
-\
-function SMLParser:consume()\
-\
-local line, char = self.line, self.character\
-if self.char > #self.text then\
-return Token( 9, nil, line, char )\
-end\
-local c = self.text:sub( self.char, self.char )\
-if c == \"\\\"\" or c == \"'\" then\
-return self:consumeString( line, char )\
-\
-elseif self.text:find( \"^<!%-%-\", self.char ) then\
-self:consumeComment( line, char )\
-return self:consume()\
-\
-elseif c == \"<\" then\
-self.char = self.char + 1\
-self.character = self.character + 1\
-return Token( 2, \"<\", line, char )\
-\
-elseif c == \">\" then\
-self.char = self.char + 1\
-self.character = self.character + 1\
-return Token( 3, \">\", line, char )\
-\
-elseif c == \"/\" then\
-self.char = self.char + 1\
-self.character = self.character + 1\
-return Token( 4, \"/\", line, char )\
-\
-elseif c == \"=\" or c == \":\" then\
-self.char = self.char + 1\
-self.character = self.character + 1\
-return Token( 1, c, line, char )\
-\
-elseif self.text:find( \"^%-?%.?%d\", self.char ) then\
-return self:consumeNumber( line, char )\
-\
-elseif c:find \"[%w_]\" then\
-return self:consumeWord( line, char )\
-\
-elseif c == \"\\n\" then\
-self:consumeNewline( line, char )\
-return self:consume()\
-\
-elseif c:find \"%s\" then\
-self:consumeWhitespace( line, char )\
-return self:consume()\
-\
-end\
-\
-self.character = self.character + 1\
-self.char = self.char + 1\
-return Token( 8, c, line, char )\
-\
-end\
-\
-function SMLParser:consumeWord( line, char )\
-local w = self.text:match( \"[a-zA-Z_][a-zA-Z_0-9]*\", self.char )\
-self.char = self.char + #w\
-self.character = self.character + #w\
-if w == \"true\" or w == \"false\" then\
-return Token( 6, w == \"true\", line, char )\
-end\
-return Token( 7, w, line, char )\
-end\
-\
-function SMLParser:consumeNumber( line, char )\
-local n = self.text:match( \"%-?%d*%.?%d+\", self.char )\
-if self.text:sub( self.char + #n, self.char + #n ) == \"e\" then\
-n = n .. ( self.text:match( \"^e%-?%d+\", self.char + #n ) or error( \"[\" .. line .. \", \" .. char .. \"]: expected number after exponent 'e'\", 0 ) )\
-end\
-self.char = self.char + #n\
-self.character = self.character + #n\
-return Token( 5, tonumber( n ), line, char )\
-end\
-\
-function SMLParser:consumeString( line, char )\
-local close, e, s = self.text:sub( self.char, self.char ), false, \"\"\
-\
-for i = self.char + 1, #self.text do\
-if e then\
-local ch = stringlookupt[self.text:sub( i, i )]\
-if self.text:sub( i, i ) == \"\\n\" then\
-self.character = 0\
-self.line = self.line + 1\
-end\
-s, self.character, e = s .. ch, self.character + 1, false\
-elseif self.text:sub( i, i ) == \"\\\\\" then\
-e = true\
-self.character = self.character + 1\
-elseif self.text:sub( i, i ) == close then\
-self.char = i + 1\
-self.character = self.character + 1\
-return Token( 0, s, line, char )\
-elseif self.text:sub( i, i ) == \"\\n\" then\
-s = s .. \"\\n\"\
-self.character = 1\
-self.line = self.line + 1\
-else\
-s = s .. self.text:sub( i, i )\
-self.character = self.character + 1\
-end\
-end\
-return error( \"[\" .. line .. \", \" .. char .. \"]: found no closing \" .. close, 0 )\
-end\
-\
-function SMLParser:consumeComment( line, char )\
-local _, e = self.text:find( \"%-%->\", self.char )\
-if e then\
-self.line = self.line + select( 2, self.text:sub( self.char, e ):gsub( \"\\n\", \"\" ) )\
-self.character = self.character + #self.text:sub( self.char, e ):gsub( \".+\\n\", \"\" ) + 2\
-self.char = e + 2\
-else\
-self.char = #self.text + 1\
-end\
-end\
-\
-function SMLParser:consumeNewline()\
-self.line = self.line + 1\
-self.character = 1\
-self.char = self.char + 1\
-end\
-\
-function SMLParser:consumeWhitespace()\
-self.char = self.char + 1\
-self.character = self.character + 1\
-end\
-\
-function SMLParser:next()\
-local t = self.token\
-self.token = table.remove( self.peeking, 1 ) or self:consume()\
-return t\
-end\
-\
-function SMLParser:peek( n )\
-if ( n or 0 ) == 0 then\
-return self.token\
-end\
-for i = #self.peeking + 1, n do\
-self.peeking[i] = self:consume()\
-end\
-return self.peeking[n]\
-end\
-\
-function SMLParser:test( type, value, n )\
-return self:peek( n ):matches( type, value ) and self:peek( n ) or nil\
-end\
-\
-function SMLParser:skip( type, value )\
-return self.token:matches( type, value ) and self:next() or nil\
-end\
-\
-function SMLParser:parseArrayList()\
-if self:test( 8, \"]\" ) then\
-return {}\
-else\
-local t = {}\
-repeat\
-t[#t + 1] = self:parseValue()\
-until not self:skip( 8, \",\" )\
-return t\
-end\
-end\
-\
-function SMLParser:parseValue()\
-local value = self:next()\
-if value.type == 0 or value.type == 7 or value.type == 5 or value.type == 6 then\
-return value.value\
-elseif value:matches( 8, \"[\" ) then\
-local array = self:parseArrayList()\
-if not self:skip( 8, \"]\" ) then\
-return error( \"[\" .. self:peek().line .. \", \" .. self:peek().character .. \"]: expected ']', got \" .. tType( self:peek().type ), 0 )\
-end \
-return array\
-else\
-return error( \"[\" .. value.line .. \", \" .. value.character .. \"]: unexpected \" .. tType( value.type ), 0 )\
-end\
-end\
-\
-function SMLParser:parseAttribute()\
-local ident = self:skip( 7 ).value\
-if self:skip( 1 ) then\
-return ident, self:parseValue()\
-else\
-return ident, true\
-end\
-end\
-\
-function SMLParser:parseAttributes()\
-local t = {}\
-local l = {}\
-while self:test( 7 ) do\
-local k, v = self:parseAttribute()\
-local n = l[k] or #t + 1\
-l[k] = n\
-t[n] = { k, v }\
-end\
-return t\
-end\
-\
-function SMLParser:parseObject( position )\
-if self:test( 7 ) then\
-local name = self:skip( 7 ).value\
-local attributes = self:parseAttributes()\
-\
-if self:skip( 4 ) then\
-if not self:skip( 3 ) then\
-return error( \"[\" .. self:peek().line .. \", \" .. self:peek().character .. \"]: expected '>' after '/'\", 0 )\
-end\
-return SMLNode( name, attributes, nil, position )\
-else\
-if not self:skip( 3 ) then\
-return error( \"[\" .. self:peek().line .. \", \" .. self:peek().character .. \"]: expected '>' after '/'\", 0 )\
-end\
-return SMLNode( name, attributes, self:parseBody( name ), position )\
-end\
-else\
-return error( \"[\" .. self:peek().line .. \", \" .. self:peek().character .. \"]: expected object type, got \" .. tType( self:peek().type ), 0 )\
-end\
-end\
-\
-function SMLParser:parseBody( closing )\
-local body = {}\
-local position = { line = self:peek().line, character = self:peek().character }\
-while self:skip( 2 ) do\
-if self:test( 4 ) then\
-if closing then\
-self:next()\
-if self:test( 7 ) then\
-if not self:skip( 7, closing ) then\
-return error( \"[\" .. self:peek().line .. \", \" .. self:peek().character .. \"]: unexpected closing tag for '\" .. self:peek().value .. \"', expected '\" .. closing .. \"'\", 0 )\
-end\
-end\
-if self:skip( 3 ) then\
-return body\
-else\
-return error( \"[\" .. self:peek().line .. \", \" .. self:peek().character .. \"]: expected '>' after '/'\", 0 )\
-end\
-else\
-return error( \"[\" .. self:peek().line .. \", \" .. self:peek().character .. \"]: unexpected closing tag\", 0 )\
-end\
-else\
-body[#body + 1] = self:parseObject( position )\
-end\
-position = { line = self:peek().line, character = self:peek().character }\
-end\
-if closing then\
-return error( \"[\" .. self:peek().line .. \", \" .. self:peek().character .. \"]: unexpected '\" .. tType( self:peek().type ) .. \"', expected closing tag to close '\" .. closing .. \"'\", 0 )\
-end\
-return body\
-end","sheets.sml.SMLParser",nil,_ENV)if not __f then error(__err,0)end __f()
-local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
-class \"SMLNodeDecoder\" {\
-name = \"node\";\
-isBodyAllowed = false;\
-isBodyNecessary = false;\
-}\
-\
-function SMLNodeDecoder:SMLNodeDecoder( name )\
-self.name = name\
-end\
-\
-function SMLNodeDecoder:init( node )\
-\
-end\
-\
-function SMLNodeDecoder:decodeBody( body )\
-\
-end","sheets.sml.SMLNodeDecoder",nil,_ENV)if not __f then error(__err,0)end __f()
-local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
-local active\
-\
-local function copyt( o )\
-local t = {}\
-local k, v = next( o )\
-while k do\
-t[k] = v\
-k, v = next( o, k )\
-end\
-return t\
-end\
-\
-local function parseScript( script, name )\
-return pcall( function()\
-local parser = SMLParser( script )\
-parser:begin()\
-return parser:parseBody()\
-end )\
-end\
-\
-local function readScript( file )\
-local h = fs.open( file, \"r\" )\
-if h then\
-local content = h.readAll()\
-h.close()\
-return parseScript( content, fs.getName( file ) )\
-else\
-return false, \"failed to open file '\" .. file .. \"'\"\
-end\
-end\
-\
-local function rawLoadNode( self, node, parent )\
-local decoder = self:getDecoder( node.nodetype )\
-if decoder then\
-local src = node:get \"src\"\
-if src then\
-if node.body then\
-return error( \"[\" .. node.position.line .. \", \" .. node.position.character .. \"]: cannot have src attribute and body\", 0 )\
-elseif type( src ) ~= \"string\" then\
-return error( \"[\" .. node.position.line .. \", \" .. node.position.character .. \"]: expected string 'src'\", 0 )\
-else\
-local ok, data = readScript( self.application and self.application.path .. \"/\" .. src or src )\
-if ok then\
-node.body = data\
-else\
-return false, data\
-end\
-end\
-end\
-\
-if node.body and not decoder.isBodyAllowed then\
-return error( \"[\" .. node.position.line .. \", \" .. node.position.character .. \"]: body not allowed for node '\" .. decoder.name .. \"'\", 0 )\
-elseif not node.body and decoder.isBodyNecessary then\
-return error( \"[\" .. node.position.line .. \", \" .. node.position.character .. \"]: body required for node '\" .. decoder.name .. \"'\", 0 )\
-end\
-\
-local element = decoder:init( parent )\
-\
-for i = 1, #node.attributes do\
-local k, v = node.attributes[i][1], node.attributes[i][2]\
-if k ~= \"src\" then\
-if decoder[\"attribute_\" .. k] then\
-local ok, data = pcall( decoder[\"attribute_\" .. k], element, v, node, parent )\
-if not ok then\
-return false, data\
-end\
-else\
-return error( \"[\" .. node.position.line .. \", \" .. node.position.character .. \"]: invalid attribute '\" .. k .. \"' for node '\" .. decoder.name .. \"'\", 0 )\
-end\
-end\
-end\
-\
-if node.body then\
-local ok, data = pcall( decoder.decodeBody, element, node.body, parent )\
-if not ok then\
-return false, data\
-end\
-end\
-\
-return element\
-else\
-return false, \"[\" .. node.position.line .. \", \" .. node.position.character .. \"]: unknown node type '\" .. node.nodetype .. \"'\"\
-end\
-end\
-\
-class \"SMLDocument\" {\
-application = nil;\
-themes = {};\
-environment = {};\
-decoders = {};\
-elements = {};\
-}\
-\
-function SMLDocument.current()\
-return active\
-end\
-\
-function SMLDocument:SMLDocument( application )\
-self.application = application\
-self.themes = copyt( SMLDocument.themes )\
-self.environment = copyt( SMLDocument.environment )\
-self.decoders = copyt( SMLDocument.decoders )\
-self.elements = copyt( SMLDocument.elements )\
-\
-self.environment.document = self\
-self.environment.application = self.application\
-\
-active = self\
-end\
-\
-function SMLDocument:loadSMLNode( node, parent )\
-if not class.typeOf( node, SMLNode ) then return error( \"expected SMLNode node, got \" .. class.type( node ) ) end\
-\
-active = self\
-if not self.application then\
-return error( \"SMLDocument has no application: load an application first using SMLDocument:loadSMLApplication()\" )\
-end\
-return rawLoadNode( self, node, parent )\
-end\
-\
-function SMLDocument:loadSMLScript( script, name, parent )\
-name = name or \"sml-script\"\
-\
-if type( script ) ~= \"string\" then return error( \"expected string script, got \" .. class.type( script ) ) end\
-if type( name ) ~= \"string\" then return error( \"expected string source, got \" .. class.type( name ) ) end\
-\
-if not self.application then\
-return error( \"SMLDocument has no application: load an application first using SMLDocument:loadSMLApplication()\" )\
-end\
-\
-local ok, data = parseScript( script, name )\
-\
-if ok then\
-local t = {}\
-for i = 1, #data do\
-local object, err = rawLoadNode( self, data[i], parent )\
-if not object then\
-return false, name .. \" \" .. tostring( err )\
-end\
-t[i] = object\
-end\
-return t\
-else\
-return false, name .. \" \" .. data\
-end\
-end\
-\
-function SMLDocument:loadSMLFile( file, parent )\
-if type( file ) ~= \"string\" then return error( \"expected string file, got \" .. class.type( file ) ) end\
-\
-if not self.application then\
-return error( \"SMLDocument has no application: load an application first using SMLDocument:loadSMLApplication()\" )\
-end\
-local h = fs.open( self.application.path .. \"/\" .. file, \"r\" )\
-if h then\
-local content = h.readAll()\
-h.close()\
-return self:loadSMLScript( content, fs.getName( file ), parent )\
-else\
-return false, \"failed to open file\"\
-end\
-end\
-\
-function SMLDocument:loadSMLApplication( script, name )\
-name = name or \"sml-script\"\
-if type( script ) ~= \"string\" then return error( \"expected string script, got \" .. class.type( script ) ) end\
-if type( name ) ~= \"string\" then return error( \"expected string source, got \" .. class.type( name ) ) end\
-\
-if self.application then\
-return error \"document already has an application\"\
-end\
-\
-local ok, data = parseScript( script, name )\
-\
-if ok then\
-if #data == 1 then\
-if data[1].nodetype == \"application\" then\
-local application, err = rawLoadNode( self, data[1], self )\
-if application and application:typeOf( Application ) then\
-self.application = application\
-self.environment.application = application\
-return application\
-elseif not application then\
-return false, name .. \" \" .. tostring( err )\
-else\
-return error( \"misconfigured Sheets installation, <application> node didn't return an Application\" )\
-end\
-else\
-return false, \"[\" .. data[1].position.line .. \", \" .. data[1].position.character .. \"]: expected application node, got \" .. data[1].nodetype\
-end\
-elseif data[2] then\
-return false, \"[\" .. data[2].position.line .. \", \" .. data[2].position.character .. \"]: unexpected node '\" .. data[2].nodetype .. \"'\"\
-else\
-return false, \"expected application node, got nothing\"\
-end\
-else\
-return false, name .. \" \" .. data\
-end\
-end\
-\
-function SMLDocument:loadSMLApplicationFile( file )\
-if type( file ) ~= \"string\" then return error( \"expected string file, got \" .. class.type( file ) ) end\
-\
-if self.application then\
-return error \"document already has an application\"\
-end\
-\
-local h = fs.open( file, \"r\" )\
-if h then\
-local content = h.readAll()\
-h.close()\
-return self:loadSMLApplication( content, fs.getName( file ) )\
-else\
-return false, \"failed to open file\"\
-end\
-end\
-\
-function SMLDocument:setTheme( name, theme )\
-if type( name ) ~= \"string\" then return error( \"expected string name, got \" .. class.type( name ) ) end\
-if not class.typeOf( theme, Theme ) then return error( \"expected Theme theme, got \" .. class.type( theme ) ) end\
-\
-self.themes[name] = theme\
-end\
-\
-function SMLDocument:getTheme( name )\
-if type( name ) ~= \"string\" then return error( \"expected string name, got \" .. class.type( name ) ) end\
-\
-return self.themes[name] or self.themes.default\
-end\
-\
-function SMLDocument:addElement( name, cls, decoder )\
-if type( name ) ~= \"string\" then return error( \"expected string name, got \" .. class.type( name ) ) end\
-if not class.isClass( cls ) then return error( \"expected Class class, got \" .. class.type( cls ) ) end\
-if not class.typeOf( decoder, SMLNodeDecoder ) then return error( \"expected SMLNodeDecoder decoder, got \" .. class.type( decoder ) ) end\
-\
-self.elements[name] = cls\
-self.decoders[name] = decoder\
-end\
-\
-function SMLDocument:getElement( name )\
-if type( name ) ~= \"string\" then return error( \"expected string name, got \" .. class.type( name ) ) end\
-\
-return self.elements[name]\
-end\
-\
-function SMLDocument:setDecoder( name, decoder )\
-if type( name ) ~= \"string\" then return error( \"expected string name, got \" .. class.type( name ) ) end\
-if not class.typeOf( decoder, SMLNodeDecoder ) then return error( \"expected SMLNodeDecoder decoder, got \" .. class.type( decoder ) ) end\
-\
-self.decoders[name] = decoder\
-end\
-\
-function SMLDocument:getDecoder( name )\
-if type( name ) ~= \"string\" then return error( \"expected string name, got \" .. class.type( name ) ) end\
-\
-return self.decoders[name]\
-end\
-\
-function SMLDocument:setVariable( name, value )\
-if type( name ) ~= \"string\" then return error( \"expected string name, got \" .. class.type( name ) ) end\
-\
-self.environment[name] = value\
-end\
-\
-function SMLDocument:getVariable( name )\
-if type( name ) ~= \"string\" then return error( \"expected string name, got \" .. class.type( name ) ) end\
-\
-return self.environment[name]\
-end","sheets.sml.SMLDocument",nil,_ENV)if not __f then error(__err,0)end __f()
-
-local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
-class \"KeyFrame\" {\
-clock = 0;\
-value = 0;\
-initial = 0;\
-difference = 0;\
-duration = 0;\
-easing = nil;\
-onFinish = nil;\
-}\
-\
-function KeyFrame:KeyFrame( initial, final, duration, easing )\
-self.duration = duration\
-self.initial = initial\
-self.difference = final - initial\
-self.easing = easing\
-self.value = initial\
-end\
-\
-function KeyFrame:update( dt )\
-self.clock = math.min( math.max( self.clock + dt, 0 ), self.duration )\
-\
-self.value = self.easing( self.initial, self.difference, self.clock / self.duration )\
-end\
-\
-function KeyFrame:finished()\
-return self.clock == self.duration\
-end","sheets.animation.KeyFrame",nil,_ENV)if not __f then error(__err,0)end __f()
-local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
-class \"Pause\" {\
-duration = 0;\
-clock = 0;\
-onFinish = nil;\
-}\
-\
-function Pause:Pause( pause )\
-self.duration = pause\
-end\
-\
-function Pause:update( dt )\
-self.clock = math.min( math.max( self.clock + dt, 0 ), self.duration )\
-\
-if self.clock == self.duration and type( self.onFinish ) == \"function\" then\
-self:onFinish()\
-end\
-end\
-\
-function Pause:finished()\
-return self.clock == self.duration\
-end","sheets.animation.Pause",nil,_ENV)if not __f then error(__err,0)end __f()
-local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
--- if you try to update the value being animated using an onFinish method, nothing will happen unless you set self.value to nil\
-\
+local sin, cos = math.sin, math.cos\
 local halfpi = math.pi / 2\
 \
 local function easing_transition( u, d, t )\
@@ -3191,14 +2289,15 @@ return u + d * ( 3 * t * t - 2 * t * t * t )\
 end\
 \
 local function easing_exit( u, d, t )\
-return -d * math.cos(t * halfpi) + d + u\
+return -d * cos(t * halfpi) + d + u\
 end\
 \
 local function easing_entrance( u, d, t )\
-return u + d * math.sin(t * halfpi)\
+return u + d * sin(t * halfpi)\
 end\
 \
 class \"Animation\" {\
+frame = 1;\
 frames = {};\
 value = nil;\
 rounded = false;\
@@ -3214,12 +2313,15 @@ return self\
 end\
 \
 function Animation:addKeyFrame( initial, final, duration, easing )\
-if easing == 2 then\
+duration = duration or .5\
+easing = easing or easing_transition\
+\
+if not easing or easing == \"transition\" then\
 easing = easing_transition\
-elseif easing == 0 then\
-easing = easing_exit\
-elseif easing == 1 then\
+elseif easing == \"entrance\" then\
 easing = easing_entrance\
+elseif easing == \"exit\" then\
+easing = easing_exit\
 end\
 \
 if type( initial ) ~= \"number\" then return error( \"expected number initial, got \" .. class.type( initial ) ) end\
@@ -3227,11 +2329,19 @@ if type( final ) ~= \"number\" then return error( \"expected number final, got \
 if type( duration ) ~= \"number\" then return error( \"expected number duration, got \" .. class.type( duration ) ) end\
 if easing and type( easing ) ~= \"function\" then return error( \"expected function easing, got \" .. class.type( easing ) ) end\
 \
-local frame = KeyFrame( initial, final, duration, easing )\
+local frame = {\
+ease = true;\
+clock = 0;\
+duration = duration;\
+initial = initial;\
+difference = final - initial;\
+easing = easing;\
+}\
+\
 self.frames[#self.frames + 1] = frame\
 \
-if #self.frames == 0 then\
-self.value = frame.value\
+if #self.frames == 1 then\
+self.value = initial\
 end\
 \
 return self\
@@ -3241,37 +2351,391 @@ function Animation:addPause( pause )\
 pause = pause or 1\
 if type( pause ) ~= \"number\" then return error( \"expected number pause, got \" .. class.type( pause ) ) end\
 \
-local p = Pause( pause )\
-self.frames[#self.frames + 1] = p\
+local frame = {\
+clock = 0;\
+duration = pause;\
+}\
+\
+self.frames[#self.frames + 1] = frame\
 \
 return self\
 end\
 \
-function Animation:getLastAdded()\
-return self.frames[#self.frames]\
+function Animation:frameFinished()\
+if type( self.onFrameFinished ) == \"function\" then\
+self:onFrameFinished( self.frame )\
+end\
+\
+self.frame = self.frame + 1\
+\
+if not self.frames[self.frame] and type( self.onFinish ) == \"function\" then\
+self:onFinish()\
+end\
 end\
 \
 function Animation:update( dt )\
 if type( dt ) ~= \"number\" then return error( \"expected number dt, got \" .. class.type( dt ) ) end\
 \
-if self.frames[1] then\
-self.frames[1]:update( dt )\
-self.value = self.frames[1].value or self.value -- the or self.value is because pauses don't have a value\
-if self.rounded and self.value then\
-self.value = math.floor( self.value + .5 )\
+local frame = self.frames[self.frame]\
+\
+if frame then\
+frame.clock = math.min( frame.clock + dt, frame.duration )\
+\
+if frame.ease then\
+\
+local value = frame.easing( frame.initial, frame.difference, frame.clock / frame.duration )\
+if self.rounded then\
+value = math.floor( value + .5 )\
 end\
-if self.frames[1]:finished() then\
-if type( self.frames[1].onFinish ) == \"function\" then\
-self.frames[1].onFinish( self )\
+\
+self.value = value\
+\
+if frame.clock >= frame.duration then\
+self:frameFinished()\
 end\
-table.remove( self.frames, 1 )\
+\
+end\
+\
+if frame.clock >= frame.duration then\
+self:frameFinished()\
 end\
 end\
 end\
 \
 function Animation:finished()\
-return #self.frames == 0\
-end","sheets.animation.Animation",nil,_ENV)if not __f then error(__err,0)end __f()
+return not self.frames[self.frame]\
+end","sheets.Animation",nil,_ENV)if not __f then error(__err,0)end __f()
+local __f,__err=load("\
+\
+\
+\
+\
+\
+\
+\
+\
+class \"Application\" implements (IChildContainer) implements (IAnimation)\
+{\
+name = \"UnNamed Application\";\
+path = \"\";\
+terminateable = true;\
+\
+viewportX = 0;\
+viewportY = 0;\
+\
+width = 0;\
+height = 0;\
+\
+screen = nil;\
+\
+terminals = { term };\
+monitor_sides = {};\
+\
+running = true;\
+\
+changed = true;\
+\
+mouse = nil;\
+keys = {};\
+}\
+\
+function Application:Application()\
+self.width, self.height = term.getSize()\
+\
+self:IChildContainer()\
+self:IAnimation()\
+\
+self.screen = ScreenCanvas( self.width, self.height )\
+end\
+\
+function Application:stop()\
+self.running = false\
+return self\
+end\
+\
+function Application:setViewportX( x )\
+if type( x ) ~= \"number\" then return error( \"expected number x, got \" .. class.type( x ) ) end\
+\
+self.viewportX = x\
+self:setChanged()\
+return self\
+end\
+\
+function Application:setViewportY( y )\
+if type( y ) ~= \"number\" then return error( \"expected number y, got \" .. class.type( y ) ) end\
+\
+self.viewportY = y\
+self:setChanged()\
+return self\
+end\
+\
+function Application:transitionViewport( x, y )\
+if x and type( x ) ~= \"number\" then return error( \"expected number x, got \" .. class.type( x ) ) end\
+if y and type( y ) ~= \"number\" then return error( \"expected number y, got \" .. class.type( y ) ) end\
+\
+local ax, ay -- the animations defined later on\
+local dx = x and math.abs( x - self.viewportX ) or 0\
+local dy = y and math.abs( y - self.viewportY ) or 0\
+\
+local xt = .4 * dx / self.width\
+if dx > 0 then\
+local ax = self:addAnimation( \"viewportX\", self.setViewportX, Animation():setRounded()\
+:addKeyFrame( self.viewportX, x, xt, SHEETS_EASING_TRANSITION ) )\
+end\
+if dy > 0 then\
+local ay = self:addAnimation( \"viewportY\", self.setViewportY, Animation():setRounded()\
+:addPause( xt )\
+:addKeyFrame( self.viewportY, y, .4 * dy / self.height, SHEETS_EASING_TRANSITION ) )\
+end\
+return ax, ay\
+end\
+\
+function Application:transitionToView( view )\
+if not class.typeOf( view, View ) then return error( \"expected View view, got \" .. class.type( view ) ) end\
+\
+if view.parent == self then\
+return self:transitionViewport( view.x, view.y )\
+else\
+return error( \"View is not a part of application '\" .. self.name .. \"'\" )\
+end\
+end\
+\
+function Application:addTerminal( t )\
+if type( t ) ~= \"table\" or not pcall( function()\
+term.redirect( term.redirect( t ) )\
+end ) then\
+return error( \"expected terminal-redirect t, got \" .. class.type( t ) )\
+end\
+\
+self.terminals[#self.terminals + 1] = t\
+self.screen:reset()\
+return self\
+end\
+\
+function Application:removeTerminal( t )\
+for i = #self.terminals, 1, -1 do\
+if self.terminals[i] == t then\
+table.remove( self.terminals, i )\
+break\
+end\
+end\
+return self\
+end\
+\
+function Application:addMonitor( side )\
+if peripheral.getType( side ) == \"monitor\" then\
+self.terminals[#self.terminals + 1] = peripheral.wrap( side )\
+self.monitor_sides[side] = r\
+return self\
+else\
+return error( \"no monitor on side \" .. tostring( side ) )\
+end\
+end\
+\
+function Application:removeMonitor( side )\
+for i = #self.terminals, 1, -1 do\
+if self.terminals[i] == self.monitor_sides[side] then\
+table.remove( self.terminals, i )\
+self.monitor_sides[side] = nil\
+break\
+end\
+end\
+return self\
+end\
+\
+function Application:event( event, ... )\
+local params = { ... }\
+local children = {}\
+\
+local function handle( e )\
+if e:typeOf( MouseEvent ) then\
+for i = #children, 1, -1 do\
+children[i]:handle( e:clone( children[i].x - self.viewportX, children[i].y - self.viewportY, true ) )\
+end\
+else\
+for i = #children, 1, -1 do\
+children[i]:handle( e )\
+end\
+end\
+end\
+\
+if event == \"timer\" and timer.update( ... ) then\
+return\
+end\
+for i = 1, #self.children do\
+children[i] = self.children[i]\
+end\
+\
+if event == \"mouse_click\" then\
+self.mouse = {\
+x = params[2] - 1, y = params[3] - 1;\
+down = true, button = params[1];\
+timer = os.startTimer( 1 ), time = os.clock(), moved = false;\
+}\
+\
+handle( MouseEvent( 0, params[2] - 1, params[3] - 1, params[1], true ) )\
+\
+elseif event == \"mouse_up\" then\
+handle( MouseEvent( 1, params[2] - 1, params[3] - 1, params[1], true ) )\
+\
+self.mouse.down = false\
+os.cancelTimer( self.mouse.timer )\
+\
+if not self.mouse.moved and os.clock() - self.mouse.time < 1 and params[1] == self.mouse.button then\
+handle( MouseEvent( 2, params[2] - 1, params[3] - 1, params[1], true ) )\
+end\
+\
+elseif event == \"mouse_drag\" then\
+handle( MouseEvent( 4, params[2] - 1, params[3] - 1, params[1], true ) )\
+\
+self.mouse.moved = true\
+os.cancelTimer( self.mouse.timer )\
+\
+elseif event == \"mouse_scroll\" then\
+handle( MouseEvent( 5, params[2] - 1, params[3] - 1, params[1], true ) )\
+\
+elseif event == \"monitor_touch\" and self.monitor_sides[params[1]] then\
+handle( MouseEvent( 2, params[2] - 1, params[3] - 1, 1 ) )\
+\
+elseif event == \"chatbox_something\" then\
+-- handle( TextEvent( 10, params[1] ) )\
+\
+elseif event == \"char\" or event == \"paste\" then\
+handle( TextEvent( event == \"char\" and 9 or 11, params[1] ) )\
+\
+elseif event == \"key\" then\
+handle( KeyboardEvent( 7, params[1], self.keys ) )\
+self.keys[keys.getName( params[1] ) or params[1]] = os.clock()\
+\
+elseif event == \"key_up\" then\
+handle( KeyboardEvent( 8, params[1], self.keys ) )\
+self.keys[keys.getName( params[1] ) or params[1]] = nil\
+\
+elseif event == \"term_resize\" then\
+self.width, self.height = term.getSize()\
+for i = 1, #self.children do\
+self.children[i]:onParentResized()\
+end\
+\
+elseif event == \"timer\" and params[1] == self.mouse.timer then\
+handle( MouseEvent( 3, self.mouse.x, self.mouse.y, self.mouse.button, true ) )\
+\
+else\
+handle( MiscEvent( event, ... ) )\
+end\
+end\
+\
+function Application:update()\
+\
+local dt = timer.getDelta()\
+local c = {}\
+\
+timer.step()\
+self:updateAnimations( dt )\
+\
+for i = 1, #self.children do\
+c[i] = self.children[i]\
+end\
+\
+for i = #c, 1, -1 do\
+c[i]:update( dt )\
+end\
+end\
+\
+function Application:draw()\
+if self.changed then\
+\
+local screen = self.screen\
+local children = {}\
+local cx, cy, cc\
+\
+screen:clear()\
+\
+for i = 1, #self.children do\
+children[i] = self.children[i]\
+end\
+\
+for i = 1, #children do\
+local child = children[i]\
+\
+if child:isVisible() then\
+child:draw()\
+child.canvas:drawTo( screen, child.x - self.viewportX, child.y - self.viewportY )\
+\
+if child.cursor_active then\
+cx, cy, cc = child.x + child.cursor_x, child.y + child.cursor_y, child.cursor_colour\
+end\
+end\
+end\
+\
+screen:drawToTerminals( self.terminals )\
+\
+self.changed = false\
+for i = 1, #self.terminals do\
+if cx then\
+self.terminals[i].setCursorPos( cx + 1, cy + 1 )\
+self.terminals[i].setTextColour( cc )\
+self.terminals[i].setCursorBlink( true )\
+else\
+self.terminals[i].setCursorBlink( false )\
+end\
+end\
+end\
+end\
+\
+function Application:run()\
+local t = timer.new( 0 )\
+while self.running do\
+local event = { coroutine.yield() }\
+if event[1] == \"timer\" and event[2] == t then\
+t = timer.new( .05 )\
+elseif event[1] == \"terminate\" and self.terminateable then\
+self:stop()\
+else\
+self:event( unpack( event ) )\
+end\
+self:update()\
+self:draw()\
+end\
+end\
+\
+function Application:setChanged( state )\
+self.changed = state ~= false\
+return self\
+end\
+\
+function Application:addChild( child )\
+if not class.typeOf( child, View ) then return error( \"expected View child, got \" .. class.type( child ) ) end\
+\
+local children = self.children\
+\
+child.parent = self\
+self:setChanged()\
+\
+for i = 1, #children do\
+if children[i].z > child.z then\
+table.insert( children, i, child )\
+return child\
+end\
+end\
+\
+children[#children + 1] = child\
+return child\
+end\
+\
+function Application:isChildVisible( child )\
+if not class.typeOf( child, View ) then return error( \"expected View child, got \" .. class.type( child ) ) end\
+\
+return child.x - self.viewportX + child.width > 0 and child.y - self.viewportY + child.height > 0 and child.x - self.viewportX < self.width and child.y - self.viewportY < self.height\
+end\
+\
+application = Application()\
+Application = nil","sheets.Application",nil,_ENV)if not __f then error(__err,0)end __f()
+
+--/ @require sheets.sml.SMLNode
+--/ @require sheets.sml.SMLParser
+--/ @require sheets.sml.SMLNodeDecoder
+--/ @require sheets.sml.SMLDocument
 
 local __f,__err=load("\
 \
@@ -3284,13 +2748,34 @@ local __f,__err=load("\
 \
 class \"KeyboardEvent\" implements (IEvent) {\
 key = 0;\
-meta = {};\
+held = {};\
 }\
 \
-function KeyboardEvent:KeyboardEvent( event, key, meta )\
+function KeyboardEvent:KeyboardEvent( event, key, held )\
 self:IEvent( event )\
 self.key = key\
-self.meta = meta\
+self.held = held\
+end\
+\
+function KeyboardEvent:matches( hotkey )\
+local t\
+\
+for segment in hotkey:gmatch \"(.*)%-\" do\
+if not self.held[segment] or ( t and self.held[segment] < t ) then\
+return false\
+end\
+t = self.held[segment]\
+end\
+\
+return self.key == keys[hotkey:gsub( \".+%-\", \"\" )]\
+end\
+\
+function KeyboardEvent:isHeld( key )\
+return self.key == keys[key] or self.held[key]\
+end\
+\
+function KeyboardEvent:tostring()\
+return \"KeyboardEvent\"\
 end","sheets.events.KeyboardEvent",nil,_ENV)if not __f then error(__err,0)end __f()
 local __f,__err=load("\
 \
@@ -3375,24 +2860,6 @@ function TextEvent:TextEvent( event, text )\
 self:IEvent( event )\
 self.text = text\
 end","sheets.events.TextEvent",nil,_ENV)if not __f then error(__err,0)end __f()
-local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
-class \"TimerEvent\" implements (IEvent) {\
-key = 0;\
-meta = {};\
-}\
-\
-function TimerEvent:TimerEvent( timerID )\
-self:IEvent( 10 )\
-self.timerID = timerID\
-end","sheets.events.TimerEvent",nil,_ENV)if not __f then error(__err,0)end __f()
 
 local __f,__err=load("\
 \
@@ -3460,6 +2927,7 @@ end\
 end\
 end\
 \
+--[[\
 local decoder = SMLNodeDecoder \"theme\"\
 \
 decoder.isBodyAllowed = true\
@@ -3505,9 +2973,8 @@ end\
 end\
 end\
 \
-SMLDocument:setDecoder( \"theme\", decoder )","sheets.Theme",nil,_ENV)if not __f then error(__err,0)end __f()
-
-default_theme = Theme()
+SMLDocument:setDecoder( \"theme\", decoder )\
+]]","sheets.Theme",nil,_ENV)if not __f then error(__err,0)end __f()
 
 local __f,__err=load("\
 \
@@ -3518,351 +2985,26 @@ local __f,__err=load("\
 \
 \
 \
--- need to add monitor support\
-\
-class \"Application\" implements (IChildContainer) implements (IAnimation) implements (ICommon)\
-{\
-name = \"UnNamed Application\";\
-path = \"\";\
-terminateable = true;\
-\
-viewportX = 0;\
-viewportY = 0;\
-\
-width = 0;\
-height = 0;\
-\
-screen = nil;\
-\
-terminal = term;\
-terminals = {};\
-monitor_sides = {};\
-\
-running = true;\
-\
-mouse = {};\
-keys = {};\
-}\
-\
-function Application:Application( name, path )\
-self.name = tostring( name or \"UnNamed Application\" )\
-self.path = path\
-\
-self.width, self.height = term.getSize()\
-self.timers = {}\
-\
-self:IChildContainer()\
-self:IAnimation()\
-\
-self.screen = ScreenCanvas( self.width, self.height )\
-end\
-\
-function Application:stop()\
-self.running = false\
-end\
-\
-function Application:addChild( child )\
-if not class.typeOf( child, View ) then return error( \"expected View child, got \" .. class.type( child ) ) end\
-\
-if child.parent then\
-child.parent:removeChild( child )\
-end\
-\
-self:setChanged( true )\
-child.parent = self\
-self.children[#self.children + 1] = child\
-return child\
-end\
-\
-function Application:isChildVisible( child )\
-if not class.typeOf( child, View ) then return error( \"expected View child, got \" .. class.type( child ) ) end\
-\
-return child.x - self.viewportX + child.width > 0 and child.y - self.viewportY + child.height > 0 and child.x - self.viewportX < self.width and child.y - self.viewportY < self.height\
-end\
-\
-function Application:setViewportX( x )\
-if type( x ) ~= \"number\" then return error( \"expected number x, got \" .. class.type( x ) ) end\
-\
-self.viewportX = x\
-self:setChanged()\
-end\
-\
-function Application:setViewportY( y )\
-if type( y ) ~= \"number\" then return error( \"expected number y, got \" .. class.type( y ) ) end\
-\
-self.viewportY = y\
-self:setChanged()\
-end\
-\
-function Application:transitionViewport( x, y )\
-if x and type( x ) ~= \"number\" then return error( \"expected number x, got \" .. class.type( x ) ) end\
-if y and type( y ) ~= \"number\" then return error( \"expected number y, got \" .. class.type( y ) ) end\
-\
-local ax, ay\
-local dx = x and math.abs( x - self.viewportX ) or 0\
-local dy = y and math.abs( y - self.viewportY ) or 0\
-local xt = .5 * dx / self.width\
-if dx > 0 then\
-local ax = self:addAnimation( \"viewportX\", self.setViewportX, Animation():setRounded()\
-:addKeyFrame( self.viewportX, x, xt, 2 ) )\
-end\
-if dy > 0 then\
-local ay = self:addAnimation( \"viewportY\", self.setViewportY, Animation():setRounded()\
-:addPause( xt )\
-:addKeyFrame( self.viewportY, y, .5 * dy / self.height, 2 ) )\
-end\
-return ax, ay\
-end\
-\
-function Application:transitionView( view )\
-if not class.typeOf( view, View ) then return error( \"expected View view, got \" .. class.type( view ) ) end\
-\
-if view.parent == self then\
-return self:transitionViewport( view.x, view.y )\
-else\
-return error( \"View is not a part of application '\" .. self.name .. \"'\" )\
-end\
-end\
-\
-function Application:event( event, ... )\
-local params = { ... }\
-local children = {}\
-\
-local function handle( e )\
-if e:typeOf( MouseEvent ) then\
-for i = #children, 1, -1 do\
-children[i]:handle( e:clone( children[i].x - self.viewportX, children[i].y - self.viewportY, true ) )\
-end\
-else\
-for i = #children, 1, -1 do\
-children[i]:handle( e )\
-end\
-end\
-end\
-\
-if event == \"timer\" and timer.update( ... ) then\
-return\
-end\
-for i = 1, #self.children do\
-children[i] = self.children[i]\
-end\
-\
-if event == \"mouse_click\" then\
-self.mouse = {\
-x = params[2] - 1;\
-y = params[3] - 1;\
-down = true;\
-timer = os.startTimer( 1 );\
-moved = false;\
-time = os.clock();\
-button = params[1];\
-}\
-\
-handle( MouseEvent( 0, params[2] - 1, params[3] - 1, params[1], true ) )\
-\
-elseif event == \"mouse_up\" then\
-handle( MouseEvent( 1, params[2] - 1, params[3] - 1, params[1], true ) )\
-\
-self.mouse.down = false\
-os.cancelTimer( self.mouse.timer )\
-\
-if not self.mouse.moved and os.clock() - self.mouse.time < 1 and params[1] == self.mouse.button then\
-handle( MouseEvent( 2, params[2] - 1, params[3] - 1, params[1], true ) )\
-end\
-\
-elseif event == \"mouse_drag\" then\
-handle( MouseEvent( 4, params[2] - 1, params[3] - 1, params[1], true ) )\
-\
-self.mouse.moved = true\
-os.cancelTimer( self.mouse.timer )\
-\
-elseif event == \"mouse_scroll\" then\
-handle( MouseEvent( 5, params[2] - 1, params[3] - 1, params[1], true ) )\
-\
-elseif event == \"monitor_touch\" then -- need to think about this one\
--- handle( MouseEvent( 2, params[2] - 1, params[3] - 1, 1 ) )\
-\
-elseif event == \"chatbox_something\" then\
-handle( TextEvent( 9, params[1] ) )\
-\
-elseif event == \"char\" then\
-handle( TextEvent( 8, params[1] ) )\
-\
-elseif event == \"paste\" then\
-handle( TextEvent( 11, params[1] ) )\
-\
-elseif event == \"key\" then\
-handle( TextEvent( 6, params[1], self.keys ) )\
-self.keys[keys.getName( params[1] ) or params[1]] = os.clock()\
-\
-elseif event == \"key_up\" then\
-handle( TextEvent( 7, params[1], self.keys ) )\
-self.keys[keys.getName( params[1] ) or params[1]] = nil\
-\
-elseif event == \"term_resize\" then\
-self.width, self.height = term.getSize()\
-for i = 1, #self.children do\
-self.children[i]:onParentResized()\
-end\
-\
-elseif event == \"timer\" then\
-if params[1] == self.mouse.timer then\
-handle( MouseEvent( 3, self.mouse.x, self.mouse.y, self.mouse.button, true ) )\
-else\
-handle( TimerEvent( params[1] ) )\
-end\
-\
-else\
-handle( MiscEvent( event, ... ) )\
-end\
-end\
-\
-function Application:update()\
-\
-local dt = timer.getDelta()\
-local c = {}\
-\
-timer.step()\
-self:updateAnimations( dt )\
-\
-for i = 1, #self.children do\
-c[i] = self.children[i]\
-end\
-\
-for i = #c, 1, -1 do\
-c[i]:update( dt )\
-end\
-end\
-\
-function Application:draw()\
-if self.changed then\
-local screen = self.screen\
-local children = {}\
-\
-screen:clear()\
-\
-for i = 1, #self.children do\
-children[i] = self.children[i]\
-end\
-\
-for i = 1, #children do\
-local child = children[i]\
-if child:isVisible() then\
-child:draw()\
-child.canvas:drawTo( screen, child.x - self.viewportX, child.y - self.viewportY )\
-end\
-end\
-\
-self.changed = false\
-screen:drawToTerminal( self.terminal )\
-end\
-end\
-\
-function Application:run()\
-local t = timer.new( 0 )\
-while self.running do\
-local event = { coroutine.yield() }\
-if event[1] == \"timer\" and event[2] == t then\
-t = timer.new( .05 )\
-self:update()\
-elseif event[1] == \"terminate\" and self.terminateable then\
-self:stop()\
-else\
-self:event( unpack( event ) )\
-end\
-self:draw()\
-end\
-end\
-\
-Theme.addToTemplate( Application, \"colour\", {\
-default = 1;\
-} )\
-\
-local decoder = SMLNodeDecoder \"application\"\
-\
-decoder.isBodyAllowed = true\
-decoder.isBodyNecessary = true\
-\
-function decoder:init( document )\
-local a = Application()\
-document.application = a\
-return a\
-end\
-\
-function decoder:attribute_name( name, node )\
-if type( name ) == \"string\" then\
-self.name = name\
-else\
-return error( \"[\" .. node.position.line .. \", \" .. node.position.character .. \"]: expected string name, got \" .. type( name ), 0 )\
-end\
-end\
-\
-function decoder:attribute_path( path, node )\
-if type( path ) == \"string\" then\
-self.path = path\
-else\
-return error( \"[\" .. node.position.line .. \", \" .. node.position.character .. \"]: expected string path, got \" .. type( path ), 0 )\
-end\
-end\
-\
-function decoder:attribute_terminateable( t, node )\
-self.terminateable = t\
-end\
-\
-function decoder:decodeBody( body, parent )\
-local document = SMLDocument.current()\
-for i = 1, #body do\
-if body[i].nodetype == \"view\" or body[i].nodetype == \"theme\" or body[i].nodetype == \"script\" then\
-local element, err = document:loadSMLNode( body[i], self )\
-if element then\
-if element:typeOf( View ) then\
-self:addChild( element )\
-end\
-else\
-return error( err, 0 )\
-end\
-end\
-end\
-end\
-\
-SMLDocument:addElement( \"application\", Application, decoder )","sheets.Application",nil,_ENV)if not __f then error(__err,0)end __f()
-local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
-local function orderChildren( children )\
-local t = {}\
-for i = 1, #children do\
-local n = 1\
-while t[n] and t[n].z <= children[i].z do\
-n = n + 1\
-end\
-table.insert( t, n, children[i] )\
-end\
-return t\
-end\
+-- undefined callbacks\
+\
+-- function Sheet:onPreDraw() end\
+-- function Sheet:onPostDraw() end\
+-- function Sheet:onUpdate( dt ) end\
+-- function Sheet:onKeyboardEvent( event ) end\
+-- function Sheet:onTextEvent( event ) end\
 \
 class \"Sheet\"\
-implements (IChildContainer)\
-implements (IPosition)\
 implements (IAnimation)\
-implements (IHasParent)\
-implements (IPositionAnimator)\
-implements (IHasID)\
-implements (IHasTheme)\
 implements (ICommon)\
+implements (IChildContainer)\
+implements (IHasParent)\
+implements (IPosition)\
+implements (IPositionAnimator)\
 {\
-z = 0;\
-\
 canvas = nil;\
 \
-handlesKeyboard = true;\
-handlesText = true;\
+handlesKeyboard = false;\
+handlesText = false;\
 }\
 \
 function Sheet:Sheet( x, y, width, height )\
@@ -3871,69 +3013,60 @@ if type( y ) ~= \"number\" then return error( \"element attribute #2 'y' not a n
 if type( width ) ~= \"number\" then return error( \"element attribute #3 'width' not a number (\" .. class.type( width ) .. \")\", 2 ) end\
 if type( height ) ~= \"number\" then return error( \"element attribute #4 'height' not a number (\" .. class.type( height ) .. \")\", 2 ) end\
 \
-self:IPosition( x, y, width, height )\
-self:IChildContainer()\
 self:IAnimation()\
+self:IChildContainer()\
+self:ICommon()\
+self:IPosition( x, y, width, height )\
 \
 self.canvas = DrawingCanvas( width, height )\
-self.theme = default_theme\
 end\
 \
 function Sheet:tostring()\
-return \"[Instance] Sheet \" .. tostring( self.id )\
+return \"[Instance] \" .. self.class:type() .. \" \" .. tostring( self.id )\
 end\
 \
-function Sheet:setZ( z )\
-if type( z ) ~= \"number\" then return error( \"expected number z, got \" .. class.type( z ) ) end\
-\
-self.z = z\
-if self.parent then self.parent:setChanged( true ) end\
-return self\
-end\
-\
-function Sheet:onPreDraw() end\
-function Sheet:onPostDraw() end\
-function Sheet:onUpdate( dt ) end\
-function Sheet:onMouseEvent( event ) end\
-function Sheet:onKeyboardEvent( event ) end\
-function Sheet:onTextEvent( event ) end\
 function Sheet:onParentResized() end\
 \
 function Sheet:draw()\
 if self.changed then\
-self:onPreDraw()\
 \
-local children = orderChildren( self.children )\
+local children = self.children\
+local cx, cy, cc\
+\
+self:resetCursor()\
+\
+if self.onPreDraw then\
+self:onPreDraw()\
+end\
 \
 for i = 1, #children do\
 local child = children[i]\
 child:draw()\
 child.canvas:drawTo( self.canvas, child.x, child.y )\
+\
+if child.cursor_active then\
+cx, cy, cc = child.x + child.cursor_x, child.y + child.cursor_y, child.cursor_colour\
+end\
 end\
 \
+if cx then\
+self:setCursor( cx, cy, cc )\
+end\
+\
+if self.onPostDraw then\
 self:onPostDraw()\
+end\
+\
 self.changed = false\
 end\
 end\
 \
-function Sheet:update( dt )\
-if type( dt ) ~= \"number\" then return error( \"expected number dt, got \" .. class.type( dt ) ) end\
-\
-self:onUpdate( dt )\
-self:updateAnimations( dt )\
-\
-local c = {}\
-for i = 1, #self.children do\
-c[i] = self.children[i]\
-end\
-\
-for i = #c, 1, -1 do\
-c[i]:update( dt )\
-end\
-end\
-\
 function Sheet:handle( event )\
-local c = orderChildren( self.children )\
+local c = {}\
+local children = self.children\
+for i = 1, #children do\
+c[i] = children[i]\
+end\
 \
 if event:typeOf( MouseEvent ) then\
 local within = event:isWithinArea( 0, 0, self.width, self.height )\
@@ -3951,9 +3084,9 @@ if event:is( EVENT_MOUSE_PING ) and event:isWithinArea( 0, 0, self.width, self.h
 event.button[#event.button + 1] = self\
 end\
 self:onMouseEvent( event )\
-elseif event:typeOf( KeyboardEvent ) and self.handlesKeyboard then\
+elseif event:typeOf( KeyboardEvent ) and self.handlesKeyboard and self.onKeyboardEvent then\
 self:onKeyboardEvent( event )\
-elseif event:typeOf( TextEvent ) and self.handlesText then\
+elseif event:typeOf( TextEvent ) and self.handlesText and self.onTextEvent then\
 self:onTextEvent( event )\
 end\
 end\
@@ -3965,7 +3098,6 @@ event:handle()\
 end\
 end\
 end","sheets.Sheet",nil,_ENV)if not __f then error(__err,0)end __f()
-
 local __f,__err=load("\
 \
 \
@@ -3975,26 +3107,12 @@ local __f,__err=load("\
 \
 \
 \
-local function orderChildren( children )\
-local t = {}\
-for i = 1, #children do\
-local n = 1\
-while t[n] and t[n].z <= children[i].z do\
-n = n + 1\
-end\
-table.insert( t, n, children[i] )\
-end\
-return t\
-end\
-\
 class \"View\"\
 implements (IChildContainer)\
 implements (IPosition)\
 implements (IAnimation)\
 implements (IHasParent)\
 implements (IPositionAnimator)\
-implements (IHasID)\
-implements (IHasTheme)\
 implements (ICommon)\
 {\
 canvas = nil;\
@@ -4009,9 +3127,9 @@ if type( height ) ~= \"number\" then return error( \"element attribute #4 'heigh
 self:IPosition( x, y, width, height )\
 self:IChildContainer()\
 self:IAnimation()\
+self:ICommon()\
 \
 self.canvas = DrawingCanvas( width, height )\
-self.theme = default_theme\
 end\
 \
 function View:tostring()\
@@ -4020,40 +3138,39 @@ end\
 \
 function View:draw()\
 if self.changed then\
+\
+local children = self.children\
 local canvas = self.canvas\
+local cx, cy, cc\
 \
+self:resetCursor()\
 canvas:clear( self.theme:getField( self.class, \"colour\", \"default\" ) )\
-\
-local children = orderChildren( self.children )\
 \
 for i = 1, #children do\
 local child = children[i]\
 child:draw()\
 child.canvas:drawTo( canvas, child.x, child.y )\
+\
+if child.cursor_active then\
+cx, cy, cc = child.x + child.cursor_x, child.y + child.cursor_y, child.cursor_colour\
+end\
+end\
+\
+if cx then\
+self:setCursor( cx, cy, cc )\
 end\
 \
 self.changed = false\
 end\
 end\
 \
-function View:update( dt )\
-if type( dt ) ~= \"number\" then return error( \"expected number dt, got \" .. class.type( dt ) ) end\
-\
-self:updateAnimations( dt )\
-\
-local c = {}\
-for i = 1, #self.children do\
-c[i] = self.children[i]\
-end\
-\
-for i = #c, 1, -1 do\
-c[i]:update( dt )\
-end\
-end\
-\
 function View:handle( event )\
+local c = {}\
+local children = self.children\
 \
-local c = orderChildren( self.children )\
+for i = 1, #children do\
+c[i] = children[i]\
+end\
 \
 if event:typeOf( MouseEvent ) then\
 local within = event:isWithinArea( 0, 0, self.width, self.height )\
@@ -4083,139 +3200,864 @@ end\
 \
 Theme.addToTemplate( View, \"colour\", {\
 default = 1;\
+} )","sheets.View",nil,_ENV)if not __f then error(__err,0)end __f()
+
+
+local __f,__err=load("\
+\
+\
+\
+\
+\
+\
+\
+\
+class \"Button\" extends \"Sheet\" implements (IHasText) {\
+down = false;\
+}\
+\
+function Button:Button( x, y, width, height, text )\
+self.text = text\
+return self:Sheet( x, y, width, height )\
+end\
+\
+function Button:onPreDraw()\
+self.canvas:clear( self.theme:getField( self.class, \"colour\", self.down and \"pressed\" or \"default\" ) )\
+self:drawText( self.down and \"pressed\" or \"default\" )\
+end\
+\
+function Button:onMouseEvent( event )\
+if event:is( 1 ) and self.down then\
+self.down = false\
+self:setChanged()\
+end\
+\
+if event.handled or not event:isWithinArea( 0, 0, self.width, self.height ) or not event.within then\
+return\
+end\
+\
+if event:is( 0 ) and not self.down then\
+self.down = true\
+self:setChanged()\
+event:handle()\
+elseif event:is( 2 ) then\
+if self.onClick then\
+self:onClick( event.button, event.x, event.y )\
+end\
+event:handle()\
+elseif event:is( 3 ) then\
+if self.onHold then\
+self:onHold( event.button, event.x, event.y )\
+end\
+event:handle()\
+end\
+end\
+\
+Theme.addToTemplate( Button, \"colour\", {\
+default = 512;\
+pressed = 8;\
+} )\
+Theme.addToTemplate( Button, \"textColour\", {\
+default = 1;\
+pressed = 1;\
 } )\
 \
-local decoder = SMLNodeDecoder \"view\"\
+Theme.addToTemplate( Button, \"horizontal-alignment\", {\
+default = 1;\
+pressed = 1;\
+} )\
+Theme.addToTemplate( Button, \"vertical-alignment\", {\
+default = 1;\
+pressed = 1;\
+} )","sheets.elements.Button",nil,_ENV)if not __f then error(__err,0)end __f()
+
+
+local __f,__err=load("\
 \
-decoder.isBodyAllowed = true\
-decoder.isBodyNecessary = false\
 \
-decoder:implement( ICommonAttributes )\
-decoder:implement( IPositionAttributes )\
-decoder:implement( IAnimatedPositionAttributes )\
-decoder:implement( IThemeAttribute )\
 \
-function decoder:init( parent )\
-return View( 0, 0, parent.width, parent.height )\
+\
+\
+\
+\
+\
+class \"Checkbox\" extends \"Sheet\" {\
+down = false;\
+checked = false;\
+}\
+\
+function Checkbox:Checkbox( x, y, checked )\
+self.checked = checked\
+self:Sheet( x, y, 1, 1 )\
 end\
 \
-function decoder:decodeBody( body )\
-local children = IChildDecoder.decodeChildren( self, body )\
+function Checkbox:setWidth() end\
+function Checkbox:setHeight() end\
+\
+function Checkbox:toggle()\
+self.checked = not self.checked\
+if self.onToggle then\
+self:onToggle()\
+end\
+if self.checked and self.onCheck then\
+self:onCheck()\
+elseif not self.checked and self.onUnCheck then\
+self:onUnCheck()\
+end\
+self:setChanged()\
+end\
+\
+function Checkbox:onPreDraw()\
+self.canvas:drawPoint( 0, 0, {\
+colour = self.theme:getField( self.class, \"colour\", ( self.down and \"pressed\" ) or ( self.checked and \"active\" ) or \"default\" );\
+textColour = self.theme:getField( self.class, \"checkColour\", self.down and \"pressed\" or \"default\" );\
+character = self.checked and \"x\" or \" \";\
+} )\
+end\
+\
+function Checkbox:onMouseEvent( event )\
+if event:is( 1 ) and self.down then\
+self.down = false\
+self:setChanged()\
+end\
+\
+if event.handled or not event:isWithinArea( 0, 0, self.width, self.height ) or not event.within then\
+return\
+end\
+\
+if event:is( 0 ) and not self.down then\
+self.down = true\
+self:setChanged()\
+event:handle()\
+elseif event:is( 2 ) then\
+self:toggle()\
+event:handle()\
+elseif event:is( 3 ) then\
+event:handle()\
+end\
+end\
+\
+Theme.addToTemplate( Checkbox, \"colour\", {\
+default = 256;\
+active = 256;\
+pressed = 128;\
+} )\
+Theme.addToTemplate( Checkbox, \"checkColour\", {\
+default = 32768;\
+pressed = 256;\
+} )","sheets.elements.Checkbox",nil,_ENV)if not __f then error(__err,0)end __f()
+
+
+local __f,__err=load("\
+\
+\
+\
+\
+\
+\
+\
+\
+class \"Draggable\" extends \"Sheet\" implements (IHasText) {\
+down = false;\
+}\
+\
+function Draggable:Draggable( x, y, width, height, text )\
+self.text = text\
+return self:Sheet( x, y, width, height )\
+end\
+\
+function Draggable:onPreDraw()\
+self.canvas:clear( self.down and 2048 or 512 )\
+self:drawText( self.down and \"pressed\" or \"default\" )\
+end\
+\
+function Draggable:onMouseEvent( event )\
+if event:is( 1 ) and self.down then\
+if self.onDrop then\
+self:onDrop( self.down.x, self.down.y )\
+end\
+self.down = false\
+self:setChanged()\
+elseif self.down and event:is( 4 ) and not event.handled and event.within then\
+self:setX( self.x + event.x - self.down.x )\
+self:setY( self.y + event.y - self.down.y )\
+event:handle()\
+return\
+end\
+\
+if event.handled or not event:isWithinArea( 0, 0, self.width, self.height ) or not event.within then\
+return\
+end\
+\
+if event:is( 0 ) and not self.down then\
+self.down = { x = event.x, y = event.y }\
+self:setChanged()\
+self:bringToFront()\
+event:handle()\
+elseif event:is( 2 ) and self.onClick then\
+self:onClick()\
+event:handle()\
+elseif event:is( 3 ) and self.onHold then\
+self:onHold()\
+event:handle()\
+end\
+end\
+\
+Theme.addToTemplate( Draggable, \"colour\", {\
+default = 512;\
+pressed = 2048;\
+} )\
+Theme.addToTemplate( Draggable, \"textColour\", {\
+default = 1;\
+pressed = 1;\
+} )\
+\
+Theme.addToTemplate( Draggable, \"horizontal-alignment\", {\
+default = 1;\
+pressed = 1;\
+} )\
+Theme.addToTemplate( Draggable, \"vertical-alignment\", {\
+default = 1;\
+pressed = 1;\
+} )","sheets.elements.Draggable",nil,_ENV)if not __f then error(__err,0)end __f()
+
+
+local __f,__err=load("\
+\
+\
+\
+\
+\
+\
+\
+\
+class \"Panel\" extends \"Sheet\" {}\
+\
+function Panel:onPreDraw()\
+self.canvas:clear( self.theme:getField( self.class, \"colour\", \"default\" ) )\
+end\
+\
+Theme.addToTemplate( Panel, \"colour\", {\
+default = 256;\
+} )","sheets.elements.Panel",nil,_ENV)if not __f then error(__err,0)end __f()
+
+
+local __f,__err=load("\
+\
+\
+\
+\
+\
+\
+\
+\
+class \"ScrollContainer\" extends \"Sheet\" {\
+scrollX = 0;\
+scrollY = 0;\
+\
+horizontalPadding = 0;\
+verticalPadding = 0;\
+\
+heldScrollbar = false;\
+down = false;\
+}\
+\
+function ScrollContainer:ScrollContainer( x, y, width, height, element )\
+if class.typeOf( x, Sheet ) then\
+element = x\
+x, y, width, height = x.x, x.y, x.width, x.height\
+element.x, element.y = 0, 0\
+end\
+\
+if type( x ) ~= \"number\" then return error( \"element attribute #1 'x' not a number (\" .. class.type( x ) .. \")\", 2 ) end\
+if type( y ) ~= \"number\" then return error( \"element attribute #2 'y' not a number (\" .. class.type( y ) .. \")\", 2 ) end\
+if type( width ) ~= \"number\" then return error( \"element attribute #3 'width' not a number (\" .. class.type( width ) .. \")\", 2 ) end\
+if type( height ) ~= \"number\" then return error( \"element attribute #4 'height' not a number (\" .. class.type( height ) .. \")\", 2 ) end\
+\
+self:Sheet( x, y, width, height )\
+\
+if element then\
+if class.typeOf( element, Sheet ) then\
+self:addChild( element )\
+else\
+return error( \"expected Sheet element, got \" .. class.type( element ), 2 )\
+end\
+end\
+end\
+\
+function ScrollContainer:setScrollX( scroll )\
+self.scrollX = scroll\
+self:setChanged()\
+end\
+\
+function ScrollContainer:setScrollY( scroll )\
+self.scrollY = scroll\
+self:setChanged()\
+end\
+\
+function ScrollContainer:getContentWidth()\
+local width = self.horizontalPadding\
+local children = self.children\
+\
+for i = 1, #self.children do\
+local childWidth = children[i].x + children[i].width + self.horizontalPadding\
+if childWidth > width then\
+width = childWidth\
+end\
+end\
+\
+return width\
+end\
+\
+function ScrollContainer:getContentHeight()\
+local height = self.verticalPadding\
+local children = self.children\
+\
+for i = 1, #self.children do\
+local childWidth = children[i].y + children[i].height + self.verticalPadding\
+if childWidth > height then\
+height = childWidth\
+end\
+end\
+\
+return height\
+end\
+\
+function ScrollContainer:getDisplayWidth( h, v )\
+return v and self.width - 1 or self.width\
+end\
+\
+function ScrollContainer:getDisplayHeight( h, v )\
+return h and self.height - 1 or self.height\
+end\
+\
+function ScrollContainer:getActiveScrollbars( cWidth, cHeight )\
+if cWidth > self.width or cHeight > self.height then\
+return cWidth >= self.width, cHeight >= self.height\
+end\
+return false, false\
+end\
+\
+function ScrollContainer:getScrollbarSizes( cWidth, cHeight, horizontal, vertical )\
+return math.floor( self:getDisplayWidth( horizontal, vertical ) / cWidth * self:getDisplayWidth( horizontal, vertical ) + .5 ), math.floor( self:getDisplayHeight( horizontal, vertical ) / cHeight * self.height + .5 )\
+end\
+\
+function ScrollContainer:getScrollbarPositions( cWidth, cHeight, horizontal, vertical )\
+return math.floor( self.scrollX / cWidth * self:getDisplayWidth( horizontal, vertical ) + .5 ), math.floor( self.scrollY / cHeight * self.height + .5 )\
+end\
+\
+function ScrollContainer:draw()\
+if self.changed then\
+\
+local children = self.children\
+local cx, cy, cc\
+local ox, oy = self.scrollX, self.scrollY\
+\
+self:resetCursor()\
+\
+if self.onPreDraw then\
+self:onPreDraw()\
+end\
 \
 for i = 1, #children do\
-if children[i]:typeOf( Sheet ) then\
-self:addChild( children[i] )\
+local child = children[i]\
+child:draw()\
+child.canvas:drawTo( self.canvas, child.x - ox, child.y - oy )\
+\
+if child.cursor_active then\
+cx, cy, cc = child.x + child.cursor_x - ox, child.y + child.cursor_y - oy, child.cursor_colour\
+end\
+end\
+\
+if cx then\
+self:setCursor( cx, cy, cc )\
+end\
+\
+if self.onPostDraw then\
+self:onPostDraw()\
+end\
+\
+self.changed = false\
+end\
+end\
+\
+function ScrollContainer:handle( event )\
+local c = {}\
+local children = self.children\
+for i = 1, #children do\
+c[i] = children[i]\
+end\
+\
+if self.down and event:is( 1 ) then\
+self.down = false\
+self.heldScrollbar = false\
+self:setChanged()\
+event:handle()\
+elseif self.down and event:is( 4 ) then\
+local cWidth, cHeight = self:getContentWidth(), self:getContentHeight()\
+local h, v = self:getActiveScrollbars( cWidth, cHeight )\
+\
+if self.heldScrollbar == \"h\" then\
+self.scrollX = math.max( math.min( math.floor( ( event.x - self.down ) / self:getDisplayWidth( h, v ) * cWidth ), cWidth - self:getDisplayWidth( h, v ) ), 0 )\
+self:setChanged()\
+event:handle()\
+elseif self.heldScrollbar == \"v\" then\
+self.scrollY = math.max( math.min( math.floor( ( event.y - self.down ) / self.height * cHeight ), cHeight - self:getDisplayHeight( h, v ) ), 0 )\
+self:setChanged()\
+event:handle()\
+end\
+end\
+\
+if event:typeOf( MouseEvent ) and not event.handled and event:isWithinArea( 0, 0, self.width, self.height ) and event.within then\
+local cWidth, cHeight = self:getContentWidth(), self:getContentHeight()\
+local h, v = self:getActiveScrollbars( cWidth, cHeight )\
+\
+if event:is( 0 ) then\
+if event.x == self.width - 1 and v then\
+local px, py = self:getScrollbarPositions( cWidth, cHeight, h, v )\
+local sx, sy = self:getScrollbarSizes( cWidth, cHeight, h, v )\
+local down = event.y\
+\
+if down < px then\
+self.scrollY = math.floor( down / self.height * cHeight )\
+down = 0\
+elseif down >= px + sx then\
+self.scrollY = math.floor( ( down - sy + 1 ) / self.height * cHeight )\
+down = sy - 1\
 else\
-return error( \"[\" .. body[i].position.line .. \", \" .. body[i].position.character .. \"]: child not a sheet\", 0 )\
+down = down - py\
+end\
+\
+self.heldScrollbar = \"v\"\
+self.down = down\
+self:setChanged()\
+event:handle()\
+elseif event.y == self.height - 1 and h then\
+local px, py = self:getScrollbarPositions( cWidth, cHeight, h, v )\
+local sx, sy = self:getScrollbarSizes( cWidth, cHeight, h, v )\
+local down = event.x\
+\
+if down < px then\
+self.scrollX = math.floor( down / self:getDisplayWidth( h, v ) * cWidth )\
+down = 0\
+elseif down >= px + sx then\
+self.scrollX = math.floor( ( down - sx + 1 ) / self:getDisplayWidth( h, v ) * cWidth )\
+down = sx - 1\
+else\
+down = down - px\
+end\
+\
+self.heldScrollbar = \"h\"\
+self.down = down\
+self:setChanged()\
+event:handle()\
+end\
+elseif event:is( 5 ) then\
+if v then\
+self:setScrollY( math.max( math.min( self.scrollY + event.button, cHeight - self:getDisplayHeight( h, v ) ), 0 ) )\
+elseif h then\
+self:setScrollX( math.max( math.min( self.scrollX + event.button, cWidth - self:getDisplayWidth( h, v ) ), 0 ) )\
+end\
+elseif event:is( 2 ) or event:is( 3 ) then\
+event:handle()\
+end\
+end\
+\
+if event:typeOf( MouseEvent ) then\
+local within = event:isWithinArea( 0, 0, self.width, self.height )\
+for i = #c, 1, -1 do\
+c[i]:handle( event:clone( c[i].x + self.scrollX, c[i].y + self.scrollY, within ) )\
+end\
+else\
+for i = #c, 1, -1 do\
+c[i]:handle( event )\
+end\
+end\
+\
+if event:typeOf( MouseEvent ) then\
+if event:is( EVENT_MOUSE_PING ) and event:isWithinArea( 0, 0, self.width, self.height ) and event.within then\
+event.button[#event.button + 1] = self\
+end\
+self:onMouseEvent( event )\
+elseif event:typeOf( KeyboardEvent ) and self.handlesKeyboard and self.onKeyboardEvent then\
+self:onKeyboardEvent( event )\
+elseif event:typeOf( TextEvent ) and self.handlesText and self.onTextEvent then\
+self:onTextEvent( event )\
+end\
+end\
+\
+function ScrollContainer:onPreDraw()\
+self.canvas:clear( self.theme:getField( self.class, \"colour\", \"default\" ) )\
+end\
+\
+function ScrollContainer:onPostDraw()\
+local cWidth, cHeight = self:getContentWidth(), self:getContentHeight()\
+local h, v = self:getActiveScrollbars( cWidth, cHeight )\
+if h or v then\
+local px, py = self:getScrollbarPositions( cWidth, cHeight, h, v )\
+local sx, sy = self:getScrollbarSizes( cWidth, cHeight, h, v )\
+\
+if h then\
+local c1 = self.theme:getField( self.class, \"horizontal-bar\", \"default\" )\
+local c2 = self.heldScrollbar == \"h\" and\
+self.theme:getField( self.class, \"horizontal-bar\", \"active\" )\
+or self.theme:getField( self.class, \"horizontal-bar\", \"bar\" )\
+\
+self.canvas:mapColour( self.canvas:getArea( 4, 0, self.height - 1, self:getDisplayWidth( h, v ) ), c1 )\
+self.canvas:mapColour( self.canvas:getArea( 4, px, self.height - 1, sx ), c2 )\
+end\
+if v then\
+local c1 = self.theme:getField( self.class, \"vertical-bar\", \"default\" )\
+local c2 = self.heldScrollbar == \"v\" and\
+self.theme:getField( self.class, \"vertical-bar\", \"active\" )\
+or self.theme:getField( self.class, \"vertical-bar\", \"bar\" )\
+\
+self.canvas:mapColour( self.canvas:getArea( 3, self.width - 1, 0, self.height ), c1 )\
+self.canvas:mapColour( self.canvas:getArea( 3, self.width - 1, py, sy ), c2 )\
 end\
 end\
 end\
 \
-SMLDocument:addElement( \"view\", View, decoder )","sheets.View",nil,_ENV)if not __f then error(__err,0)end __f()
-
-SMLDocument:setVariable( "transparent", 0 )
-SMLDocument:setVariable( "white", 1 )
-SMLDocument:setVariable( "orange", 2 )
-SMLDocument:setVariable( "magenta", 4 )
-SMLDocument:setVariable( "lightBlue", 8 )
-SMLDocument:setVariable( "yellow", 16 )
-SMLDocument:setVariable( "lime", 32 )
-SMLDocument:setVariable( "pink", 64 )
-SMLDocument:setVariable( "grey", 128 )
-SMLDocument:setVariable( "lightGrey", 256 )
-SMLDocument:setVariable( "cyan", 512 )
-SMLDocument:setVariable( "purple", 1024 )
-SMLDocument:setVariable( "blue", 2048 )
-SMLDocument:setVariable( "brown", 4096 )
-SMLDocument:setVariable( "green", 8192 )
-SMLDocument:setVariable( "red", 16384 )
-SMLDocument:setVariable( "black", 32768 )
+Theme.addToTemplate( ScrollContainer, \"colour\", {\
+default = 1;\
+} )\
+\
+Theme.addToTemplate( ScrollContainer, \"horizontal-bar\", {\
+default = 128;\
+bar = 256;\
+active = 8;\
+} )\
+\
+Theme.addToTemplate( ScrollContainer, \"vertical-bar\", {\
+default = 128;\
+bar = 256;\
+active = 8;\
+} )","sheets.elements.ScrollContainer",nil,_ENV)if not __f then error(__err,0)end __f()
 
 
+local __f,__err=load("\
+\
+\
+\
+\
+\
+\
+\
+\
+class \"Text\" extends \"Sheet\" implements (IHasText) {}\
+\
+function Text:Text( x, y, width, height, text )\
+self.text = text\
+return self:Sheet( x, y, width, height )\
+end\
+\
+function Text:onPreDraw()\
+self.canvas:clear( self.theme:getField( self.class, \"colour\", \"default\" ) )\
+self:drawText \"default\"\
+end\
+\
+Theme.addToTemplate( Text, \"colour\", {\
+default = 1;\
+} )\
+Theme.addToTemplate( Text, \"textColour\", {\
+default = 128;\
+} )","sheets.elements.Text",nil,_ENV)if not __f then error(__err,0)end __f()
+
+
+local __f,__err=load("\
+\
+\
+\
+\
+\
+\
+\
+\
+class \"TextInput\" extends \"Sheet\" {\
+text = \"\";\
+cursor = 0;\
+scroll = 0;\
+selection = false;\
+focussed = false;\
+handlesKeyboard = true;\
+handlesText = true;\
+}\
+\
+function TextInput:TextInput( x, y, width )\
+return self:Sheet( x, y, width, 1 )\
+end\
+\
+function TextInput:setText( text )\
+self.text = text\
+return self:setChanged()\
+end\
+\
+function TextInput:setScroll( scroll )\
+self.scroll = scroll\
+return self:setChanged()\
+end\
+\
+function TextInput:setCursorPosition( cursor )\
+self.cursor = math.min( math.max( cursor, 0 ), #self.text )\
+if self.cursor == self.selection then\
+self.selection = nil\
+end\
+if self.cursor - self.scroll < 1 then\
+self.scroll = math.max( self.cursor - 1, 0 )\
+elseif self.cursor - self.scroll > self.width - 1 then\
+self.scroll = self.cursor - self.width + 1\
+end\
+self:setChanged()\
+end\
+\
+function TextInput:setSelectionPosition( position )\
+self.selection = position\
+self:setChanged()\
+end\
+\
+function TextInput:getSelectedText()\
+return self.selection and self.text:sub( math.min( self.cursor, self.selection ) + 1, math.max( self.cursor, self.selection ) + 1 )\
+end\
+\
+function TextInput:write( text )\
+if self.selection then\
+self.text = self.text:sub( 1, math.min( self.cursor, self.selection ) ) .. text .. self.text:sub( math.max( self.cursor, self.selection ) + 1 )\
+self:setCursorPosition( math.min( self.cursor, self.selection ) + #text )\
+self.selection = false\
+else\
+self.text = self.text:sub( 1, self.cursor ) .. text .. self.text:sub( self.cursor + 1 )\
+self:setCursorPosition( self.cursor + #text )\
+end\
+self:setChanged()\
+end\
+\
+function TextInput:focus()\
+if not self.focussed then\
+self.focussed = true\
+if self.onFocus then\
+self:onFocus()\
+end\
+return self:setChanged()\
+end\
+return self\
+end\
+\
+function TextInput:unfocus()\
+if self.focussed then\
+self.focussed = false\
+if self.onUnFocus then\
+self:onUnFocus()\
+end\
+return self:setChanged()\
+end\
+return self\
+end\
+\
+function TextInput:onPreDraw()\
+self.canvas:clear( self.theme:getField( self.class, \"colour\", self.focussed and \"focussed\" or \"default\" ) )\
+\
+if self.selection then\
+local min = math.min( self.cursor, self.selection )\
+local max = math.max( self.cursor, self.selection )\
+\
+self.canvas:drawText( -self.scroll, 0, self.text:sub( 1, min ), {\
+textColour = self.theme:getField( self.class, \"textColour\", self.focussed and \"focussed\" or \"default\" );\
+} )\
+self.canvas:drawText( min - self.scroll, 0, self.text:sub( min + 1, max ), {\
+colour = self.theme:getField( self.class, \"colour\", \"highlighted\" );\
+textColour = self.theme:getField( self.class, \"textColour\", \"highlighted\" );\
+} )\
+self.canvas:drawText( max - self.scroll, 0, self.text:sub( max + 1 ), {\
+textColour = self.theme:getField( self.class, \"textColour\", self.focussed and \"focussed\" or \"default\" );\
+} )\
+else\
+self.canvas:drawText( -self.scroll, 0, self.text, {\
+textColour = self.theme:getField( self.class, \"textColour\", self.focussed and \"focussed\" or \"default\" );\
+} )\
+end\
+\
+if not self.selection and self.focussed and self.cursor - self.scroll >= 0 and self.cursor - self.scroll < self.width then\
+self:setCursor( self.cursor - self.scroll, 0, self.theme:getField( self.class, \"textColour\", self.focussed and \"focussed\" or \"default\" ) )\
+end\
+end\
+\
+function TextInput:onMouseEvent( event )\
+if self.down and event:is( 4 ) then\
+self.selection = self.selection or self.cursor\
+self:setCursorPosition( event.x - self.scroll + 1 )\
+elseif self.down and event:is( 1 ) then\
+self.down = false\
+end\
+\
+if event.handled or not event:isWithinArea( 0, 0, self.width, self.height ) or not event.within then\
+if event:is( 0 ) then\
+self:unfocus()\
+end\
+return\
+end\
+\
+if event:is( 0 ) then\
+self:focus()\
+self.selection = nil\
+self:setCursorPosition( event.x - self.scroll )\
+self.down = true\
+event:handle()\
+elseif event:is( 2 ) or event:is( 3 ) then\
+event:handle()\
+end\
+end\
+\
+function TextInput:onKeyboardEvent( event )\
+if not self.focussed or event.handled then return end\
+\
+if event:is( 7 ) then\
+if self.selection then\
+if event:matches \"left\" then\
+if event:isHeld \"leftShift\" or event:isHeld \"rightShift\" then\
+self:setCursorPosition( self.cursor - 1 )\
+else\
+self:setCursorPosition( math.min( self.cursor, self.selection ) )\
+self.selection = nil\
+end\
+event:handle()\
+elseif event:matches \"right\" then\
+if event:isHeld \"leftShift\" or event:isHeld \"rightShift\" then\
+self:setCursorPosition( self.cursor + 1 )\
+else\
+self:setCursorPosition( math.max( self.cursor, self.selection ) )\
+self.selection = nil\
+end\
+event:handle()\
+elseif event:matches \"backspace\" or event:matches \"delete\" then\
+self:write \"\"\
+event:handle()\
+end\
+else\
+if event:matches \"left\" then\
+if event:isHeld \"leftShift\" or event:isHeld \"rightShift\" then\
+self.selection = self.cursor\
+end\
+self:setCursorPosition( self.cursor - 1 )\
+event:handle()\
+elseif event:matches \"right\" then\
+if event:isHeld \"leftShift\" or event:isHeld \"rightShift\" then\
+self.selection = self.cursor\
+end\
+self:setCursorPosition( self.cursor + 1 )\
+event:handle()\
+elseif event:matches \"backspace\" and self.cursor > 0 then\
+self.text = self.text:sub( 1, self.cursor - 1 ) .. self.text:sub( self.cursor + 1 )\
+self:setCursorPosition( self.cursor - 1 )\
+event:handle()\
+elseif event:matches \"delete\" then\
+self:setText( self.text:sub( 1, self.cursor ) .. self.text:sub( self.cursor + 2 ) )\
+event:handle()\
+end\
+end\
+\
+if event:matches \"leftCtrl-a\" or event:matches \"rightCtrl-a\" then\
+self.selection = self.selection or self.cursor\
+if self.selection > self.cursor then\
+self.selection, self.cursor = self.cursor, self.selection\
+end\
+self:addAnimation( \"selection\", self.setSelectionPosition, Animation():setRounded():addKeyFrame( self.selection, 0, .15 ) )\
+self:addAnimation( \"cursor\", self.setCursorPosition, Animation():setRounded():addKeyFrame( self.cursor, #self.text, .15 ) )\
+event:handle()\
+elseif event:matches \"end\" then\
+self:addAnimation( \"cursor\", self.setCursorPosition, Animation():setRounded():addKeyFrame( self.cursor, #self.text, .15 ) )\
+event:handle()\
+elseif event:matches \"home\" then\
+self:addAnimation( \"cursor\", self.setCursorPosition, Animation():setRounded():addKeyFrame( self.cursor, 0, .15 ) )\
+event:handle()\
+elseif event:matches \"enter\" then\
+self:unfocus()\
+if self.onEnter then\
+self:onEnter()\
+end\
+event:handle()\
+elseif event:matches \"tab\" then\
+self:unfocus()\
+if self.onTab then\
+self:onTab()\
+end\
+event:handle()\
+end\
+\
+end\
+end\
+\
+function TextInput:onTextEvent( event )\
+if not event.handled and self.focussed then\
+self:write( event.text )\
+event:handle()\
+end\
+end\
+\
+Theme.addToTemplate( TextInput, \"colour\", {\
+default = 256;\
+focussed = 256;\
+highlighted = 2048;\
+} )\
+Theme.addToTemplate( TextInput, \"textColour\", {\
+default = 128;\
+focussed = 128;\
+highlighted = 1;\
+} )\
+\
+Theme.addToTemplate( TextInput, \"mask\", {\
+default = false;\
+focussed = false;\
+} )","sheets.elements.TextInput",nil,_ENV)if not __f then error(__err,0)end __f()
 
 
 
-
-
-
-
-class "UIButton" extends "Sheet" implements (IHasText) {
-down = false;
-vertical_alignment = 1;
-horizontal_alignment = 1;
-}
-
-function UIButton:UIButton( x, y, width, height, text )
-self.text = text
-return self:Sheet( x, y, width, height )
+end
+f()
+local sheets = {}
+for k, v in pairs( env ) do
+sheets[k] = v
 end
 
-function UIButton:onPreDraw()
-self.canvas:clear( self.theme:getField( self.class, "colour", self.down and "pressed" or "default" ) )
-self:drawText( self.down and "pressed" or "default" )
+local view = sheets.application + sheets.View( 0, 0, sheets.application.width, sheets.application.height )
+local button = view + sheets.Button( 1, 1, 20, 5, "I am a button.\n\nClick me." )
+local check = view + sheets.Checkbox( 1, 7 )
+local label = view + sheets.Text( 3, 7, 9, 1, "Checkbox." )
+local quit = view + sheets.Button( view.width - 10, 0, 10, 3, "Quit" )
+local key_detector = view + sheets.Sheet( 0, 0, 0, 0 )
+local panel = view + sheets.Panel( 1, 9, 20, 5 )
+local scroll = view + sheets.ScrollContainer( 22, 1, 21, 5 )
+local text = scroll + sheets.Text( 0, 0, 20, 10, "This is a big block of text that is wordwrapped and is scrollable as it's inside a ScrollContainer." )
+local input = view + sheets.TextInput( 22, 7, 21 )
+
+button:setZ( 1 )
+
+quit.theme:setField( quit.class, "colour", "default", sheets.colour.red )
+quit.theme:setField( quit.class, "colour", "pressed", sheets.colour.orange )
+
+key_detector.handlesKeyboard = true
+
+function button:onClick()
+for i = 1, #view.children do
+local child = view.children[i]
+
+child:animateX( math.random( 0, view.width - child.width ) )
+child:animateY( math.random( 0, view.height - child.height ) )
+end
 end
 
-function UIButton:onMouseEvent( event )
-if event:is( 1 ) and self.down then
-self.down = false
-self:setChanged()
+function quit:onClick()
+sheets.application:stop()
 end
 
-if event.handled or not event:isWithinArea( 0, 0, self.width, self.height ) or not event.within then
-return
-end
+function key_detector:onKeyboardEvent( event )
+if not event.handled and event:is( sheets.event.key_down ) then
 
-if event:is( 0 ) and not self.down then
-self.down = true
-self:setChanged()
+if event:matches "leftCtrl-t" then
+sheets.application:stop()
 event:handle()
-elseif event:is( 2 ) then
-if self.onClick then
-self:onClick( event.button, event.x, event.y )
 end
-event:handle()
-elseif event:is( 3 ) then
-if self.onHold then
-self:onHold( event.button, event.x, event.y )
-end
-event:handle()
-elseif event:is( 1 ) and self.down then
-event:handle()
+
 end
 end
 
-Theme.addToTemplate( UIButton, "colour", {
-default = 512;
-pressed = 8;
-} )
-Theme.addToTemplate( UIButton, "textColour", {
-default = 1;
-pressed = 1;
-} )
-
-local decoder = SMLNodeDecoder()
-
-decoder.isBodyAllowed = false
-decoder.isBodyNecessary = false
-
-decoder:implement( ICommonAttributes )
-decoder:implement( IPositionAttributes )
-decoder:implement( IAnimatedPositionAttributes )
-decoder:implement( IThemeAttribute )
-decoder:implement( ITextAttributes )
-
-function decoder:init()
-return UIButton( 0, 0, 10, 3 )
-end
-
-SMLDocument:addElement( "button", UIButton, decoder )
-
-local document = SMLDocument()
-
-local app, err = document:loadSMLApplicationFile "test/main.sml"
-
-if not app then
-return error( err, 0 )
-end
-
-app:run()
+sheets.application:run()

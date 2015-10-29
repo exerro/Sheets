@@ -29,6 +29,9 @@
 	local env = setmetatable( {}, { __index = _ENV } )
 	local function f()
 		local _ENV = env
+		if setfenv then
+			setfenv( 1, env )
+		end
  -- @endif
 
  -- @once
