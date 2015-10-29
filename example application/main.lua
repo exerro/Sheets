@@ -20,8 +20,8 @@ local input = view + sheets.TextInput( 22, 7, 21 )
 
 button:setZ( 1 )
 
-quit.theme:setField( quit.class, "colour", "default", sheets.colour.red )
-quit.theme:setField( quit.class, "colour", "pressed", sheets.colour.orange )
+quit.style:setField( "colour", sheets.colour.red )
+quit.style:setField( "colour.pressed", sheets.colour.orange )
 
 key_detector.handlesKeyboard = true
 

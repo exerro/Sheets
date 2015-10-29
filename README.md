@@ -37,8 +37,8 @@ local view = sheets.application + sheets.View( 0, 0, sheets.application.width, s
 local button = view + sheets.Button( 0, 0, 20, 5, "I am a button" )
 
 -- Make the button orange (or yellow when held)
-button.theme:setField( button.class, "colour", "default", sheets.colour.orange )
-button.theme:setField( button.class, "colour", "pressed", sheets.colour.yellow )
+button.style:setField( "colour", sheets.colour.orange )
+button.style:setField( "colour.pressed", sheets.colour.yellow )
 
 -- Define a function to be called when the button is clicked.
 function button:onClick()
