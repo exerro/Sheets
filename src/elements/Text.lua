@@ -25,3 +25,10 @@ Theme.addToTemplate( Text, "colour", {
 Theme.addToTemplate( Text, "textColour", {
 	default = GREY;
 } )
+
+Theme.addToTemplate( Text, "horizontal-alignment", {
+	default = ALIGNMENT_LEFT;
+} )
+Theme.addToTemplate( Text, "vertical-alignment", {
+	default = ALIGNMENT_TOP;
+} )

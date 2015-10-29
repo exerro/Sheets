@@ -35,7 +35,7 @@ end
 
 function Checkbox:onPreDraw()
 	self.canvas:drawPoint( 0, 0, {
-		colour = self.theme:getField( self.class, "colour", ( self.down and "pressed" ) or ( self.checked and "active" ) or "default" );
+		colour = self.theme:getField( self.class, "colour", ( self.down and "pressed" ) or ( self.checked and "checked" ) or "default" );
 		textColour = self.theme:getField( self.class, "checkColour", self.down and "pressed" or "default" );
 		character = self.checked and "x" or " ";
 	} )
@@ -65,7 +65,7 @@ end
 
 Theme.addToTemplate( Checkbox, "colour", {
 	default = LIGHTGREY;
-	active = LIGHTGREY;
+	checked = LIGHTGREY;
 	pressed = GREY;
 } )
 Theme.addToTemplate( Checkbox, "checkColour", {

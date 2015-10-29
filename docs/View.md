@@ -4,12 +4,16 @@
 The View class is the interface between Sheet objects and an Application.
 
 > Please note that if a setter is provided (i.e. `setX()`), use that instead of directly setting the variable.
-> If you directly set `sheet.x`, it won't cause its parent to redraw, unlike `sheet:setX()`.
+> If you directly set `view.x`, it won't cause its parent to redraw, unlike `view:setX()`.
 > If something is behaving weirdly (not updating till you click or something), this is probably what you've done.
 
 #### Constructor
 
 `View( number x, number y, number width, number height )`
+
+#### Theme options
+
+- `colour.default` - The background colour of the view.
 
 #### Callbacks
 

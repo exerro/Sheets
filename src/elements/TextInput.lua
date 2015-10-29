@@ -45,14 +45,14 @@ function TextInput:setCursor( cursor )
 	elseif self.cursor - self.scroll > self.width - 1 then
 		self.scroll = self.cursor - self.width + 1
 	end
-	self:setChanged()
+	return self:setChanged()
 end
 
 function TextInput:setSelection( position )
 	if type( position ) ~= "number" then return error( "expected number position, got " .. class.type( position ) ) end
 
 	self.selection = position
-	self:setChanged()
+	return self:setChanged()
 end
 
 function TextInput:getSelectedText()
@@ -70,7 +70,7 @@ function TextInput:write( text )
 		self.text = self.text:sub( 1, self.cursor ) .. text .. self.text:sub( self.cursor + 1 )
 		self:setCursor( self.cursor + #text )
 	end
-	self:setChanged()
+	return self:setChanged()
 end
 
 function TextInput:focus()
