@@ -6,7 +6,7 @@ local timerID = 0
 local t, lt = os.clock()
 
 function timer.new( n )
-	if type( n ) ~= "number" then return error( "expected number time, got " .. class.type( n ) ) end
+	functionParameters.check( 1, "n", "number", n )
 
 	local finish, ID = t + n, false -- avoids duplicating timer events
 	for i = 1, #timers do
@@ -19,8 +19,7 @@ function timer.new( n )
 end
 
 function timer.queue( n, response )
-	if type( n ) ~= "number" then return error( "expected number time, got " .. class.type( n ) ) end
-	if type( response ) ~= "function" then return error( "expected function response, got " .. class.type( response ) ) end
+	functionParameters.check( 2, "n", "number", n, "response", "function", response )
 
 	local finish, ID = t + n, false -- avoids duplicating timer events
 	for i = 1, #timers do
@@ -36,7 +35,7 @@ function timer.queue( n, response )
 end
 
 function timer.cancel( ID )
-	if type( ID ) ~= "number" then return error( "expected number ID, got " .. class.type( ID ) ) end
+	functionParameters.check( 1, "ID", "number", ID )
 
 	for i = #timers, 1, -1 do
 		if timers[i].ID == ID then

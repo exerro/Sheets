@@ -50,10 +50,12 @@ function Animation:addKeyFrame( initial, final, duration, easing )
 		easing = easing_exit
 	end
 
-	if type( initial ) ~= "number" then return error( "expected number initial, got " .. class.type( initial ) ) end
-	if type( final ) ~= "number" then return error( "expected number final, got " .. class.type( final ) ) end
-	if type( duration ) ~= "number" then return error( "expected number duration, got " .. class.type( duration ) ) end
-	if easing and type( easing ) ~= "function" then return error( "expected function easing, got " .. class.type( easing ) ) end
+	functionParameters.check( 4,
+		"initial", "number", initial,
+		"final", "number", final,
+		"duration", "number", duration,
+		"easing", "function", easing
+	)
 
 	local frame = {
 		ease = true;
@@ -75,7 +77,7 @@ end
 
 function Animation:addPause( pause )
 	pause = pause or 1
-	if type( pause ) ~= "number" then return error( "expected number pause, got " .. class.type( pause ) ) end
+	functionParameters.check( 1, "pause", "number", pause )
 
 	local frame = {
 		clock = 0;
@@ -100,7 +102,7 @@ function Animation:frameFinished()
 end
 
 function Animation:update( dt )
-	if type( dt ) ~= "number" then return error( "expected number dt, got " .. class.type( dt ) ) end
+	functionParameters.check( 1, "dt", "number", dt )
 	
 	local frame = self.frames[self.frame]
 

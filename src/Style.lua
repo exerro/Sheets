@@ -7,14 +7,14 @@
 
  -- @print Including sheets.Style
 
-local function formatPropertyName( name )
+local function formatFieldName( name )
 	if not name:find "%." then
 		return name .. ".default"
 	end
 	return name
 end
 
-local function getDefaultPropertyName( name )
+local function getDefaultFieldName( name )
 	return name:gsub( "%..-$", "", 1 ) .. ".default"
 end
 
@@ -25,18 +25,18 @@ class "Style" {
 	object = nil;
 }
 
-function Style.addToTemplate( cls, properties )
-	if not class.isClass( cls ) then return error( "expected Class class, got " .. class.type( cls ) ) end
-	if type( properties ) ~= "table" then return error( "expected table fields, got " .. class.type( properties ) ) end
+function Style.addToTemplate( cls, fields )
+	if not class.isClass( cls ) then throw( IncorrectParameterException( "expected Class class, got " .. class.type( cls ), 2 ) ) end
+	if type( fields ) ~= "table" then throw( IncorrectParameterException( "expected table fields, got " .. class.type( fields ), 2 ) ) end
 
 	template[cls] = template[cls] or {}
-	for k, v in pairs( properties ) do
-		template[cls][formatPropertyName( k )] = v
+	for k, v in pairs( fields ) do
+		template[cls][formatFieldName( k )] = v
 	end
 end
 
 function Style:Style( object )
-	if not class.isInstance( object ) then return error( "Style attribute #1 'object' not an instance (" .. class.type( object ) .. ")", 2 ) end
+	if not class.isInstance( object ) then throw( IncorrectConstructorException( "Style expects Instance object when created, got " .. class.type( object ), 3 ) ) end
 
 	template[object.class] = template[object.class] or {}
 	self.fields = {}
@@ -44,7 +44,7 @@ function Style:Style( object )
 end
 
 function Style:clone( object )
-	if not class.isInstance( object ) then return error( "expected Instance object, got " .. class.type( object ) ) end
+	if not class.isInstance( object ) then throw( IncorrectInitialiserException( "expected Instance object, got " .. class.type( object ), 2 ) ) end
 
 	local s = Style( object or self.object )
 	for k, v in pairs( self.fields ) do
@@ -54,18 +54,18 @@ function Style:clone( object )
 end
 
 function Style:setField( field, value )
-	if type( field ) ~= "string" then return error( "expected string field, got " .. class.type( field ) ) end
+	functionParameters.check( 1, "field", "string", field )
 
-	self.fields[formatPropertyName( field )] = value
+	self.fields[formatFieldName( field )] = value
 	self.object:setChanged()
 	return self
 end
 
 function Style:getField( field )
-	if type( field ) ~= "string" then return error( "expected string field, got " .. class.type( field ) ) end
+	functionParameters.check( 1, "field", "string", field )
 
-	field = formatPropertyName( field )
-	local default = getDefaultPropertyName( field )
+	field = formatFieldName( field )
+	local default = getDefaultFieldName( field )
 	if self.fields[field] ~= nil then
 		return self.fields[field]
 	elseif template[self.object.class][field] ~= nil then

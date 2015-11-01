@@ -35,7 +35,7 @@ function ICommon:setID( id )
 end
 
 function ICommon:setStyle( style, children )
-	if not class.typeOf( style, Style ) then return error( "expected Style style, got " .. type( style ) ) end
+	functionParameters.check( 1, "style", Style, style )
 
 	self.style = style:clone( self )
 	
@@ -50,14 +50,14 @@ function ICommon:setStyle( style, children )
 end
 
 function ICommon:setCursorBlink( x, y, colour )
-	if type( x ) ~= "number" then return error( "expected number x, got " .. class.type( x ) ) end
-	if type( y ) ~= "number" then return error( "expected number y, got " .. class.type( y ) ) end
-	if colour and type( colour ) ~= "number" then return error( "expected number colour, got " .. class.type( colour ) ) end
+	colour = colour or GREY
+
+	functionParameters.check( 3, "x", "number", x, "y", "number", y, "colour", "number", colour )
 
 	self.cursor_active = true
 	self.cursor_x = x
 	self.cursor_y = y
-	self.cursor_colour = colour or GREY
+	self.cursor_colour = colour
 	return self
 end
 

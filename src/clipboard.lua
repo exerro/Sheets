@@ -4,12 +4,12 @@ local c = {}
 clipboard = {}
 
 function clipboard.put( modes )
-	if type( modes ) ~= "table" then return error( "expected table modes, got " .. class.type( modes ) ) end
+	functionParameters.check( 1, "modes", "table", modes )
 	c = modes
 end
 
 function clipboard.get( mode )
-	if type( mode ) ~= "string" then return error( "expected string mode, got " .. class.type( mode ) ) end
+	functionParameters.check( 1, "mode", "string", mode )
 	return c[mode]
 end
 

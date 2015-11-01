@@ -14,9 +14,11 @@ function IAnimation:IAnimation()
 end
 
 function IAnimation:addAnimation( label, setter, animation )
- 	if type( label ) ~= "string" then return error( "expected string label, got " .. class.type( label ) ) end
- 	if type( setter ) ~= "function" then return error( "expected function setter, got " .. class.type( setter ) ) end
- 	if not class.typeOf( animation, Animation ) then return error( "expected Animation animation, got " .. class.type( animation ) ) end
+	functionParameters.check( 3,
+		"label", "string", label,
+		"setter", "function", setter,
+		"animation", Animation, animation
+	)
 
 	self.animations[label] = {
 		setter = setter;
@@ -30,14 +32,15 @@ function IAnimation:addAnimation( label, setter, animation )
 end
 
 function IAnimation:stopAnimation( label )
- 	if type( label ) ~= "string" then return error( "expected string label, got " .. class.type( label ) ) end
+	functionParameters.check( 1, "label", "string", label )
+
 	local a = self.animations[label]
 	self.animations[label] = nil
 	return a
 end
 
 function IAnimation:updateAnimations( dt )
-	 if type( dt ) ~= "number" then return error( "expected number dt, got " .. class.type( dt ) ) end
+	functionParameters.check( 1, "dt", "number", dt )
 
 	local finished = {}
 	local animations = self.animations

@@ -15,7 +15,7 @@ IHasText = {
 }
 
 function IHasText:setText( text )
-	if type( text ) ~= "string" then return error( "expected string text, got " .. class.type( text ) ) end
+	functionParameters.check( 1, "text", "string", text )
 
 	self.text = text
 	self:wrapText()

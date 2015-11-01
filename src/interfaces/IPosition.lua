@@ -24,7 +24,7 @@ function IPosition:IPosition( x, y, width, height )
 end
 
 function IPosition:setX( x )
-	if type( x ) ~= "number" then return error( "expected number x, got " .. class.type( x ) ) end
+	functionParameters.check( 1, "x", "number", x )
 	
 	if self.x ~= x then
 		self.x = x
@@ -34,7 +34,7 @@ function IPosition:setX( x )
 end
 
 function IPosition:setY( y )
-	if type( y ) ~= "number" then return error( "expected number y, got " .. class.type( y ) ) end
+	functionParameters.check( 1, "y", "number", y )
 	
 	if self.y ~= y then
 		self.y = y
@@ -44,7 +44,7 @@ function IPosition:setY( y )
 end
 
 function IPosition:setZ( z )
-	if type( z ) ~= "number" then return error( "expected number z, got " .. class.type( z ) ) end
+	functionParameters.check( 1, "z", "number", z )
 
 	if self.z ~= z then
 		self.z = z
@@ -54,7 +54,7 @@ function IPosition:setZ( z )
 end
 
 function IPosition:setWidth( width )
-	if type( width ) ~= "number" then return error( "expected number width, got " .. class.type( width ) ) end
+	functionParameters.check( 1, "width", "number", width )
 
 	if self.width ~= width then
 		self.width = width
@@ -68,7 +68,7 @@ function IPosition:setWidth( width )
 end
 
 function IPosition:setHeight( height )
-	if type( height ) ~= "number" then return error( "expected number height, got " .. class.type( height ) ) end
+	functionParameters.check( 1, "height", "number", height )
 
 	if self.height ~= height then
 		self.height = height

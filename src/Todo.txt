@@ -1,3 +1,4 @@
+Exceptions
 Image class.
 Fix TextInput... everything...
 Container class.
@@ -8,3 +9,5 @@ Tabs class.
 Toggle class.
 Window class.
 Application:positionChildrenInGrid()
+Dynamic values
+Make application fire mouse up and down events for monitor touches.

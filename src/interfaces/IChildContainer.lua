@@ -15,7 +15,7 @@ function IChildContainer:IChildContainer()
 end
 
 function IChildContainer:addChild( child )
-	if not class.typeOf( child, Sheet ) then return error( "expected Sheet child, got " .. class.type( child ) ) end
+	functionParameters.check( 1, "child", Sheet, child )
 
 	local children = self.children
 
@@ -68,7 +68,7 @@ function IChildContainer:repositionChildZIndex( child )
 end
 
 function IChildContainer:getChildById( id )
-	if type( id ) ~= "string" then return error( "expected string id, got " .. class.type( id ) ) end
+	functionParameters.check( 1, "id", "string", id )
 
 	for i = #self.children, 1, -1 do
 		local c = self.children[i]:getChildById( id )
@@ -81,7 +81,7 @@ function IChildContainer:getChildById( id )
 end
 
 function IChildContainer:getChildrenById( id )
-	if type( id ) ~= "string" then return error( "expected string id, got " .. class.type( id ) ) end
+	functionParameters.check( 1, "id", "string", id )
 
 	local t = {}
 	for i = #self.children, 1, -1 do
@@ -97,8 +97,7 @@ function IChildContainer:getChildrenById( id )
 end
 
 function IChildContainer:getChildrenAt( x, y )
-	if type( x ) ~= "number" then return error( "expected number x, got " .. class.type( x ) ) end
-	if type( y ) ~= "number" then return error( "expected number y, got " .. class.type( y ) ) end
+	functionParameters.check( 2, "x", "number", x, "y", "number", y )
 
 	local c = {}
 	local children = self.children
@@ -116,13 +115,12 @@ function IChildContainer:getChildrenAt( x, y )
 end
 
 function IChildContainer:isChildVisible( child )
-	if not class.typeOf( child, Sheet ) then return error( "expected Sheet child, got " .. class.type( child ) ) end
+	functionParameters.check( 1, "child", Sheet, child )
+
 	return child.x + child.width > 0 and child.y + child.height > 0 and child.x < self.width and child.y < self.height
 end
 
 function IChildContainer:update( dt )
-	if type( dt ) ~= "number" then return error( "expected number dt, got " .. class.type( dt ) ) end
-
 	local c = {}
 	local children = self.children
 

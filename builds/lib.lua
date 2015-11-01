@@ -1592,7 +1592,7 @@ local timerID = 0\
 local t, lt = os.clock()\
 \
 function timer.new( n )\
-if type( n ) ~= \"number\" then return error( \"expected number time, got \" .. class.type( n ) ) end\
+functionParameters.check( 1, \"n\", \"number\", n )\
 \
 local finish, ID = t + n, false -- avoids duplicating timer events\
 for i = 1, #timers do\
@@ -1605,8 +1605,7 @@ return ID or os.startTimer( n )\
 end\
 \
 function timer.queue( n, response )\
-if type( n ) ~= \"number\" then return error( \"expected number time, got \" .. class.type( n ) ) end\
-if type( response ) ~= \"function\" then return error( \"expected function response, got \" .. class.type( response ) ) end\
+functionParameters.check( 2, \"n\", \"number\", n, \"response\", \"function\", response )\
 \
 local finish, ID = t + n, false -- avoids duplicating timer events\
 for i = 1, #timers do\
@@ -1622,7 +1621,7 @@ return timerID\
 end\
 \
 function timer.cancel( ID )\
-if type( ID ) ~= \"number\" then return error( \"expected number ID, got \" .. class.type( ID ) ) end\
+functionParameters.check( 1, \"ID\", \"number\", ID )\
 \
 for i = #timers, 1, -1 do\
 if timers[i].ID == ID then\
@@ -1659,18 +1658,159 @@ local c = {}\
 clipboard = {}\
 \
 function clipboard.put( modes )\
-if type( modes ) ~= \"table\" then return error( \"expected table modes, got \" .. class.type( modes ) ) end\
+functionParameters.check( 1, \"modes\", \"table\", modes )\
 c = modes\
 end\
 \
 function clipboard.get( mode )\
-if type( mode ) ~= \"string\" then return error( \"expected string mode, got \" .. class.type( mode ) ) end\
+functionParameters.check( 1, \"mode\", \"string\", mode )\
 return c[mode]\
 end\
 \
 function clipboard.clear()\
 c = {}\
 end","sheets.clipboard",nil,_ENV)if not __f then error(__err,0)end __f()
+
+local __f,__err=load("\
+\
+\
+\
+\
+\
+\
+\
+\
+local ID = 0\
+local exceptions = {}\
+local thrownExceptionID\
+\
+local function __tostring( e )\
+local trace = \"\"\
+for i = 1, #e.trace do\
+trace = trace .. \"\\n in \" .. e.trace[i]\
+end\
+return textutils.serialize( e.data ) .. trace\
+end\
+\
+local function handler( t )\
+local exception = exceptions[thrownExceptionID]\
+for i = 1, #t do\
+if t[i].catch == exception.name or t[i].default then\
+return t[i].handler( exception )\
+end\
+end\
+end\
+\
+local function exception( name, data, call_level )\
+if type( name ) ~= \"string\" then return error( \"expected string name, got \" .. class.type( name ) ) end\
+\
+local function f( data, call_level )\
+local e = setmetatable( { name = name, ID = ID }, { __tostring = __tostring } )\
+local level = ( call_level or 1 ) + 1\
+local trace = {}\
+\
+for i = 1, 5 do\
+local src = select( 2, pcall( error, \"\", i + level ) )\
+if src == \"pcall: \" then\
+break\
+else\
+trace[i] = src:gsub( \":%s$\", \"\", 1 )\
+end\
+end\
+\
+e.data = data\
+e.trace = trace\
+exceptions[ID] = e\
+ID = ID + 1\
+\
+return e\
+end\
+\
+if data == nil and call_level == nil then\
+return f\
+else\
+return f( data, call_level )\
+end\
+end\
+\
+function throw( exception, data )\
+if type( exception ) == \"string\" then\
+if not data then\
+return function( data )\
+return throw( exception, data, 2 )\
+end\
+end\
+exception = Exception( exception, data, 2 )\
+end\
+return error( \"SheetsException-\" .. exception.ID, 0 )\
+end\
+\
+function try( func )\
+local ok, err = pcall( func )\
+\
+if not ok and type( err ) == \"string\" then\
+local ID = err:match \"SheetsException%-(%d+)\"\
+if ID then\
+thrownExceptionID = tonumber( ID )\
+return handler\
+end\
+end\
+\
+return error( err, 0 )\
+end\
+\
+function catch( etype )\
+return function( handler )\
+return { catch = etype, handler = handler }\
+end\
+end\
+\
+function default( handler )\
+return { default = true, handler = handler }\
+end\
+\
+IncorrectParameterException = exception \"IncorrectParameterException\"\
+IncorrectConstructorException = exception \"IncorrectConstructorException\"","sheets.exception",nil,_ENV)if not __f then error(__err,0)end __f()
+local __f,__err=load("\
+functionParameters = {}\
+\
+function functionParameters.checkConstructor( _class, argc, ... )\
+local args = { ... }\
+for i = 1, argc * 3, 3 do\
+local name = args[i]\
+local expectedType = args[i + 1]\
+local value = args[i + 2]\
+\
+if type( expectedType ) == \"string\" then\
+if type( value ) ~= expectedType then\
+throw( IncorrectConstructorException( _class:type() .. \"expects \" .. expectedType .. \" \" .. name .. \" when created, got \" .. class.type( value ), 4 ) )\
+end\
+else\
+if not class.typeOf( value, expectedType ) then\
+throw( IncorrectConstructorException( _class:type() .. \"expects \" .. expectedType:type() .. \" \" .. name .. \" when created, got \" .. class.type( value ), 4 ) )\
+end\
+end\
+end\
+end\
+\
+function functionParameters.check( argc, ... )\
+local args = { ... }\
+for i = 1, argc * 3, 3 do\
+local name = args[i]\
+local expectedType = args[i + 1]\
+local value = args[i + 2]\
+\
+if type( expectedType ) == \"string\" then\
+if type( value ) ~= expectedType then\
+throw( IncorrectParameterException( \"expected \" .. expectedType .. \" \" .. name .. \", got \" .. class.type( value ), 3 ) )\
+end\
+else\
+if not class.typeOf( value, expectedType ) then\
+throw( IncorrectParameterException( \"expected \" .. expectedType:type() .. \" \" .. name .. \", got \" .. class.type( value ), 3 ) )\
+end\
+end\
+end\
+end","sheets.functionParameters",nil,_ENV)if not __f then error(__err,0)end __f()
 
 local __f,__err=load("\
 \
@@ -1688,9 +1828,11 @@ self.animations = {}\
 end\
 \
 function IAnimation:addAnimation( label, setter, animation )\
-if type( label ) ~= \"string\" then return error( \"expected string label, got \" .. class.type( label ) ) end\
-if type( setter ) ~= \"function\" then return error( \"expected function setter, got \" .. class.type( setter ) ) end\
-if not class.typeOf( animation, Animation ) then return error( \"expected Animation animation, got \" .. class.type( animation ) ) end\
+functionParameters.check( 3,\
+\"label\", \"string\", label,\
+\"setter\", \"function\", setter,\
+\"animation\", Animation, animation\
+)\
 \
 self.animations[label] = {\
 setter = setter;\
@@ -1704,14 +1846,15 @@ return animation\
 end\
 \
 function IAnimation:stopAnimation( label )\
-if type( label ) ~= \"string\" then return error( \"expected string label, got \" .. class.type( label ) ) end\
+functionParameters.check( 1, \"label\", \"string\", label )\
+\
 local a = self.animations[label]\
 self.animations[label] = nil\
 return a\
 end\
 \
 function IAnimation:updateAnimations( dt )\
-if type( dt ) ~= \"number\" then return error( \"expected number dt, got \" .. class.type( dt ) ) end\
+functionParameters.check( 1, \"dt\", \"number\", dt )\
 \
 local finished = {}\
 local animations = self.animations\
@@ -1753,7 +1896,7 @@ end\
 end\
 \
 function IChildContainer:addChild( child )\
-if not class.typeOf( child, Sheet ) then return error( \"expected Sheet child, got \" .. class.type( child ) ) end\
+functionParameters.check( 1, \"child\", Sheet, child )\
 \
 local children = self.children\
 \
@@ -1806,7 +1949,7 @@ end\
 end\
 \
 function IChildContainer:getChildById( id )\
-if type( id ) ~= \"string\" then return error( \"expected string id, got \" .. class.type( id ) ) end\
+functionParameters.check( 1, \"id\", \"string\", id )\
 \
 for i = #self.children, 1, -1 do\
 local c = self.children[i]:getChildById( id )\
@@ -1819,7 +1962,7 @@ end\
 end\
 \
 function IChildContainer:getChildrenById( id )\
-if type( id ) ~= \"string\" then return error( \"expected string id, got \" .. class.type( id ) ) end\
+functionParameters.check( 1, \"id\", \"string\", id )\
 \
 local t = {}\
 for i = #self.children, 1, -1 do\
@@ -1835,8 +1978,7 @@ return t\
 end\
 \
 function IChildContainer:getChildrenAt( x, y )\
-if type( x ) ~= \"number\" then return error( \"expected number x, got \" .. class.type( x ) ) end\
-if type( y ) ~= \"number\" then return error( \"expected number y, got \" .. class.type( y ) ) end\
+functionParameters.check( 2, \"x\", \"number\", x, \"y\", \"number\", y )\
 \
 local c = {}\
 local children = self.children\
@@ -1854,13 +1996,12 @@ return elements\
 end\
 \
 function IChildContainer:isChildVisible( child )\
-if not class.typeOf( child, Sheet ) then return error( \"expected Sheet child, got \" .. class.type( child ) ) end\
+functionParameters.check( 1, \"child\", Sheet, child )\
+\
 return child.x + child.width > 0 and child.y + child.height > 0 and child.x < self.width and child.y < self.height\
 end\
 \
 function IChildContainer:update( dt )\
-if type( dt ) ~= \"number\" then return error( \"expected number dt, got \" .. class.type( dt ) ) end\
-\
 local c = {}\
 local children = self.children\
 \
@@ -1916,7 +2057,7 @@ return self\
 end\
 \
 function ICommon:setStyle( style, children )\
-if not class.typeOf( style, Style ) then return error( \"expected Style style, got \" .. type( style ) ) end\
+functionParameters.check( 1, \"style\", Style, style )\
 \
 self.style = style:clone( self )\
 \
@@ -1931,14 +2072,14 @@ return self\
 end\
 \
 function ICommon:setCursorBlink( x, y, colour )\
-if type( x ) ~= \"number\" then return error( \"expected number x, got \" .. class.type( x ) ) end\
-if type( y ) ~= \"number\" then return error( \"expected number y, got \" .. class.type( y ) ) end\
-if colour and type( colour ) ~= \"number\" then return error( \"expected number colour, got \" .. class.type( colour ) ) end\
+colour = colour or 128\
+\
+functionParameters.check( 3, \"x\", \"number\", x, \"y\", \"number\", y, \"colour\", \"number\", colour )\
 \
 self.cursor_active = true\
 self.cursor_x = x\
 self.cursor_y = y\
-self.cursor_colour = colour or 128\
+self.cursor_colour = colour\
 return self\
 end\
 \
@@ -1985,6 +2126,7 @@ parent = nil;\
 }\
 \
 function IHasParent:setParent( parent )\
+-- fix this\
 if parent and ( not class.isInstance( parent ) or not parent:implements( IChildContainer ) ) then return error( \"expected IChildContainer parent, got \" .. class.type( parent ) ) end\
 \
 if parent then\
@@ -2006,7 +2148,10 @@ return self.parent and self.parent:isChildVisible( self )\
 end\
 \
 function IHasParent:bringToFront()\
+if self.parent then\
 return self:setParent( self.parent )\
+end\
+return self\
 end","sheets.interfaces.IHasParent",nil,_ENV)if not __f then error(__err,0)end __f()
 local __f,__err=load("\
 \
@@ -2025,7 +2170,7 @@ text_lines = {};\
 }\
 \
 function IHasText:setText( text )\
-if type( text ) ~= \"string\" then return error( \"expected string text, got \" .. class.type( text ) ) end\
+functionParameters.check( 1, \"text\", \"string\", text )\
 \
 self.text = text\
 self:wrapText()\
@@ -2125,7 +2270,7 @@ self.height = height\
 end\
 \
 function IPosition:setX( x )\
-if type( x ) ~= \"number\" then return error( \"expected number x, got \" .. class.type( x ) ) end\
+functionParameters.check( 1, \"x\", \"number\", x )\
 \
 if self.x ~= x then\
 self.x = x\
@@ -2135,7 +2280,7 @@ return self\
 end\
 \
 function IPosition:setY( y )\
-if type( y ) ~= \"number\" then return error( \"expected number y, got \" .. class.type( y ) ) end\
+functionParameters.check( 1, \"y\", \"number\", y )\
 \
 if self.y ~= y then\
 self.y = y\
@@ -2145,7 +2290,7 @@ return self\
 end\
 \
 function IPosition:setZ( z )\
-if type( z ) ~= \"number\" then return error( \"expected number z, got \" .. class.type( z ) ) end\
+functionParameters.check( 1, \"z\", \"number\", z )\
 \
 if self.z ~= z then\
 self.z = z\
@@ -2155,7 +2300,7 @@ return self\
 end\
 \
 function IPosition:setWidth( width )\
-if type( width ) ~= \"number\" then return error( \"expected number width, got \" .. class.type( width ) ) end\
+functionParameters.check( 1, \"width\", \"number\", width )\
 \
 if self.width ~= width then\
 self.width = width\
@@ -2169,7 +2314,7 @@ return self\
 end\
 \
 function IPosition:setHeight( height )\
-if type( height ) ~= \"number\" then return error( \"expected number height, got \" .. class.type( height ) ) end\
+functionParameters.check( 1, \"height\", \"number\", height )\
 \
 if self.height ~= height then\
 self.height = height\
@@ -2191,24 +2336,22 @@ local __f,__err=load("\
 \
 \
 local function animateAttribute( self, label, setter, from, to, time, easing )\
-if type( to ) ~= \"number\" then return error( \"expected number to, got \" .. class.type( to ) ) end\
-if time and type( time ) ~= \"number\" then return error( \"expected number time, got \" .. class.type( time ) ) end\
+easing = easing or \"transition\"\
+\
+functionParameters.check( 3, \"to\", \"number\", to, \"time\", \"number\", time or 0, \"easing\", \"function\", easing )\
 \
 local a = Animation():setRounded()\
-:addKeyFrame( from, to, time or .3, easing or \"transition\" )\
+:addKeyFrame( from, to, time or .3, easing )\
 self:addAnimation( label, setter, a )\
 return a\
 end\
 \
 local function animateElementInOrOut( self, mode, vertical, current, to, time )\
-if time and type( time ) ~= \"number\" then return error( \"expected number time, got \" .. class.type( time ) ) end\
-if to and type( to ) ~= \"number\" then return error( \"expected number to, got \" .. class.type( to ) ) end\
-\
 if not self.parent then\
-return error( tostring( self ) .. \" has no parent, cannot animate \" .. mode )\
+return\
 end\
 \
-local a = Animation():setRounded():addKeyFrame( current, to, time or .3, mode == \"in\" and \"entrance\" or \"exit\" )\
+local a = Animation():setRounded():addKeyFrame( current, to, time, mode == \"in\" and \"entrance\" or \"exit\" )\
 \
 if vertical then\
 self:addAnimation( \"y\", self.setY, a )\
@@ -2246,7 +2389,10 @@ end\
 \
 function IPositionAnimator:animateIn( side, to, time )\
 side = side or \"top\"\
-if type( side ) ~= \"string\" then return error( \"expected string side, got \" .. class.type( side ) ) end\
+time = time or .3\
+\
+functionParameters.check( 3, \"side\", \"string\", side, \"to\", \"number\", to or 0, \"time\", \"number\", time )\
+\
 if side == \"top\" then\
 return animateElementInOrOut( self, \"in\", true, self.y, to or 0, time )\
 elseif side == \"left\" then\
@@ -2256,13 +2402,16 @@ return animateElementInOrOut( self, \"in\", false, self.x, to or self.parent.wid
 elseif side == \"bottom\" then\
 return animateElementInOrOut( self, \"in\", true, self.y, to or self.parent.height - self.height, time )\
 else\
-return error( \"invalid side '\" .. side .. \"', expected \" .. '\"left\", \"right\", \"top\", or \"bottom\"' )\
+throw( IncorrectParameterException( \"invalid side '\" .. side .. \"'\", 2 ) )\
 end\
 end\
 \
 function IPositionAnimator:animateOut( side, to, time )\
 side = side or \"top\"\
-if type( side ) ~= \"string\" then return error( \"expected string side, got \" .. class.type( side ) ) end\
+time = time or .3\
+\
+functionParameters.check( 3, \"side\", \"string\", side, \"to\", \"number\", to or 0, \"time\", \"number\", time )\
+\
 if side == \"top\" then\
 return animateElementInOrOut( self, \"out\", true, self.y, to or -self.height, time )\
 elseif side == \"left\" then\
@@ -2272,7 +2421,7 @@ return animateElementInOrOut( self, \"out\", false, self.x, to or self.parent.wi
 elseif side == \"bottom\" then\
 return animateElementInOrOut( self, \"out\", true, self.y, to or self.parent.height, time )\
 else\
-return error( \"invalid side '\" .. side .. \"', expected \" .. '\"left\", \"right\", \"top\", or \"bottom\"' )\
+throw( IncorrectParameterException( \"invalid side '\" .. side .. \"'\", 2 ) )\
 end\
 end","sheets.interfaces.IPositionAnimator",nil,_ENV)if not __f then error(__err,0)end __f()
 --/ @require sheets.interfaces.attributes.IAnimatedPositionAttributes
@@ -2333,10 +2482,12 @@ elseif easing == \"exit\" then\
 easing = easing_exit\
 end\
 \
-if type( initial ) ~= \"number\" then return error( \"expected number initial, got \" .. class.type( initial ) ) end\
-if type( final ) ~= \"number\" then return error( \"expected number final, got \" .. class.type( final ) ) end\
-if type( duration ) ~= \"number\" then return error( \"expected number duration, got \" .. class.type( duration ) ) end\
-if easing and type( easing ) ~= \"function\" then return error( \"expected function easing, got \" .. class.type( easing ) ) end\
+functionParameters.check( 4,\
+\"initial\", \"number\", initial,\
+\"final\", \"number\", final,\
+\"duration\", \"number\", duration,\
+\"easing\", \"function\", easing\
+)\
 \
 local frame = {\
 ease = true;\
@@ -2358,7 +2509,7 @@ end\
 \
 function Animation:addPause( pause )\
 pause = pause or 1\
-if type( pause ) ~= \"number\" then return error( \"expected number pause, got \" .. class.type( pause ) ) end\
+functionParameters.check( 1, \"pause\", \"number\", pause )\
 \
 local frame = {\
 clock = 0;\
@@ -2383,7 +2534,7 @@ end\
 end\
 \
 function Animation:update( dt )\
-if type( dt ) ~= \"number\" then return error( \"expected number dt, got \" .. class.type( dt ) ) end\
+functionParameters.check( 1, \"dt\", \"number\", dt )\
 \
 local frame = self.frames[self.frame]\
 \
@@ -2422,6 +2573,10 @@ local __f,__err=load("\
 \
 \
 \
+\
+local function exceptionHandler( e )\
+return error( \"An uncaught \" .. e.name .. \" exception was thrown:\\n\" .. tostring( e ), 0 )\
+end\
 \
 class \"Application\" implements (IChildContainer) implements (IAnimation)\
 {\
@@ -2463,7 +2618,7 @@ return self\
 end\
 \
 function Application:setViewportX( x )\
-if type( x ) ~= \"number\" then return error( \"expected number x, got \" .. class.type( x ) ) end\
+functionParameters.check( 1, \"x\", \"number\", x )\
 \
 self.viewportX = x\
 self:setChanged()\
@@ -2471,7 +2626,7 @@ return self\
 end\
 \
 function Application:setViewportY( y )\
-if type( y ) ~= \"number\" then return error( \"expected number y, got \" .. class.type( y ) ) end\
+functionParameters.check( 1, \"y\", \"number\", y )\
 \
 self.viewportY = y\
 self:setChanged()\
@@ -2479,8 +2634,8 @@ return self\
 end\
 \
 function Application:transitionViewport( x, y )\
-if x and type( x ) ~= \"number\" then return error( \"expected number x, got \" .. class.type( x ) ) end\
-if y and type( y ) ~= \"number\" then return error( \"expected number y, got \" .. class.type( y ) ) end\
+functionParameters.check( 1, \"x\", \"number\", x )\
+functionParameters.check( 1, \"y\", \"number\", y )\
 \
 local ax, ay -- the animations defined later on\
 local dx = x and math.abs( x - self.viewportX ) or 0\
@@ -2500,21 +2655,17 @@ return ax, ay\
 end\
 \
 function Application:transitionToView( view )\
-if not class.typeOf( view, View ) then return error( \"expected View view, got \" .. class.type( view ) ) end\
+functionParameters.check( 1, \"view\", View, view )\
 \
 if view.parent == self then\
 return self:transitionViewport( view.x, view.y )\
 else\
-return error( \"View is not a part of application '\" .. self.name .. \"'\" )\
+throw( IncorrectParameterException( \"View given is not a part of application '\" .. self.name .. \"'\", 2 ) )\
 end\
 end\
 \
 function Application:addTerminal( t )\
-if type( t ) ~= \"table\" or not pcall( function()\
-term.redirect( term.redirect( t ) )\
-end ) then\
-return error( \"expected terminal-redirect t, got \" .. class.type( t ) )\
-end\
+functionParameters.check( 1, \"redirect\", \"table\", t )\
 \
 self.terminals[#self.terminals + 1] = t\
 self.screen:reset()\
@@ -2532,7 +2683,8 @@ return self\
 end\
 \
 function Application:addMonitor( side )\
-if type( side ) ~= \"string\" then return error( \"expected string side, got \" .. class.type( side ) ) end\
+functionParameters.check( 1, \"side\", \"string\", side )\
+\
 if peripheral.getType( side ) == \"monitor\" then\
 local r = peripheral.wrap( side )\
 self.terminals[#self.terminals + 1] = r\
@@ -2544,7 +2696,8 @@ end\
 end\
 \
 function Application:removeMonitor( side )\
-if type( side ) ~= \"string\" then return error( \"expected string side, got \" .. class.type( side ) ) end\
+functionParameters.check( 1, \"side\", \"string\", side )\
+\
 for i = #self.terminals, 1, -1 do\
 if self.terminals[i] == self.monitor_sides[side] then\
 table.remove( self.terminals, i )\
@@ -2559,9 +2712,8 @@ function Application:positionChildrenInColumn( padding, order )\
 padding = padding or 0\
 order = order or \"ascending\"\
 \
-if type( padding ) ~= \"number\" then return error( \"expected number padding, got \" .. class.type( padding ) ) end\
-if type( order ) ~= \"string\" then return error( \"expected string order, got \" .. class.type( order ) ) end\
-if order ~= \"ascending\" and order ~= \"descending\" then return error( \"invalid order '\" .. order .. \"', expected 'ascending' or 'descending'\" ) end\
+functionParameters.check( 2, \"padding\", \"number\", padding, \"order\", \"string\", order )\
+if order ~= \"ascending\" and order ~= \"descending\" then throw( IncorrectParameterException( \"invalid order '\" .. order .. \"', expected 'ascending' or 'descending'\" ) ) end\
 \
 local children = self.children\
 local y = 0\
@@ -2578,9 +2730,8 @@ function Application:positionChildrenInRow( padding, order )\
 padding = padding or 0\
 order = order or \"ascending\"\
 \
-if type( padding ) ~= \"number\" then return error( \"expected number padding, got \" .. class.type( padding ) ) end\
-if type( order ) ~= \"string\" then return error( \"expected string order, got \" .. class.type( order ) ) end\
-if order ~= \"ascending\" and order ~= \"descending\" then return error( \"invalid order '\" .. order .. \"', expected 'ascending' or 'descending'\" ) end\
+functionParameters.check( 2, \"padding\", \"number\", padding, \"order\", \"string\", order )\
+if order ~= \"ascending\" and order ~= \"descending\" then throw( IncorrectParameterException( \"invalid order '\" .. order .. \"', expected 'ascending' or 'descending'\" ) ) end\
 \
 local children = self.children\
 local x = 0\
@@ -2745,6 +2896,10 @@ end\
 end\
 \
 function Application:run()\
+try (function()\
+if self.load then\
+self:load()\
+end\
 local t = timer.new( 0 )\
 while self.running do\
 local event = { coroutine.yield() }\
@@ -2758,6 +2913,9 @@ end\
 self:update()\
 self:draw()\
 end\
+end) {\
+default (exceptionHandler);\
+}\
 end\
 \
 function Application:setChanged( state )\
@@ -2766,9 +2924,9 @@ return self\
 end\
 \
 function Application:addChild( child )\
-if not class.typeOf( child, View ) then return error( \"expected View child, got \" .. class.type( child ) ) end\
-\
 local children = self.children\
+\
+functionParameters.check( 1, \"child\", View, child )\
 \
 child.parent = self\
 self:setChanged()\
@@ -2785,7 +2943,7 @@ return child\
 end\
 \
 function Application:isChildVisible( child )\
-if not class.typeOf( child, View ) then return error( \"expected View child, got \" .. class.type( child ) ) end\
+functionParameters.check( 1, \"child\", View, child )\
 \
 return child.x - self.viewportX + child.width > 0 and child.y - self.viewportY + child.height > 0 and child.x - self.viewportX < self.width and child.y - self.viewportY < self.height\
 end\
@@ -2801,14 +2959,14 @@ local __f,__err=load("\
 \
 \
 \
-local function formatPropertyName( name )\
+local function formatFieldName( name )\
 if not name:find \"%.\" then\
 return name .. \".default\"\
 end\
 return name\
 end\
 \
-local function getDefaultPropertyName( name )\
+local function getDefaultFieldName( name )\
 return name:gsub( \"%..-$\", \"\", 1 ) .. \".default\"\
 end\
 \
@@ -2819,18 +2977,18 @@ fields = {};\
 object = nil;\
 }\
 \
-function Style.addToTemplate( cls, properties )\
-if not class.isClass( cls ) then return error( \"expected Class class, got \" .. class.type( cls ) ) end\
-if type( properties ) ~= \"table\" then return error( \"expected table fields, got \" .. class.type( properties ) ) end\
+function Style.addToTemplate( cls, fields )\
+if not class.isClass( cls ) then throw( IncorrectParameterException( \"expected Class class, got \" .. class.type( cls ), 2 ) ) end\
+if type( fields ) ~= \"table\" then throw( IncorrectParameterException( \"expected table fields, got \" .. class.type( fields ), 2 ) ) end\
 \
 template[cls] = template[cls] or {}\
-for k, v in pairs( properties ) do\
-template[cls][formatPropertyName( k )] = v\
+for k, v in pairs( fields ) do\
+template[cls][formatFieldName( k )] = v\
 end\
 end\
 \
 function Style:Style( object )\
-if not class.isInstance( object ) then return error( \"Style attribute #1 'object' not an instance (\" .. class.type( object ) .. \")\", 2 ) end\
+if not class.isInstance( object ) then throw( IncorrectConstructorException( \"Style expects Instance object when created, got \" .. class.type( object ), 3 ) ) end\
 \
 template[object.class] = template[object.class] or {}\
 self.fields = {}\
@@ -2838,7 +2996,7 @@ self.object = object\
 end\
 \
 function Style:clone( object )\
-if not class.isInstance( object ) then return error( \"expected Instance object, got \" .. class.type( object ) ) end\
+if not class.isInstance( object ) then throw( IncorrectInitialiserException( \"expected Instance object, got \" .. class.type( object ), 2 ) ) end\
 \
 local s = Style( object or self.object )\
 for k, v in pairs( self.fields ) do\
@@ -2848,18 +3006,18 @@ return s\
 end\
 \
 function Style:setField( field, value )\
-if type( field ) ~= \"string\" then return error( \"expected string field, got \" .. class.type( field ) ) end\
+functionParameters.check( 1, \"field\", \"string\", field )\
 \
-self.fields[formatPropertyName( field )] = value\
+self.fields[formatFieldName( field )] = value\
 self.object:setChanged()\
 return self\
 end\
 \
 function Style:getField( field )\
-if type( field ) ~= \"string\" then return error( \"expected string field, got \" .. class.type( field ) ) end\
+functionParameters.check( 1, \"field\", \"string\", field )\
 \
-field = formatPropertyName( field )\
-local default = getDefaultPropertyName( field )\
+field = formatFieldName( field )\
+local default = getDefaultFieldName( field )\
 if self.fields[field] ~= nil then\
 return self.fields[field]\
 elseif template[self.object.class][field] ~= nil then\
@@ -3032,10 +3190,12 @@ handlesText = false;\
 }\
 \
 function Sheet:Sheet( x, y, width, height )\
-if type( x ) ~= \"number\" then return error( \"element attribute #1 'x' not a number (\" .. class.type( x ) .. \")\", 2 ) end\
-if type( y ) ~= \"number\" then return error( \"element attribute #2 'y' not a number (\" .. class.type( y ) .. \")\", 2 ) end\
-if type( width ) ~= \"number\" then return error( \"element attribute #3 'width' not a number (\" .. class.type( width ) .. \")\", 2 ) end\
-if type( height ) ~= \"number\" then return error( \"element attribute #4 'height' not a number (\" .. class.type( height ) .. \")\", 2 ) end\
+functionParameters.checkConstructor( self.class, 4,\
+\"x\", \"number\", x,\
+\"y\", \"number\", y,\
+\"width\", \"number\", width,\
+\"height\", \"number\", height\
+)\
 \
 self:IAnimation()\
 self:IChildContainer()\
@@ -3143,10 +3303,12 @@ canvas = nil;\
 }\
 \
 function View:View( x, y, width, height )\
-if type( x ) ~= \"number\" then return error( \"element attribute #1 'x' not a number (\" .. class.type( x ) .. \")\", 2 ) end\
-if type( y ) ~= \"number\" then return error( \"element attribute #2 'y' not a number (\" .. class.type( y ) .. \")\", 2 ) end\
-if type( width ) ~= \"number\" then return error( \"element attribute #3 'width' not a number (\" .. class.type( width ) .. \")\", 2 ) end\
-if type( height ) ~= \"number\" then return error( \"element attribute #4 'height' not a number (\" .. class.type( height ) .. \")\", 2 ) end\
+functionParameters.checkConstructor( self.class, 4,\
+\"x\", \"number\", x,\
+\"y\", \"number\", y,\
+\"width\", \"number\", width,\
+\"height\", \"number\", height\
+)\
 \
 self:IPosition( x, y, width, height )\
 self:IChildContainer()\

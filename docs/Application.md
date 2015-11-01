@@ -13,6 +13,12 @@ You can use this to make fancy animations that go between views (see `transition
 
 `Application()`
 
+#### Callbacks
+
+`load()`
+
+- Called when the application loads before being run.
+
 #### Variables
 
 name `string`

@@ -7,6 +7,10 @@
 
  -- @print Including sheets.Application
 
+local function exceptionHandler( e )
+	return error( "An uncaught " .. e.name .. " exception was thrown:\n" .. tostring( e ), 0 )
+end
+
 class "Application" implements (IChildContainer) implements (IAnimation)
 {
 	name = "UnNamed Application";
@@ -47,7 +51,7 @@ function Application:stop()
 end
 
 function Application:setViewportX( x )
-	if type( x ) ~= "number" then return error( "expected number x, got " .. class.type( x ) ) end
+	functionParameters.check( 1, "x", "number", x )
 
 	self.viewportX = x
 	self:setChanged()
@@ -55,7 +59,7 @@ function Application:setViewportX( x )
 end
 
 function Application:setViewportY( y )
-	if type( y ) ~= "number" then return error( "expected number y, got " .. class.type( y ) ) end
+	functionParameters.check( 1, "y", "number", y )
 	
 	self.viewportY = y
 	self:setChanged()
@@ -63,8 +67,8 @@ function Application:setViewportY( y )
 end
 
 function Application:transitionViewport( x, y )
-	if x and type( x ) ~= "number" then return error( "expected number x, got " .. class.type( x ) ) end
-	if y and type( y ) ~= "number" then return error( "expected number y, got " .. class.type( y ) ) end
+	functionParameters.check( 1, "x", "number", x )
+	functionParameters.check( 1, "y", "number", y )
 	
 	local ax, ay -- the animations defined later on
 	local dx = x and math.abs( x - self.viewportX ) or 0
@@ -84,21 +88,17 @@ function Application:transitionViewport( x, y )
 end
 
 function Application:transitionToView( view )
-	if not class.typeOf( view, View ) then return error( "expected View view, got " .. class.type( view ) ) end
+	functionParameters.check( 1, "view", View, view )
 	
 	if view.parent == self then
 		return self:transitionViewport( view.x, view.y )
 	else
-		return error( "View is not a part of application '" .. self.name .. "'" )
+		throw( IncorrectParameterException( "View given is not a part of application '" .. self.name .. "'", 2 ) )
 	end
 end
 
 function Application:addTerminal( t )
-	if type( t ) ~= "table" or not pcall( function()
-		term.redirect( term.redirect( t ) )
-	end ) then
-		return error( "expected terminal-redirect t, got " .. class.type( t ) )
-	end
+	functionParameters.check( 1, "redirect", "table", t )
 
 	self.terminals[#self.terminals + 1] = t
 	self.screen:reset()
@@ -116,7 +116,8 @@ function Application:removeTerminal( t )
 end
 
 function Application:addMonitor( side )
-	if type( side ) ~= "string" then return error( "expected string side, got " .. class.type( side ) ) end
+	functionParameters.check( 1, "side", "string", side )
+
 	if peripheral.getType( side ) == "monitor" then
 		local r = peripheral.wrap( side )
 		self.terminals[#self.terminals + 1] = r
@@ -128,7 +129,8 @@ function Application:addMonitor( side )
 end
 
 function Application:removeMonitor( side )
-	if type( side ) ~= "string" then return error( "expected string side, got " .. class.type( side ) ) end
+	functionParameters.check( 1, "side", "string", side )
+
 	for i = #self.terminals, 1, -1 do
 		if self.terminals[i] == self.monitor_sides[side] then
 			table.remove( self.terminals, i )
@@ -143,9 +145,8 @@ function Application:positionChildrenInColumn( padding, order )
 	padding = padding or 0
 	order = order or "ascending"
 
-	if type( padding ) ~= "number" then return error( "expected number padding, got " .. class.type( padding ) ) end
-	if type( order ) ~= "string" then return error( "expected string order, got " .. class.type( order ) ) end
-	if order ~= "ascending" and order ~= "descending" then return error( "invalid order '" .. order .. "', expected 'ascending' or 'descending'" ) end
+	functionParameters.check( 2, "padding", "number", padding, "order", "string", order )
+	if order ~= "ascending" and order ~= "descending" then throw( IncorrectParameterException( "invalid order '" .. order .. "', expected 'ascending' or 'descending'" ) ) end
 
 	local children = self.children
 	local y = 0
@@ -162,9 +163,8 @@ function Application:positionChildrenInRow( padding, order )
 	padding = padding or 0
 	order = order or "ascending"
 
-	if type( padding ) ~= "number" then return error( "expected number padding, got " .. class.type( padding ) ) end
-	if type( order ) ~= "string" then return error( "expected string order, got " .. class.type( order ) ) end
-	if order ~= "ascending" and order ~= "descending" then return error( "invalid order '" .. order .. "', expected 'ascending' or 'descending'" ) end
+	functionParameters.check( 2, "padding", "number", padding, "order", "string", order )
+	if order ~= "ascending" and order ~= "descending" then throw( IncorrectParameterException( "invalid order '" .. order .. "', expected 'ascending' or 'descending'" ) ) end
 
 	local children = self.children
 	local x = 0
@@ -329,19 +329,26 @@ function Application:draw()
 end
 
 function Application:run()
-	local t = timer.new( 0 )
-	while self.running do
-		local event = { coroutine.yield() }
-		if event[1] == "timer" and event[2] == t then
-			t = timer.new( .05 )
-		elseif event[1] == "terminate" and self.terminateable then
-			self:stop()
-		else
-			self:event( unpack( event ) )
+	try (function()
+		if self.load then
+			self:load()
 		end
-		self:update()
-		self:draw()
-	end
+		local t = timer.new( 0 )
+		while self.running do
+			local event = { coroutine.yield() }
+			if event[1] == "timer" and event[2] == t then
+				t = timer.new( .05 )
+			elseif event[1] == "terminate" and self.terminateable then
+				self:stop()
+			else
+				self:event( unpack( event ) )
+			end
+			self:update()
+			self:draw()
+		end
+	end) {
+		default (exceptionHandler);
+	}
 end
 
 function Application:setChanged( state )
@@ -350,9 +357,9 @@ function Application:setChanged( state )
 end
 
 function Application:addChild( child )
-	if not class.typeOf( child, View ) then return error( "expected View child, got " .. class.type( child ) ) end
-
 	local children = self.children
+
+	functionParameters.check( 1, "child", View, child )
 
 	child.parent = self
 	self:setChanged()
@@ -369,8 +376,8 @@ function Application:addChild( child )
 end
 
 function Application:isChildVisible( child )
-	if not class.typeOf( child, View ) then return error( "expected View child, got " .. class.type( child ) ) end
-
+	functionParameters.check( 1, "child", View, child )
+	
 	return child.x - self.viewportX + child.width > 0 and child.y - self.viewportY + child.height > 0 and child.x - self.viewportX < self.width and child.y - self.viewportY < self.height
 end
 

@@ -8,24 +8,22 @@
  -- @print Including sheets.interfaces.IPositionAnimator
 
 local function animateAttribute( self, label, setter, from, to, time, easing )
-	if type( to ) ~= "number" then return error( "expected number to, got " .. class.type( to ) ) end
-	if time and type( time ) ~= "number" then return error( "expected number time, got " .. class.type( time ) ) end
+	easing = easing or SHEETS_DEFAULT_TRANSITION_EASING
+
+	functionParameters.check( 3, "to", "number", to, "time", "number", time or 0, "easing", "function", easing )
 
 	local a = Animation():setRounded()
-		:addKeyFrame( from, to, time or SHEETS_DEFAULT_TRANSITION_TIME, easing or SHEETS_DEFAULT_TRANSITION_EASING )
+		:addKeyFrame( from, to, time or SHEETS_DEFAULT_TRANSITION_TIME, easing )
 	self:addAnimation( label, setter, a )
 	return a
 end
 
 local function animateElementInOrOut( self, mode, vertical, current, to, time )
-	if time and type( time ) ~= "number" then return error( "expected number time, got " .. class.type( time ) ) end
-	if to and type( to ) ~= "number" then return error( "expected number to, got " .. class.type( to ) ) end
-
 	if not self.parent then
-		return error( tostring( self ) .. " has no parent, cannot animate " .. mode )
+		return
 	end
 
-	local a = Animation():setRounded():addKeyFrame( current, to, time or SHEETS_DEFAULT_TRANSITION_TIME, mode == "in" and "entrance" or "exit" )
+	local a = Animation():setRounded():addKeyFrame( current, to, time, mode == "in" and "entrance" or "exit" )
 
 	if vertical then
 		self:addAnimation( "y", self.setY, a )
@@ -63,7 +61,10 @@ end
 
 function IPositionAnimator:animateIn( side, to, time )
 	side = side or "top"
-	if type( side ) ~= "string" then return error( "expected string side, got " .. class.type( side ) ) end
+	time = time or SHEETS_DEFAULT_TRANSITION_TIME
+
+	functionParameters.check( 3, "side", "string", side, "to", "number", to or 0, "time", "number", time )
+
 	if side == "top" then
 		return animateElementInOrOut( self, "in", true, self.y, to or 0, time )
 	elseif side == "left" then
@@ -73,13 +74,16 @@ function IPositionAnimator:animateIn( side, to, time )
 	elseif side == "bottom" then
 		return animateElementInOrOut( self, "in", true, self.y, to or self.parent.height - self.height, time )
 	else
-		return error( "invalid side '" .. side .. "', expected " .. '"left", "right", "top", or "bottom"' )
+		throw( IncorrectParameterException( "invalid side '" .. side .. "'", 2 ) )
 	end
 end
 
 function IPositionAnimator:animateOut( side, to, time )
 	side = side or "top"
-	if type( side ) ~= "string" then return error( "expected string side, got " .. class.type( side ) ) end
+	time = time or SHEETS_DEFAULT_TRANSITION_TIME
+
+	functionParameters.check( 3, "side", "string", side, "to", "number", to or 0, "time", "number", time )
+
 	if side == "top" then
 		return animateElementInOrOut( self, "out", true, self.y, to or -self.height, time )
 	elseif side == "left" then
@@ -89,6 +93,6 @@ function IPositionAnimator:animateOut( side, to, time )
 	elseif side == "bottom" then
 		return animateElementInOrOut( self, "out", true, self.y, to or self.parent.height, time )
 	else
-		return error( "invalid side '" .. side .. "', expected " .. '"left", "right", "top", or "bottom"' )
+		throw( IncorrectParameterException( "invalid side '" .. side .. "'", 2 ) )
 	end
 end

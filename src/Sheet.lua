@@ -30,10 +30,12 @@ class "Sheet"
 }
 
 function Sheet:Sheet( x, y, width, height )
-	if type( x ) ~= "number" then return error( "element attribute #1 'x' not a number (" .. class.type( x ) .. ")", 2 ) end
-	if type( y ) ~= "number" then return error( "element attribute #2 'y' not a number (" .. class.type( y ) .. ")", 2 ) end
-	if type( width ) ~= "number" then return error( "element attribute #3 'width' not a number (" .. class.type( width ) .. ")", 2 ) end
-	if type( height ) ~= "number" then return error( "element attribute #4 'height' not a number (" .. class.type( height ) .. ")", 2 ) end
+	functionParameters.checkConstructor( self.class, 4,
+		"x", "number", x,
+		"y", "number", y,
+		"width", "number", width,
+		"height", "number", height
+	)
 
 	self:IAnimation()
 	self:IChildContainer()

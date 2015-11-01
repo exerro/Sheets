@@ -12,6 +12,7 @@ IHasParent = {
 }
 
 function IHasParent:setParent( parent )
+	-- fix this
 	if parent and ( not class.isInstance( parent ) or not parent:implements( IChildContainer ) ) then return error( "expected IChildContainer parent, got " .. class.type( parent ) ) end
 
 	if parent then
@@ -33,5 +34,8 @@ function IHasParent:isVisible()
 end
 
 function IHasParent:bringToFront()
-	return self:setParent( self.parent )
+	if self.parent then
+		return self:setParent( self.parent )
+	end
+	return self
 end
