@@ -233,6 +233,8 @@ function Application:event( event, ... )
 		handle( MouseEvent( SHEETS_EVENT_MOUSE_SCROLL, params[2] - 1, params[3] - 1, params[1], true ) )
 
 	elseif event == "monitor_touch" and self.monitor_sides[params[1]] then
+		handle( MouseEvent( SHEETS_EVENT_MOUSE_DOWN, params[2] - 1, params[3] - 1, 1 ) )
+		handle( MouseEvent( SHEETS_EVENT_MOUSE_UP, params[2] - 1, params[3] - 1, 1 ) )
 		handle( MouseEvent( SHEETS_EVENT_MOUSE_CLICK, params[2] - 1, params[3] - 1, 1 ) )
 
 	elseif event == "chatbox_something" then
@@ -380,6 +382,3 @@ function Application:isChildVisible( child )
 	
 	return child.x - self.viewportX + child.width > 0 and child.y - self.viewportY + child.height > 0 and child.x - self.viewportX < self.width and child.y - self.viewportY < self.height
 end
-
-application = Application()
-Application = nil

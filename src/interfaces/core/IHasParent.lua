@@ -39,3 +39,13 @@ function IHasParent:bringToFront()
 	end
 	return self
 end
+
+function IHasParent:getRootParent()
+	local p = self.parent
+	if p then
+		while p.parent do
+			p = p.parent
+		end
+		return p
+	end
+end

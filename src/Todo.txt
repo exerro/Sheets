@@ -1,13 +1,12 @@
-Exceptions
-Image class.
-Fix TextInput... everything...
-Container class.
+Rethink TextInput selection.
+Update all the exceptions.
 ColourSelector class.
+Docy doc doc.
 Label class.
 RadioButton class.
 Tabs class.
 Toggle class.
 Window class.
-Application:positionChildrenInGrid()
-Dynamic values
-Make application fire mouse up and down events for monitor touches.
+Dynamic values.
+Menu class.
+Terminal class.

@@ -84,20 +84,6 @@ function View:handle( event )
 			c[i]:handle( event )
 		end
 	end
-
-	if event:typeOf( MouseEvent ) then
-		self:onMouseEvent( event )
-	elseif event:typeOf( KeyboardEvent ) then
-		self:onKeyboardEvent( event )
-	end
-end
-
-function View:onMouseEvent( event )
-	-- click callbacks
-end
-
-function View:onKeyboardEvent( event )
-	-- keyboard shortcut callbacks
 end
 
 Style.addToTemplate( View, {

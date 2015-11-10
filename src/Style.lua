@@ -68,11 +68,10 @@ function Style:getField( field )
 	local default = getDefaultFieldName( field )
 	if self.fields[field] ~= nil then
 		return self.fields[field]
-	elseif template[self.object.class][field] ~= nil then
-		return template[self.object.class][field]
 	elseif self.fields[default] ~= nil then
 		return self.fields[default]
-	else
-		return template[self.object.class][default]
+	elseif template[self.object.class][field] ~= nil then
+		return template[self.object.class][field]
 	end
+	return template[self.object.class][default]
 end

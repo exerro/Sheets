@@ -11,8 +11,15 @@ local wrapline, wrap
 
 IHasText = {
 	text = "";
-	text_lines = {};
+	text_lines = nil;
 }
+
+function IHasText:autoHeight()
+	if not self.text_lines then
+		self:wrapText( true )
+	end
+	return self:setHeight( #self.text_lines )
+end
 
 function IHasText:setText( text )
 	functionParameters.check( 1, "text", "string", text )
@@ -23,12 +30,12 @@ function IHasText:setText( text )
 	return self
 end
 
-function IHasText:wrapText()
-	self.lines = wrap( self.text, self.width, self.height )
+function IHasText:wrapText( ignoreHeight )
+	self.text_lines = wrap( self.text, self.width, not ignoreHeight and self.height )
 end
 
 function IHasText:drawText( mode )
-	local offset, lines = 0, self.lines
+	local offset, lines = 0, self.text_lines
 	mode = mode or "default"
 
 	local horizontal_alignment = self.style:getField( "horizontal-alignment." .. mode )
@@ -36,7 +43,7 @@ function IHasText:drawText( mode )
 
 	if not lines then
 		self:wrapText()
-		lines = self.lines
+		lines = self.text_lines
 	end
 
 	if vertical_alignment == ALIGNMENT_CENTRE then
@@ -83,7 +90,7 @@ end
 
 function wrap( text, width, height )
 	local lines, line = {}
-	while text and #lines < height do
+	while text and ( not height or #lines < height ) do
 		line, text = wrapline( text, width )
 		lines[#lines + 1] = line
 	end

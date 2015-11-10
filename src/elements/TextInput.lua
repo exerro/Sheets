@@ -7,6 +7,8 @@
 
  -- @print Including sheets.elements.TextInput
 
+-- needs to update to new exception system
+
 local function getSimilarPattern( char )
 	local pat = "^[^_%w%s]+"
 	if char:find "%s" then
@@ -283,16 +285,16 @@ function TextInput:onKeyboardEvent( event )
 			event:handle()
 		elseif event:matches "enter" then
 			self:unfocus()
-			if self.onEnter then
-				self:onEnter()
-			end
 			event:handle()
+			if self.onEnter then
+				return self:onEnter()
+			end
 		elseif event:matches "tab" then
 			self:unfocus()
-			if self.onTab then
-				self:onTab()
-			end
 			event:handle()
+			if self.onTab then
+				return self:onTab()
+			end
 		elseif event:matches "v" and ( event:isHeld "leftCtrl" or event:isHeld "rightCtrl" ) then
 			local text = clipboard.get "plain-text"
 			if text then
@@ -312,6 +314,8 @@ function TextInput:onKeyboardEvent( event )
 				self:write ""
 			end
 		end
+
+		event:handle()
 
 	end
 end

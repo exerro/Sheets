@@ -10,11 +10,11 @@ function functionParameters.checkConstructor( _class, argc, ... )
 
 		if type( expectedType ) == "string" then
 			if type( value ) ~= expectedType then
-				throw( IncorrectConstructorException( _class:type() .. "expects " .. expectedType .. " " .. name .. " when created, got " .. class.type( value ), 4 ) )
+				throw( IncorrectConstructorException( _class:type() .. " expects " .. expectedType .. " " .. name .. " when created, got " .. class.type( value ), 4 ) )
 			end
 		else
 			if not class.typeOf( value, expectedType ) then
-				throw( IncorrectConstructorException( _class:type() .. "expects " .. expectedType:type() .. " " .. name .. " when created, got " .. class.type( value ), 4 ) )
+				throw( IncorrectConstructorException( _class:type() .. " expects " .. expectedType:type() .. " " .. name .. " when created, got " .. class.type( value ), 4 ) )
 			end
 		end
 	end

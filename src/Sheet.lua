@@ -23,8 +23,8 @@ class "Sheet"
 	implements (IPosition)
 	implements (IPositionAnimator)
 {
-	canvas = nil;
-
+	canvas = nil
+;
 	handlesKeyboard = false;
 	handlesText = false;
 }

@@ -12,11 +12,22 @@
  -- @if SHEETS_CORE_ELEMENTS
 	 -- @define SHEETS_BUTTON
 	 -- @define SHEETS_CHECKBOX
+	 -- @define SHEETS_COLOURSELECTOR
+	 -- @define SHEETS_CONTAINER
 	 -- @define SHEETS_DRAGGABLE
+	 -- @define SHEETS_IMAGE
+	 -- @define SHEETS_KEYHANDLER
+	 -- @define SHEETS_LABEL
+	 -- @define SHEETS_MENU
 	 -- @define SHEETS_PANEL
+	 -- @define SHEETS_RADIOBUTTON
 	 -- @define SHEETS_SCROLLCONTAINER
+	 -- @define SHEETS_TABS
+	 -- @define SHEETS_TERMINAL
 	 -- @define SHEETS_TEXT
 	 -- @define SHEETS_TEXTINPUT
+	 -- @define SHEETS_TOGGLE
+	 -- @define SHEETS_WINDOW
  -- @endif
 
  -- @if SHEETS_LOWRES
@@ -90,29 +101,19 @@ alignment = {
  -- @require sheets.exception
  -- @require sheets.functionParameters
 
- -- @require sheets.interfaces.IAnimation
- -- @require sheets.interfaces.IChildContainer
- --/ @require sheets.interfaces.IChildDecoder
- -- @require sheets.interfaces.ICommon
- -- @require sheets.interfaces.IEvent
- -- @require sheets.interfaces.IHasParent
+ -- @require sheets.interfaces.core.IAnimation
+ -- @require sheets.interfaces.core.IChildContainer
+ -- @require sheets.interfaces.core.ICommon
+ -- @require sheets.interfaces.core.IEvent
+ -- @require sheets.interfaces.core.IHasParent
+ -- @require sheets.interfaces.core.IPosition
+ -- @require sheets.interfaces.core.IPositionAnimator
+
  -- @require sheets.interfaces.IHasText
- -- @require sheets.interfaces.IPosition
- -- @require sheets.interfaces.IPositionAnimator
- --/ @require sheets.interfaces.attributes.IAnimatedPositionAttributes
- --/ @require sheets.interfaces.attributes.ICommonAttributes
- --/ @require sheets.interfaces.attributes.IPositionAttributes
- --/ @require sheets.interfaces.attributes.ITextAttributes
- --/ @require sheets.interfaces.attributes.IThemeAttribute
 
  -- @require sheets.Animation
  -- @require sheets.Application
  -- @require sheets.Style
-
- --/ @require sheets.sml.SMLNode
- --/ @require sheets.sml.SMLParser
- --/ @require sheets.sml.SMLNodeDecoder
- --/ @require sheets.sml.SMLDocument
 
  -- @require sheets.events.KeyboardEvent
  -- @require sheets.events.MiscEvent
@@ -128,8 +129,17 @@ alignment = {
  -- @if SHEETS_CHECKBOX
 	 -- @require sheets.elements.Checkbox
  -- @endif
+ -- @if SHEETS_CONTAINER
+	 -- @require sheets.elements.Container
+ -- @endif
  -- @if SHEETS_DRAGGABLE
 	 -- @require sheets.elements.Draggable
+ -- @endif
+ -- @if SHEETS_IMAGE
+	 -- @require sheets.elements.Image
+ -- @endif
+ -- @if SHEETS_KEYHANDLER
+ 	 -- @require sheets.elements.KeyHandler
  -- @endif
  -- @if SHEETS_PANEL
 	 -- @require sheets.elements.Panel

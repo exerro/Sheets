@@ -10,7 +10,7 @@
 local function animateAttribute( self, label, setter, from, to, time, easing )
 	easing = easing or SHEETS_DEFAULT_TRANSITION_EASING
 
-	functionParameters.check( 3, "to", "number", to, "time", "number", time or 0, "easing", "function", easing )
+	functionParameters.check( 3, "to", "number", to, "time", "number", time or 0, "easing", type( easing ) == "string" and "string" or "function", easing )
 
 	local a = Animation():setRounded()
 		:addKeyFrame( from, to, time or SHEETS_DEFAULT_TRANSITION_TIME, easing )

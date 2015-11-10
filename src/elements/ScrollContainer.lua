@@ -7,6 +7,8 @@
 
  -- @print Including sheets.elements.ScrollContainer
 
+-- needs to update to new exception system
+
 class "ScrollContainer" extends "Sheet" {
 	scrollX = 0;
 	scrollY = 0;
@@ -25,19 +27,18 @@ function ScrollContainer:ScrollContainer( x, y, width, height, element )
 		element.x, element.y = 0, 0
 	end
 
-	if type( x ) ~= "number" then return error( "element attribute #1 'x' not a number (" .. class.type( x ) .. ")", 2 ) end
-	if type( y ) ~= "number" then return error( "element attribute #2 'y' not a number (" .. class.type( y ) .. ")", 2 ) end
-	if type( width ) ~= "number" then return error( "element attribute #3 'width' not a number (" .. class.type( width ) .. ")", 2 ) end
-	if type( height ) ~= "number" then return error( "element attribute #4 'height' not a number (" .. class.type( height ) .. ")", 2 ) end
+	functionParameters.checkConstructor( self.class, 4,
+		"x", "number", x,
+		"y", "number", y,
+		"width", "number", width,
+		"height", "number", height,
+		"element", element and Sheet, element
+	)
 
 	self:Sheet( x, y, width, height )
 
 	if element then
-		if class.typeOf( element, Sheet ) then
-			self:addChild( element )
-		else
-			return error( "expected Sheet element, got " .. class.type( element ), 2 )
-		end
+		self:addChild( element )
 	end
 end
 
@@ -121,11 +122,13 @@ function ScrollContainer:draw()
 
 		for i = 1, #children do
 			local child = children[i]
-			child:draw()
-			child.canvas:drawTo( self.canvas, child.x - ox, child.y - oy )
+			if child:isVisible() then
+				child:draw()
+				child.canvas:drawTo( self.canvas, child.x - ox, child.y - oy )
 
-			if child.cursor_active then
-				cx, cy, cc = child.x + child.cursor_x - ox, child.y + child.cursor_y - oy, child.cursor_colour
+				if child.cursor_active then
+					cx, cy, cc = child.x + child.cursor_x - ox, child.y + child.cursor_y - oy, child.cursor_colour
+				end
 			end
 		end
 
@@ -143,6 +146,7 @@ end
 
 function ScrollContainer:handle( event )
 	local c = {}
+	local ox, oy = self.scrollX, self.scrollY
 	local children = self.children
 	for i = 1, #children do
 		c[i] = children[i]
@@ -214,9 +218,9 @@ function ScrollContainer:handle( event )
 			end
 		elseif event:is( SHEETS_EVENT_MOUSE_SCROLL ) then
 			if v then
-				self:setScrollY( math.max( math.min( self.scrollY + event.button, cHeight - self:getDisplayHeight( h, v ) ), 0 ) )
+				self:setScrollY( math.max( math.min( oy + event.button, cHeight - self:getDisplayHeight( h, v ) ), 0 ) )
 			elseif h then
-				self:setScrollX( math.max( math.min( self.scrollX + event.button, cWidth - self:getDisplayWidth( h, v ) ), 0 ) )
+				self:setScrollX( math.max( math.min( ox + event.button, cWidth - self:getDisplayWidth( h, v ) ), 0 ) )
 			end
 		elseif event:is( SHEETS_EVENT_MOUSE_CLICK ) or event:is( SHEETS_EVENT_MOUSE_HOLD ) then
 			event:handle()
@@ -226,7 +230,7 @@ function ScrollContainer:handle( event )
 	if event:typeOf( MouseEvent ) then
 		local within = event:isWithinArea( 0, 0, self.width, self.height )
 		for i = #c, 1, -1 do
-			c[i]:handle( event:clone( c[i].x - self.scrollX, c[i].y - self.scrollY, within ) )
+			c[i]:handle( event:clone( c[i].x - ox, c[i].y - oy, within ) )
 		end
 	else
 		for i = #c, 1, -1 do
@@ -276,6 +280,34 @@ function ScrollContainer:onPostDraw()
 			self.canvas:mapColour( self.canvas:getArea( GRAPHICS_AREA_VLINE, self.width - 1, py, sy ), c2 )
 		end
 	end
+end
+
+function ScrollContainer:getChildrenAt( x, y )
+	functionParameters.check( 2, "x", "number", x, "y", "number", y )
+
+	local c = {}
+	local ox, oy = self.scrollX, self.scrollY
+
+	local children = self.children
+	for i = 1, #children do
+		c[i] = children[i]
+	end
+
+	local elements = {}
+
+	for i = #c, 1, -1 do
+		c[i]:handle( MouseEvent( EVENT_MOUSE_PING, x - c[i].x - ox, y - c[i].y - oy, elements, true ) )
+	end
+
+	return elements
+end
+
+function ScrollContainer:isChildVisible( child )
+	functionParameters.check( 1, "child", Sheet, child )
+
+	local ox, oy = self.scrollX, self.scrollY
+
+	return child.x + child.width - ox > 0 and child.y + child.height - oy > 0 and child.x - ox < self.width and child.y - oy < self.height
 end
 
 Style.addToTemplate( ScrollContainer, {
