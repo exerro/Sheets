@@ -7,7 +7,7 @@
 
  -- @print Including sheets.elements.Button
 
-class "Button" extends "Sheet" implements (IHasText) {
+class "Button" extends "Sheet" implements "IHasText" {
 	down = false;
 }
 

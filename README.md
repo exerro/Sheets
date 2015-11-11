@@ -27,32 +27,4 @@ Take a look in the `/builds` folder. To use the library as an API, download `api
 
 Alternatively, to use with Annex, you can download the `src` folder and place it under `sheets` in one of your include paths when building. By doing this, the library will not be localised to `sheets` by default. You'll also need to download the `src` folder of the graphics library to do this, and place that under `graphics` in one of your include paths.
 
-### Your first application
-
-```lua
--- Create a view to contain elements. Elements must be contained in a view.
-local view = sheets.application + sheets.View( 0, 0, sheets.application.width, sheets.application.height )
-
--- Create a random button.
-local button = view + sheets.Button( 0, 0, 20, 5, "I am a button" )
-
--- Make the button orange (or yellow when held)
-button.style:setField( "colour", sheets.colour.orange )
-button.style:setField( "colour.pressed", sheets.colour.yellow )
-
--- Define a function to be called when the button is clicked.
-function button:onClick()
-	-- Move the button to random coordinates.
-	self:animateX( math.random( 0, self.parent.width - self.width ) )
-	self:animateY( math.random( 0, self.parent.height - self.height ) )
-end
-
--- Define a function to be called when the button is held.
-function button:onHold()
-	-- Stop the application from running.
-	sheets.application:stop()
-end
-
--- Run the application.
-sheets.application:run()
-```
+Take a look at the example application to see how things work.

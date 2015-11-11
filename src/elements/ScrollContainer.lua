@@ -262,19 +262,19 @@ function ScrollContainer:onPostDraw()
 		local sx, sy = self:getScrollbarSizes( cWidth, cHeight, h, v )
 
 		if h then
-			local c1 = self.style:getField( self.class, "horizontal-bar", "default" )
+			local c1 = self.style:getField "horizontal-bar"
 			local c2 = self.heldScrollbar == "h" and
-					   self.style:getField( self.class, "horizontal-bar", "active" )
-					or self.style:getField( self.class, "horizontal-bar", "bar" )
+					   self.style:getField "horizontal-bar.active"
+					or self.style:getField "horizontal-bar.bar"
 
 			self.canvas:mapColour( self.canvas:getArea( GRAPHICS_AREA_HLINE, 0, self.height - 1, self:getDisplayWidth( h, v ) ), c1 )
 			self.canvas:mapColour( self.canvas:getArea( GRAPHICS_AREA_HLINE, px, self.height - 1, sx ), c2 )
 		end
 		if v then
-			local c1 = self.style:getField( self.class, "vertical-bar", "default" )
+			local c1 = self.style:getField "vertical-bar"
 			local c2 = self.heldScrollbar == "v" and
-					   self.style:getField( self.class, "vertical-bar", "active" )
-					or self.style:getField( self.class, "vertical-bar", "bar" )
+					   self.style:getField "vertical-bar.active"
+					or self.style:getField "vertical-bar.bar"
 
 			self.canvas:mapColour( self.canvas:getArea( GRAPHICS_AREA_VLINE, self.width - 1, 0, self.height ), c1 )
 			self.canvas:mapColour( self.canvas:getArea( GRAPHICS_AREA_VLINE, self.width - 1, py, sy ), c2 )

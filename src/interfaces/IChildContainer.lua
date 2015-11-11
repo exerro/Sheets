@@ -1,5 +1,5 @@
 
-IChildContainer = {
+interface "IChildContainer" {
 	children = {}
 }
 
@@ -43,26 +43,6 @@ function IChildContainer:removeChild( child )
 			child.parent = nil
 			self:setChanged()
 			return table.remove( self.children, i )
-		end
-	end
-end
-
-function IChildContainer:repositionChildZIndex( child )
-	local children = self.children
-
-	for i = 1, #children do
-		if children[i] == child then
-			while children[i-1] and children[i-1].z > child.z do
-				children[i-1], children[i] = child, children[i-1]
-				i = i - 1
-			end
-			while children[i+1] and children[i+1].z < child.z do
-				children[i+1], children[i] = child, children[i+1]
-				i = i + 1
-			end
-			
-			self:setChanged()
-			break
 		end
 	end
 end
@@ -120,21 +100,22 @@ function IChildContainer:isChildVisible( child )
 	return child.x + child.width > 0 and child.y + child.height > 0 and child.x < self.width and child.y < self.height
 end
 
-function IChildContainer:update( dt )
-	local c = {}
+function IChildContainer:repositionChildZIndex( child )
 	local children = self.children
 
-	self:updateAnimations( dt )
-
-	if self.onUpdate then
-		self:onUpdate( dt )
-	end
-
 	for i = 1, #children do
-		c[i] = children[i]
-	end
-
-	for i = #c, 1, -1 do
-		c[i]:update( dt )
+		if children[i] == child then
+			while children[i-1] and children[i-1].z > child.z do
+				children[i-1], children[i] = child, children[i-1]
+				i = i - 1
+			end
+			while children[i+1] and children[i+1].z < child.z do
+				children[i+1], children[i] = child, children[i+1]
+				i = i + 1
+			end
+			
+			self:setChanged()
+			break
+		end
 	end
 end

@@ -7,7 +7,7 @@
 
  -- @print Including sheets.elements.Draggable
 
-class "Draggable" extends "Sheet" implements (IHasText) {
+class "Draggable" extends "Sheet" implements "IHasText" {
 	down = false;
 }
 

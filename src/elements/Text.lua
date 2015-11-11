@@ -7,7 +7,7 @@
 
  -- @print Including sheets.elements.Text
 
-class "Text" extends "Sheet" implements (IHasText) {}
+class "Text" extends "Sheet" implements "IHasText" {}
 
 function Text:Text( x, y, width, height, text )
 	self.text = text

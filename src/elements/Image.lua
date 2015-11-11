@@ -7,7 +7,7 @@
 
  -- @print Including sheets.elements.Image
 
-class "Image" extends "Sheet" implements (IHasText) {
+class "Image" extends "Sheet" {
 	down = false;
 	image = nil;
 	fill = nil;

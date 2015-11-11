@@ -10,3 +10,4 @@ Window class.
 Dynamic values.
 Menu class.
 Terminal class.
+Application class coroutine manager.

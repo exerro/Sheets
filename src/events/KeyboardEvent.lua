@@ -7,13 +7,14 @@
 
  -- @print Including sheets.events.KeyboardEvent
 
-class "KeyboardEvent" implements (IEvent) {
+class "KeyboardEvent" {
+	event = "KeyboardEvent";
 	key = 0;
 	held = {};
 }
 
 function KeyboardEvent:KeyboardEvent( event, key, held )
-	self:IEvent( event )
+	self.event = event
 	self.key = key
 	self.held = held
 end
@@ -37,4 +38,13 @@ end
 
 function KeyboardEvent:tostring()
 	return "KeyboardEvent"
+end
+
+function KeyboardEvent:is( event )
+	return self.event == event
+end
+
+function KeyboardEvent:handle( handler )
+	self.handled = true
+	self.handler = handler
 end

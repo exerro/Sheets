@@ -156,29 +156,27 @@ local __f,__err=load("\
 class = {}\
 local classobj = setmetatable( {}, { __index = class } )\
 local names = {}\
+local interfaces = {}\
 local last_created\
 \
-local supportedMetaMethods = {\
-__add = true;\
-__sub = true;\
-__mul = true;\
-__div = true;\
-__mod = true;\
-__pow = true;\
-__unm = true;\
-__len = true;\
-__eq = true;\
-__lt = true;\
-__lte = true;\
-__tostring = true;\
-__concat = true;\
-}\
+local supportedMetaMethods = { __add = true, __sub = true, __mul = true, __div = true, __mod = true, __pow = true, __unm = true, __len = true, __eq = true, __lt = true, __lte = true, __tostring = true, __concat = true }\
 \
 local function _tostring( self )\
 return \"[Class] \" .. self:type()\
 end\
 local function _concat( a, b )\
 return tostring( a ) .. tostring( b )\
+end\
+\
+local function construct( t )\
+if not last_created then\
+return error \"no class to define\"\
+end\
+\
+for k, v in pairs( t ) do\
+last_created[k] = v\
+end\
+last_created = nil\
 end\
 \
 local function newSuper( object, super )\
@@ -276,28 +274,6 @@ function classobj:typeOf( super )\
 return super == self or ( self.super and self.super:typeOf( super ) ) or false\
 end\
 \
-function classobj:implement( t )\
-if type( t ) ~= \"table\" then\
-return error( \"cannot implement non-table\" )\
-end\
-for k, v in pairs( t ) do\
-self[k] = v\
-end\
-return self\
-end\
-\
-function classobj:implements( t )\
-if type( t ) ~= \"table\" then\
-return error( \"cannot compare non-table\" )\
-end\
-for k, v in pairs( t ) do\
-if type( self[k] ) ~= type( v ) then\
-return false\
-end\
-end\
-return true\
-end\
-\
 function class:new( name )\
 \
 if type( name or self ) ~= \"string\" then\
@@ -360,58 +336,41 @@ __call = class.new;\
 } )\
 \
 function extends( name )\
-\
 if not last_created then\
 return error \"no class to extend\"\
-end\
-\
-if not names[name] then\
+elseif not names[name] then\
 return error( \"no such class '\" .. tostring( name ) .. \"'\" )\
 end\
 \
 last_created:extends( names[name] )\
 \
+return construct\
+end\
+\
+function interface( name )\
+interfaces[name] = {}\
+_ENV[name] = interfaces[name]\
 return function( t )\
-if not last_created then\
-return error \"no class to define\"\
+if type( t ) ~= \"table\" then\
+return error( \"expected table t, got \" .. class.type( t ) )\
 end\
-\
-for k, v in pairs( t ) do\
-last_created[k] = v\
+_ENV[name] = t\
+interfaces[name] = t\
 end\
-last_created = nil\
-end\
-\
 end\
 \
 function implements( name )\
-\
 if not last_created then\
 return error \"no class to modify\"\
+elseif not interfaces[name] then\
+return error( \"no interface by name '\" .. tostring( name ) .. \"'\" )\
 end\
 \
-if type( name ) == \"string\" then\
-if not names[name] then\
-return error( \"no such class '\" .. tostring( name ) .. \"'\" )\
-end\
-last_created:implement( names[name] )\
-elseif type( name ) == \"table\" then\
-last_created:implement( name )\
-else\
-return error( \"Cannot implement type (\" .. class.type( name ) .. \")\" )\
-end\
-\
-return function( t )\
-if not last_created then\
-return error \"no class to define\"\
-end\
-\
-for k, v in pairs( t ) do\
+for k, v in pairs( interfaces[name] ) do\
 last_created[k] = v\
 end\
-last_created = nil\
-end\
 \
+return construct\
 end","class",nil,_ENV)if not __f then error(__err,0)end __f()
 
 
@@ -1581,8 +1540,8 @@ local bc, tc, s = {}, {}, {}\
 i = i - sWidth\
 for x = 1, sWidth do\
 local px = pixels[i]\
-bc[x] = hex[px[1]]\
-tc[x] = hex[px[2]]\
+bc[x] = hex[px[1]] or \"0\"\
+tc[x] = hex[px[2]] or \"0\"\
 s[x] = px[3] == \"\" and \" \" or px[3]\
 i = i + 1\
 end\
@@ -1741,97 +1700,122 @@ local __f,__err=load("\
 \
 \
 \
-local ID = 0\
-local exceptions = {}\
-local thrownExceptionID\
 \
-local function __tostring( e )\
-local trace = \"\"\
-for i = 1, #e.trace do\
-trace = trace .. \"\\n in \" .. e.trace[i]\
-end\
-return textutils.serialize( e.data ) .. trace\
-end\
+\
+local exceptions = {}\
+local thrown\
 \
 local function handler( t )\
-local exception = exceptions[thrownExceptionID]\
 for i = 1, #t do\
-if t[i].catch == exception.name or t[i].default then\
-return t[i].handler( exception )\
+if t[i].catch == thrown.name or t[i].default then\
+return t[i].handler( thrown )\
 end\
 end\
+return Exception.throw( thrown )\
 end\
 \
-local function exception( name, data, call_level )\
-if type( name ) ~= \"string\" then return error( \"expected string name, got \" .. class.type( name ) ) end\
+class \"Exception\" {\
+name = \"undefined\";\
+data = \"undefined\";\
+trace = {};\
+ID = 0;\
+}\
 \
-local function f( data, call_level )\
-local e = setmetatable( { name = name, ID = ID }, { __tostring = __tostring } )\
-local level = ( call_level or 1 ) + 1\
-local trace = {}\
+function Exception:Exception( name, data, level )\
+self.name = name\
+self.data = data\
+self.trace = {}\
+\
+level = ( level or 1 ) + 2\
 \
 for i = 1, 5 do\
-local src = select( 2, pcall( error, \"\", i + level ) )\
-if src == \"pcall: \" then\
+local src = select( 2, pcall( error, \"\", level + i ) ):gsub( \": $\", \"\" )\
+\
+if src == \"pcall\" then\
 break\
 else\
-trace[i] = src:gsub( \":%s$\", \"\", 1 )\
+self.trace[i] = src\
 end\
-end\
-\
-e.data = data\
-e.trace = trace\
-exceptions[ID] = e\
-ID = ID + 1\
-\
-return e\
-end\
-\
-if data == nil and call_level == nil then\
-return f\
-else\
-return f( data, call_level )\
 end\
 end\
 \
-function throw( exception, data )\
-if type( exception ) == \"string\" then\
-if not data then\
-return function( data )\
-return throw( exception, data, 2 )\
-end\
-end\
-exception = Exception( exception, data, 2 )\
-end\
-return error( \"SheetsException-\" .. exception.ID, 0 )\
+function Exception:getTraceback( initial, format )\
+initial = initial or \"\"\
+format = format or \"\\n\"\
+return initial .. table.concat( self.trace, format )\
 end\
 \
-function try( func )\
+function Exception:getDataAndTraceback( indent )\
+return textutils.serialize( self.data ) .. \"\\n\" .. self:getTraceback( (\" \"):rep( indent or 1 ) .. \"in \", \"\\n\" .. (\" \"):rep( indent or 1 ) .. \"in \" )\
+end\
+\
+function Exception:tostring()\
+return tostring( self.name ) .. \" exception:\\n \" .. self:getDataAndTraceback( 2 )\
+end\
+\
+function Exception.getExceptionById( ID )\
+return exceptions[ID]\
+end\
+\
+function Exception.throw( e, data, level )\
+if class.isClass( e ) then\
+e = e( data, ( level or 1 ) + 1 )\
+elseif type( e ) == \"string\" then\
+e = Exception( e, data, ( level or 1 ) + 1 )\
+elseif not class.typeOf( e, Exception ) then\
+return Exception.throw( \"IncorrectParameterException\", \"expected class, string, or Exception e, got \" .. class.type( e ) )\
+end\
+thrown = e\
+error( \"SHEETS_EXCEPTION\\nPut code in a try block to catch the exception.\", 0 )\
+end\
+\
+function Exception.try( func )\
 local ok, err = pcall( func )\
 \
-if not ok and type( err ) == \"string\" then\
-local ID = err:match \"SheetsException%-(%d+)\"\
-if ID then\
-thrownExceptionID = tonumber( ID )\
+if not ok and err == \"SHEETS_EXCEPTION\\nPut code in a try block to catch the exception.\" then\
 return handler\
-end\
 end\
 \
 return error( err, 0 )\
 end\
 \
-function catch( etype )\
+function Exception.catch( etype )\
 return function( handler )\
 return { catch = etype, handler = handler }\
 end\
 end\
 \
-function default( handler )\
+function Exception.default( handler )\
 return { default = true, handler = handler }\
-end\
+end","sheets.exceptions.Exception",nil,_ENV)if not __f then error(__err,0)end __f()
+local __f,__err=load("\
 \
-IncorrectParameterException = exception \"IncorrectParameterException\"\
-IncorrectConstructorException = exception \"IncorrectConstructorException\"","sheets.exception",nil,_ENV)if not __f then error(__err,0)end __f()
+\
+\
+\
+\
+\
+\
+\
+class \"IncorrectParameterException\" extends \"Exception\"\
+\
+function IncorrectParameterException:IncorrectParameterException( data, level )\
+return self:Exception( \"IncorrectParameterException\", data, level )\
+end","sheets.exceptions.IncorrectParameterException",nil,_ENV)if not __f then error(__err,0)end __f()
+local __f,__err=load("\
+\
+\
+\
+\
+\
+\
+\
+\
+class \"IncorrectConstructorException\" extends \"Exception\"\
+\
+function IncorrectConstructorException:IncorrectConstructorException( data, level )\
+return self:Exception( \"IncorrectConstructorException\", data, level )\
+end","sheets.exceptions.IncorrectConstructorException",nil,_ENV)if not __f then error(__err,0)end __f()
 local __f,__err=load("\
 functionParameters = {}\
 \
@@ -1844,11 +1828,11 @@ local value = args[i + 2]\
 \
 if type( expectedType ) == \"string\" then\
 if type( value ) ~= expectedType then\
-throw( IncorrectConstructorException( _class:type() .. \" expects \" .. expectedType .. \" \" .. name .. \" when created, got \" .. class.type( value ), 4 ) )\
+Exception.throw( IncorrectConstructorException, _class:type() .. \" expects \" .. expectedType .. \" \" .. name .. \" when created, got \" .. class.type( value ), 4 )\
 end\
 else\
 if not class.typeOf( value, expectedType ) then\
-throw( IncorrectConstructorException( _class:type() .. \" expects \" .. expectedType:type() .. \" \" .. name .. \" when created, got \" .. class.type( value ), 4 ) )\
+Exception.throw( IncorrectConstructorException, _class:type() .. \" expects \" .. expectedType:type() .. \" \" .. name .. \" when created, got \" .. class.type( value ), 4 )\
 end\
 end\
 end\
@@ -1863,11 +1847,11 @@ local value = args[i + 2]\
 \
 if type( expectedType ) == \"string\" then\
 if type( value ) ~= expectedType then\
-throw( IncorrectParameterException( \"expected \" .. expectedType .. \" \" .. name .. \", got \" .. class.type( value ), 3 ) )\
+Exception.throw( IncorrectParameterException, \"expected \" .. expectedType .. \" \" .. name .. \", got \" .. class.type( value ), 3 )\
 end\
 else\
 if not class.typeOf( value, expectedType ) then\
-throw( IncorrectParameterException( \"expected \" .. expectedType:type() .. \" \" .. name .. \", got \" .. class.type( value ), 3 ) )\
+Exception.throw( IncorrectParameterException, \"expected \" .. expectedType:type() .. \" \" .. name .. \", got \" .. class.type( value ), 3 )\
 end\
 end\
 end\
@@ -1882,7 +1866,7 @@ local __f,__err=load("\
 \
 \
 \
-IAnimation = {}\
+interface \"IAnimation\" {}\
 \
 function IAnimation:IAnimation()\
 self.animations = {}\
@@ -1939,9 +1923,9 @@ end\
 for i = 1, #finished do\
 self.animations[finished[i]] = nil\
 end\
-end","sheets.interfaces.core.IAnimation",nil,_ENV)if not __f then error(__err,0)end __f()
+end","sheets.interfaces.IAnimation",nil,_ENV)if not __f then error(__err,0)end __f()
 local __f,__err=load("\
-IChildContainer = {\
+interface \"IChildContainer\" {\
 children = {}\
 }\
 \
@@ -1985,26 +1969,6 @@ if self.children[i] == child then\
 child.parent = nil\
 self:setChanged()\
 return table.remove( self.children, i )\
-end\
-end\
-end\
-\
-function IChildContainer:repositionChildZIndex( child )\
-local children = self.children\
-\
-for i = 1, #children do\
-if children[i] == child then\
-while children[i-1] and children[i-1].z > child.z do\
-children[i-1], children[i] = child, children[i-1]\
-i = i - 1\
-end\
-while children[i+1] and children[i+1].z < child.z do\
-children[i+1], children[i] = child, children[i+1]\
-i = i + 1\
-end\
-\
-self:setChanged()\
-break\
 end\
 end\
 end\
@@ -2062,24 +2026,25 @@ functionParameters.check( 1, \"child\", Sheet, child )\
 return child.x + child.width > 0 and child.y + child.height > 0 and child.x < self.width and child.y < self.height\
 end\
 \
-function IChildContainer:update( dt )\
-local c = {}\
+function IChildContainer:repositionChildZIndex( child )\
 local children = self.children\
 \
-self:updateAnimations( dt )\
-\
-if self.onUpdate then\
-self:onUpdate( dt )\
-end\
-\
 for i = 1, #children do\
-c[i] = children[i]\
+if children[i] == child then\
+while children[i-1] and children[i-1].z > child.z do\
+children[i-1], children[i] = child, children[i-1]\
+i = i - 1\
+end\
+while children[i+1] and children[i+1].z < child.z do\
+children[i+1], children[i] = child, children[i+1]\
+i = i + 1\
 end\
 \
-for i = #c, 1, -1 do\
-c[i]:update( dt )\
+self:setChanged()\
+break\
 end\
-end","sheets.interfaces.core.IChildContainer",nil,_ENV)if not __f then error(__err,0)end __f()
+end\
+end","sheets.interfaces.IChildContainer",nil,_ENV)if not __f then error(__err,0)end __f()
 local __f,__err=load("\
 \
 \
@@ -2089,222 +2054,37 @@ local __f,__err=load("\
 \
 \
 \
-ICommon = {\
-changed = true;\
-id = \"ID\";\
-style = nil;\
-cursor_x = 0;\
-cursor_y = 0;\
-cursor_colour = 0;\
-cursor_active = false;\
-}\
-\
-function ICommon:ICommon()\
-self.style = Style( self )\
-end\
-\
-function ICommon:setChanged( state )\
-self.changed = state ~= false\
-if state ~= false and self.parent and not self.parent.changed then\
-self.parent:setChanged( true )\
-end\
-return self\
-end\
-\
-function ICommon:setID( id )\
-self.id = tostring( id )\
-return self\
-end\
-\
-function ICommon:setStyle( style, children )\
-functionParameters.check( 1, \"style\", Style, style )\
-\
-self.style = style:clone( self )\
-\
-if children and self.children then\
-for i = 1, #self.children do\
-self.children[i]:setStyle( style, true )\
-end\
-end\
-\
-self:setChanged( true )\
-return self\
-end\
-\
-function ICommon:setCursorBlink( x, y, colour )\
-colour = colour or 128\
-\
-functionParameters.check( 3, \"x\", \"number\", x, \"y\", \"number\", y, \"colour\", \"number\", colour )\
-\
-self.cursor_active = true\
-self.cursor_x = x\
-self.cursor_y = y\
-self.cursor_colour = colour\
-return self\
-end\
-\
-function ICommon:resetCursorBlink()\
-self.cursor_active = false\
-return self\
-end","sheets.interfaces.core.ICommon",nil,_ENV)if not __f then error(__err,0)end __f()
-local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
-IEvent = {\
-event = nil;\
-handled = false;\
-}\
-\
-function IEvent:IEvent( event )\
-self.event = event\
-end\
-\
-function IEvent:is( event )\
-return self.event == event\
-end\
-\
-function IEvent:handle()\
-self.handled = true\
-end","sheets.interfaces.core.IEvent",nil,_ENV)if not __f then error(__err,0)end __f()
-local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
-IHasParent = {\
-parent = nil;\
-}\
-\
-function IHasParent:setParent( parent )\
--- fix this\
-if parent and ( not class.isInstance( parent ) or not parent:implements( IChildContainer ) ) then return error( \"expected IChildContainer parent, got \" .. class.type( parent ) ) end\
-\
-if parent then\
-parent:addChild( self )\
-else\
-self:remove()\
-end\
-return self\
-end\
-\
-function IHasParent:remove()\
-if self.parent then\
-return self.parent:removeChild( self )\
-end\
-end\
-\
-function IHasParent:isVisible()\
-return self.parent and self.parent:isChildVisible( self )\
-end\
-\
-function IHasParent:bringToFront()\
-if self.parent then\
-return self:setParent( self.parent )\
-end\
-return self\
-end\
-\
-function IHasParent:getRootParent()\
-local p = self.parent\
-if p then\
-while p.parent do\
-p = p.parent\
-end\
-return p\
-end\
-end","sheets.interfaces.core.IHasParent",nil,_ENV)if not __f then error(__err,0)end __f()
-local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
-IPosition = {\
-x = 0;\
-y = 0;\
-z = 0;\
-\
+interface \"ISize\" {\
 width = 0;\
 height = 0;\
 }\
 \
-function IPosition:IPosition( x, y, width, height )\
-self.x = x\
-self.y = y\
-self.width = width\
-self.height = height\
-end\
-\
-function IPosition:setX( x )\
-functionParameters.check( 1, \"x\", \"number\", x )\
-\
-if self.x ~= x then\
-self.x = x\
-if self.parent then self.parent:setChanged( true ) end\
-end\
-return self\
-end\
-\
-function IPosition:setY( y )\
-functionParameters.check( 1, \"y\", \"number\", y )\
-\
-if self.y ~= y then\
-self.y = y\
-if self.parent then self.parent:setChanged( true ) end\
-end\
-return self\
-end\
-\
-function IPosition:setZ( z )\
-functionParameters.check( 1, \"z\", \"number\", z )\
-\
-if self.z ~= z then\
-self.z = z\
-if self.parent then self.parent:repositionChildZIndex( self ) end\
-end\
-return self\
-end\
-\
-function IPosition:setWidth( width )\
+function ISize:setWidth( width )\
 functionParameters.check( 1, \"width\", \"number\", width )\
 \
 if self.width ~= width then\
 self.width = width\
+self.canvas:setWidth( width )\
+self:setChanged()\
 for i = 1, #self.children do\
 self.children[i]:onParentResized()\
 end\
-self.canvas:setWidth( width )\
-self:setChanged( true )\
 end\
 return self\
 end\
 \
-function IPosition:setHeight( height )\
+function ISize:setHeight( height )\
 functionParameters.check( 1, \"height\", \"number\", height )\
 \
 if self.height ~= height then\
 self.height = height\
+self.canvas:setHeight( height )\
 for i = 1, #self.children do\
 self.children[i]:onParentResized()\
 end\
-self.canvas:setHeight( height )\
-self:setChanged( true )\
 end\
 return self\
-end","sheets.interfaces.core.IPosition",nil,_ENV)if not __f then error(__err,0)end __f()
+end","sheets.interfaces.ISize",nil,_ENV)if not __f then error(__err,0)end __f()
 local __f,__err=load("\
 \
 \
@@ -2344,7 +2124,7 @@ end\
 return a\
 end\
 \
-IPositionAnimator = {}\
+interface \"IPositionAnimator\" {}\
 \
 function IPositionAnimator:animateX( to, time, easing )\
 return animateAttribute( self, \"x\", self.setX, self.x, to, time, easing )\
@@ -2402,8 +2182,7 @@ return animateElementInOrOut( self, \"out\", true, self.y, to or self.parent.hei
 else\
 throw( IncorrectParameterException( \"invalid side '\" .. side .. \"'\", 2 ) )\
 end\
-end","sheets.interfaces.core.IPositionAnimator",nil,_ENV)if not __f then error(__err,0)end __f()
-
+end","sheets.interfaces.IPositionAnimator",nil,_ENV)if not __f then error(__err,0)end __f()
 local __f,__err=load("\
 \
 \
@@ -2415,7 +2194,7 @@ local __f,__err=load("\
 \
 local wrapline, wrap\
 \
-IHasText = {\
+interface \"IHasText\" {\
 text = \"\";\
 text_lines = nil;\
 }\
@@ -2502,6 +2281,173 @@ lines[#lines + 1] = line\
 end\
 return lines\
 end","sheets.interfaces.IHasText",nil,_ENV)if not __f then error(__err,0)end __f()
+
+local __f,__err=load("\
+\
+\
+\
+\
+\
+\
+\
+\
+class \"KeyboardEvent\" {\
+event = \"KeyboardEvent\";\
+key = 0;\
+held = {};\
+}\
+\
+function KeyboardEvent:KeyboardEvent( event, key, held )\
+self.event = event\
+self.key = key\
+self.held = held\
+end\
+\
+function KeyboardEvent:matches( hotkey )\
+local t\
+\
+for segment in hotkey:gmatch \"(.*)%-\" do\
+if not self.held[segment] or ( t and self.held[segment] < t ) then\
+return false\
+end\
+t = self.held[segment]\
+end\
+\
+return self.key == keys[hotkey:gsub( \".+%-\", \"\" )]\
+end\
+\
+function KeyboardEvent:isHeld( key )\
+return self.key == keys[key] or self.held[key]\
+end\
+\
+function KeyboardEvent:tostring()\
+return \"KeyboardEvent\"\
+end\
+\
+function KeyboardEvent:is( event )\
+return self.event == event\
+end\
+\
+function KeyboardEvent:handle( handler )\
+self.handled = true\
+self.handler = handler\
+end","sheets.events.KeyboardEvent",nil,_ENV)if not __f then error(__err,0)end __f()
+local __f,__err=load("\
+\
+\
+\
+\
+\
+\
+\
+\
+class \"MiscEvent\" {\
+event = \"MiscEvent\";\
+parameters = {};\
+}\
+\
+function MiscEvent:MiscEvent( event, ... )\
+self.event = event\
+self.parameters = { ... }\
+end\
+\
+function MiscEvent:is( event )\
+return self.event == event\
+end\
+\
+function MiscEvent:handle( handler )\
+self.handled = true\
+self.handler = handler\
+end","sheets.events.MiscEvent",nil,_ENV)if not __f then error(__err,0)end __f()
+local __f,__err=load("\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+class \"MouseEvent\" {\
+event = \"MouseEvent\";\
+x = 0;\
+y = 0;\
+button = 0;\
+within = true;\
+}\
+\
+function MouseEvent:MouseEvent( event, x, y, button, within )\
+self.event = event\
+self.x = x\
+self.y = y\
+self.button = button\
+self.within = within\
+end\
+\
+function MouseEvent:isWithinArea( x, y, width, height )\
+functionParameters.check( 4,\
+\"x\", \"number\", x,\
+\"y\", \"number\", y,\
+\"width\", \"number\", width,\
+\"height\", \"number\", height\
+)\
+\
+return self.x >= x and self.y >= y and self.x < x + width and self.y < y + height\
+end\
+\
+function MouseEvent:clone( x, y, within )\
+functionParameters.check( 2,\
+\"x\", \"number\", x,\
+\"y\", \"number\", y\
+)\
+\
+local sub = MouseEvent( self.event, self.x - x, self.y - y, self.button, self.within and within or false )\
+sub.handled = self.handled\
+\
+function sub.handle()\
+sub.handled = true\
+self:handle()\
+end\
+\
+return sub\
+end\
+\
+function MouseEvent:is( event )\
+return self.event == event\
+end\
+\
+function MouseEvent:handle( handler )\
+self.handled = true\
+self.handler = handler\
+end","sheets.events.MouseEvent",nil,_ENV)if not __f then error(__err,0)end __f()
+local __f,__err=load("\
+\
+\
+\
+\
+\
+\
+\
+\
+class \"TextEvent\" {\
+event = \"TextEvent\";\
+text = \"\";\
+}\
+\
+function TextEvent:TextEvent( event, text )\
+self.event = event\
+self.text = text\
+end\
+\
+function TextEvent:is( event )\
+return self.event == event\
+end\
+\
+function TextEvent:handle( handler )\
+self.handled = true\
+self.handler = handler\
+end","sheets.events.TextEvent",nil,_ENV)if not __f then error(__err,0)end __f()
 
 local __f,__err=load("\
 \
@@ -2648,41 +2594,30 @@ local __f,__err=load("\
 \
 \
 local function exceptionHandler( e )\
-return error( \"An uncaught \" .. e.name .. \" exception was thrown:\\n\" .. tostring( e ), 0 )\
+return error( tostring( e ), 0 )\
 end\
 \
-class \"Application\" implements (IChildContainer) implements (IAnimation)\
+class \"Application\" implements \"IAnimation\"\
 {\
 name = \"UnNamed Application\";\
 path = \"\";\
+\
 terminateable = true;\
-\
-viewportX = 0;\
-viewportY = 0;\
-\
-width = 0;\
-height = 0;\
-\
-screen = nil;\
-\
-terminals = { term };\
-monitor_sides = {};\
-\
 running = true;\
 \
-changed = true;\
+screens = {};\
+screen = nil;\
 \
 mouse = nil;\
 keys = {};\
+changed = true;\
 }\
 \
 function Application:Application()\
-self.width, self.height = term.getSize()\
-\
-self:IChildContainer()\
 self:IAnimation()\
 \
-self.screen = ScreenCanvas( self.width, self.height )\
+self.screens = { Screen( self, term.getSize() ):addTerminal( term ) }\
+self.screen = self.screens[1]\
 end\
 \
 function Application:stop()\
@@ -2690,158 +2625,38 @@ self.running = false\
 return self\
 end\
 \
-function Application:setViewportX( x )\
-functionParameters.check( 1, \"x\", \"number\", x )\
+function Application:addScreen( screen )\
+functionParameters.check( 1, \"screen\", Screen, screen )\
+self.screens[#self.screens + 1] = screen\
 \
-self.viewportX = x\
-self:setChanged()\
-return self\
+return screen\
 end\
 \
-function Application:setViewportY( y )\
-functionParameters.check( 1, \"y\", \"number\", y )\
-\
-self.viewportY = y\
-self:setChanged()\
-return self\
-end\
-\
-function Application:transitionViewport( x, y )\
-functionParameters.check( 1, \"x\", \"number\", x )\
-functionParameters.check( 1, \"y\", \"number\", y )\
-\
-local ax, ay -- the animations defined later on\
-local dx = x and math.abs( x - self.viewportX ) or 0\
-local dy = y and math.abs( y - self.viewportY ) or 0\
-\
-local xt = .4 * dx / self.width\
-if dx > 0 then\
-local ax = self:addAnimation( \"viewportX\", self.setViewportX, Animation():setRounded()\
-:addKeyFrame( self.viewportX, x, xt, SHEETS_EASING_TRANSITION ) )\
-end\
-if dy > 0 then\
-local ay = self:addAnimation( \"viewportY\", self.setViewportY, Animation():setRounded()\
-:addPause( xt )\
-:addKeyFrame( self.viewportY, y, .4 * dy / self.height, SHEETS_EASING_TRANSITION ) )\
-end\
-return ax, ay\
-end\
-\
-function Application:transitionToView( view )\
-functionParameters.check( 1, \"view\", View, view )\
-\
-if view.parent == self then\
-return self:transitionViewport( view.x, view.y )\
-else\
-throw( IncorrectParameterException( \"View given is not a part of application '\" .. self.name .. \"'\", 2 ) )\
+function Application:removeScreen( screen )\
+functionParameters.check( 1, \"screen\", Screen, screen )\
+for i = #self.screens, 1, -1 do\
+if self.screens[i] == screen then\
+return table.remove( self.screens, i )\
 end\
 end\
-\
-function Application:addTerminal( t )\
-functionParameters.check( 1, \"redirect\", \"table\", t )\
-\
-self.terminals[#self.terminals + 1] = t\
-self.screen:reset()\
-return self\
-end\
-\
-function Application:removeTerminal( t )\
-for i = #self.terminals, 1, -1 do\
-if self.terminals[i] == t then\
-table.remove( self.terminals, i )\
-break\
-end\
-end\
-return self\
-end\
-\
-function Application:addMonitor( side )\
-functionParameters.check( 1, \"side\", \"string\", side )\
-\
-if peripheral.getType( side ) == \"monitor\" then\
-local r = peripheral.wrap( side )\
-self.terminals[#self.terminals + 1] = r\
-self.monitor_sides[side] = r\
-return self\
-else\
-return error( \"no monitor on side \" .. tostring( side ) )\
-end\
-end\
-\
-function Application:removeMonitor( side )\
-functionParameters.check( 1, \"side\", \"string\", side )\
-\
-for i = #self.terminals, 1, -1 do\
-if self.terminals[i] == self.monitor_sides[side] then\
-table.remove( self.terminals, i )\
-self.monitor_sides[side] = nil\
-break\
-end\
-end\
-return self\
-end\
-\
-function Application:positionChildrenInColumn( padding, order )\
-padding = padding or 0\
-order = order or \"ascending\"\
-\
-functionParameters.check( 2, \"padding\", \"number\", padding, \"order\", \"string\", order )\
-if order ~= \"ascending\" and order ~= \"descending\" then throw( IncorrectParameterException( \"invalid order '\" .. order .. \"', expected 'ascending' or 'descending'\" ) ) end\
-\
-local children = self.children\
-local y = 0\
-\
-for i = order == \"ascending\" and 1 or #children, order == \"ascending\" and #children or 1, order == \"ascending\" and 1 or -1 do\
-children[i].y = y\
-y = y + children[i].height + padding\
-end\
-\
-self:setChanged()\
-end\
-\
-function Application:positionChildrenInRow( padding, order )\
-padding = padding or 0\
-order = order or \"ascending\"\
-\
-functionParameters.check( 2, \"padding\", \"number\", padding, \"order\", \"string\", order )\
-if order ~= \"ascending\" and order ~= \"descending\" then throw( IncorrectParameterException( \"invalid order '\" .. order .. \"', expected 'ascending' or 'descending'\" ) ) end\
-\
-local children = self.children\
-local x = 0\
-\
-for i = order == \"ascending\" and 1 or #children, order == \"ascending\" and #children or 1, order == \"ascending\" and 1 or -1 do\
-children[i].x = x\
-x = x + children[i].width + padding\
-end\
-\
-self:setChanged()\
-end\
-\
-function Application:positionChildrenInGrid( hPadding, vPadding, order )\
-return error( \"positionChildrenInGrid() not yet supported\" )\
 end\
 \
 function Application:event( event, ... )\
 local params = { ... }\
-local children = {}\
+local screens = {}\
 \
 local function handle( e )\
-if e:typeOf( MouseEvent ) then\
-for i = #children, 1, -1 do\
-children[i]:handle( e:clone( children[i].x - self.viewportX, children[i].y - self.viewportY, true ) )\
-end\
-else\
-for i = #children, 1, -1 do\
-children[i]:handle( e )\
-end\
+for i = #screens, 1, -1 do\
+screens[i]:handle( e )\
 end\
 end\
 \
 if event == \"timer\" and timer.update( ... ) then\
 return\
 end\
-for i = 1, #self.children do\
-children[i] = self.children[i]\
+\
+for i = 1, #self.screens do\
+screens[i] = self.screens[i]\
 end\
 \
 if event == \"mouse_click\" then\
@@ -2872,10 +2687,10 @@ os.cancelTimer( self.mouse.timer )\
 elseif event == \"mouse_scroll\" then\
 handle( MouseEvent( 5, params[2] - 1, params[3] - 1, params[1], true ) )\
 \
-elseif event == \"monitor_touch\" and self.monitor_sides[params[1]] then\
-handle( MouseEvent( 0, params[2] - 1, params[3] - 1, 1 ) )\
+elseif event == \"monitor_touch\" then -- broken\
+--[[handle( MouseEvent( 0, params[2] - 1, params[3] - 1, 1 ) )\
 handle( MouseEvent( 1, params[2] - 1, params[3] - 1, 1 ) )\
-handle( MouseEvent( 2, params[2] - 1, params[3] - 1, 1 ) )\
+handle( MouseEvent( 2, params[2] - 1, params[3] - 1, 1 ) )]]\
 \
 elseif event == \"chatbox_something\" then\
 -- handle( TextEvent( 10, params[1] ) )\
@@ -2891,17 +2706,17 @@ handle( TextEvent( 11, params[1] ) )\
 end\
 \
 elseif event == \"key\" then\
-handle( KeyboardEvent( 7, params[1], self.keys ) )\
 self.keys[keys.getName( params[1] ) or params[1]] = os.clock()\
+handle( KeyboardEvent( 7, params[1], self.keys ) )\
 \
 elseif event == \"key_up\" then\
-handle( KeyboardEvent( 8, params[1], self.keys ) )\
 self.keys[keys.getName( params[1] ) or params[1]] = nil\
+handle( KeyboardEvent( 8, params[1], self.keys ) )\
 \
 elseif event == \"term_resize\" then\
 self.width, self.height = term.getSize()\
-for i = 1, #self.children do\
-self.children[i]:onParentResized()\
+for i = 1, #self.screens do\
+self.screens[i]:onParentResized()\
 end\
 \
 elseif event == \"timer\" and params[1] == self.mouse.timer then\
@@ -2915,28 +2730,142 @@ end\
 function Application:update()\
 \
 local dt = timer.getDelta()\
-local c = {}\
-\
 timer.step()\
-self:updateAnimations( dt )\
 \
-for i = 1, #self.children do\
-c[i] = self.children[i]\
+for i = 1, #self.screens do\
+self.screens[i]:update( dt )\
 end\
 \
-for i = #c, 1, -1 do\
-c[i]:update( dt )\
-end\
 end\
 \
 function Application:draw()\
+\
+--if self.changed then\
+for i = 1, #self.screens do\
+self.screens[i]:draw()\
+end\
+self.changed = false\
+--end\
+\
+end\
+\
+function Application:run()\
+\
+Exception.try (function()\
+\
+if self.onLoad then\
+self:onLoad()\
+end\
+local t = timer.new( 0 ) -- updating timer\
+while self.running do\
+local event = { coroutine.yield() }\
+if event[1] == \"timer\" and event[2] == t then\
+t = timer.new( .05 )\
+elseif event[1] == \"terminate\" and self.terminateable then\
+self:stop()\
+else\
+self:event( unpack( event ) )\
+end\
+self:update()\
+self:draw()\
+end\
+\
+end) {\
+Exception.default (exceptionHandler);\
+}\
+\
+end","sheets.Application",nil,_ENV)if not __f then error(__err,0)end __f()
+local __f,__err=load("\
+\
+\
+\
+\
+\
+\
+\
+\
+class \"Screen\"\
+implements \"IAnimation\"\
+implements \"IChildContainer\"\
+implements \"ISize\"\
+{\
+terminals = {};\
+monitors = {};\
+\
+canvas = nil;\
+parent = nil;\
+changed = true;\
+}\
+\
+function Screen:Screen( application, width, height )\
+self.parent = application\
+self.terminals = {}\
+self.monitors = {}\
+self.canvas = ScreenCanvas( width, height )\
+self.width = width\
+self.height = height\
+end\
+\
+function Screen:setChanged( state )\
+self.changed = state ~= false\
+if state ~= false then -- must have a parent Application\
+self.parent.changed = true\
+end\
+return self\
+end\
+\
+function Screen:addMonitor( side )\
+functionParameters.check( 1, \"side\", \"string\", side )\
+\
+if peripheral.getType( side ) ~= \"monitor\" then\
+throw( IncorrectParameterException, \"expected monitor on side '\" .. side .. \"', got \" .. peripheral.getType( side ), 2 )\
+end\
+\
+local mon = peripheral.wrap( side )\
+self.monitors[side] = mon\
+\
+return self:addTerminal( mon )\
+end\
+\
+function Screen:removeMonitor( side )\
+functionParameters.check( 1, \"side\", \"string\", side )\
+\
+local mon = self.monitors[side]\
+if mon then\
+self.monitors[side] = nil\
+self:removeTerminal( mon )\
+end\
+end\
+\
+function Screen:usesMonitor( side )\
+return self.monitors[side] ~= nil\
+end\
+\
+function Screen:addTerminal( t )\
+functionParameters.check( 1, \"terminal\", \"table\", t )\
+self.terminals[#self.terminals + 1] = t\
+return self:setChanged()\
+end\
+\
+function Screen:removeTerminal( t )\
+functionParameters.check( 1, \"terminal\", \"table\", t )\
+\
+for i = #self.terminals, 1, -1 do\
+if self.terminals[i] == t then\
+self:setChanged()\
+return table.remove( self.terminals, i )\
+end\
+end\
+end\
+\
+function Screen:draw()\
 if self.changed then\
 \
-local screen = self.screen\
+local canvas = self.canvas\
 local children = {}\
 local cx, cy, cc\
 \
-screen:clear()\
+canvas:clear()\
 \
 for i = 1, #self.children do\
 children[i] = self.children[i]\
@@ -2947,7 +2876,7 @@ local child = children[i]\
 \
 if child:isVisible() then\
 child:draw()\
-child.canvas:drawTo( screen, child.x - self.viewportX, child.y - self.viewportY )\
+child.canvas:drawTo( canvas, child.x, child.y )\
 \
 if child.cursor_active then\
 cx, cy, cc = child.x + child.cursor_x, child.y + child.cursor_y, child.cursor_colour\
@@ -2955,7 +2884,7 @@ end\
 end\
 end\
 \
-screen:drawToTerminals( self.terminals )\
+canvas:drawToTerminals( self.terminals )\
 \
 self.changed = false\
 for i = 1, #self.terminals do\
@@ -2970,58 +2899,297 @@ end\
 end\
 end\
 \
-function Application:run()\
-try (function()\
-if self.load then\
-self:load()\
-end\
-local t = timer.new( 0 )\
-while self.running do\
-local event = { coroutine.yield() }\
-if event[1] == \"timer\" and event[2] == t then\
-t = timer.new( .05 )\
-elseif event[1] == \"terminate\" and self.terminateable then\
-self:stop()\
-else\
-self:event( unpack( event ) )\
-end\
-self:update()\
-self:draw()\
-end\
-end) {\
-default (exceptionHandler);\
-}\
+function Screen:handle( event )\
+local c = {}\
+local children = self.children\
+for i = 1, #children do\
+c[i] = children[i]\
 end\
 \
-function Application:setChanged( state )\
-self.changed = state ~= false\
+if event:typeOf( MouseEvent ) then\
+local within = event:isWithinArea( 0, 0, self.width, self.height )\
+for i = #c, 1, -1 do\
+c[i]:handle( event:clone( c[i].x, c[i].y, within ) )\
+end\
+else\
+for i = #c, 1, -1 do\
+c[i]:handle( event )\
+end\
+end\
+end\
+\
+function Screen:update( dt )\
+local children = {}\
+for i = 1, #self.children do\
+children[i] = self.children[i]\
+end\
+for i = 1, #children do\
+children[i]:update( dt )\
+end\
+end","sheets.Screen",nil,_ENV)if not __f then error(__err,0)end __f()
+local __f,__err=load("\
+\
+\
+\
+\
+\
+\
+\
+\
+-- undefined callbacks\
+\
+-- function Sheet:onPreDraw() end\
+-- function Sheet:onPostDraw() end\
+-- function Sheet:onUpdate( dt ) end\
+-- function Sheet:onKeyboardEvent( event ) end\
+-- function Sheet:onTextEvent( event ) end\
+\
+class \"Sheet\"\
+implements \"IAnimation\"\
+implements \"IChildContainer\"\
+implements \"ISize\"\
+implements \"IPositionAnimator\"\
+{\
+x = 0;\
+y = 0;\
+z = 0;\
+\
+id = \"ID\";\
+style = nil;\
+\
+parent = nil;\
+\
+canvas = nil;\
+changed = true;\
+cursor_x = 0;\
+cursor_y = 0;\
+cursor_colour = 0;\
+cursor_active = false;\
+\
+handlesKeyboard = false;\
+handlesText = false;\
+}\
+\
+function Sheet:Sheet( x, y, width, height )\
+functionParameters.checkConstructor( self.class, 4,\
+\"x\", \"number\", x,\
+\"y\", \"number\", y,\
+\"width\", \"number\", width,\
+\"height\", \"number\", height\
+)\
+\
+self.x = x\
+self.y = y\
+self.width = width\
+self.height = height\
+\
+self:IAnimation()\
+self:IChildContainer()\
+self.style = Style( self )\
+\
+self.canvas = DrawingCanvas( width, height )\
+end\
+\
+function Sheet:setX( x )\
+functionParameters.check( 1, \"x\", \"number\", x )\
+\
+if self.x ~= x then\
+self.x = x\
+if self.parent then self.parent:setChanged( true ) end\
+end\
 return self\
 end\
 \
-function Application:addChild( child )\
+function Sheet:setY( y )\
+functionParameters.check( 1, \"y\", \"number\", y )\
+\
+if self.y ~= y then\
+self.y = y\
+if self.parent then self.parent:setChanged( true ) end\
+end\
+return self\
+end\
+\
+function Sheet:setZ( z )\
+functionParameters.check( 1, \"z\", \"number\", z )\
+\
+if self.z ~= z then\
+self.z = z\
+if self.parent then self.parent:repositionChildZIndex( self ) end\
+end\
+return self\
+end\
+\
+function Sheet:setID( id )\
+self.id = tostring( id )\
+return self\
+end\
+\
+function Sheet:setStyle( style, children )\
+functionParameters.check( 1, \"style\", Style, style )\
+\
+self.style = style:clone( self )\
+\
+if children and self.children then\
+for i = 1, #self.children do\
+self.children[i]:setStyle( style, true )\
+end\
+end\
+\
+self:setChanged( true )\
+return self\
+end\
+\
+function Sheet:setParent( parent )\
+-- fix this\
+if parent and ( not class.isInstance( parent ) or not parent:implements( IChildContainer ) ) then return error( \"expected IChildContainer parent, got \" .. class.type( parent ) ) end\
+\
+if parent then\
+parent:addChild( self )\
+else\
+self:remove()\
+end\
+return self\
+end\
+\
+function Sheet:remove()\
+if self.parent then\
+return self.parent:removeChild( self )\
+end\
+end\
+\
+function Sheet:isVisible()\
+return self.parent and self.parent:isChildVisible( self )\
+end\
+\
+function Sheet:bringToFront()\
+if self.parent then\
+return self:setParent( self.parent )\
+end\
+return self\
+end\
+\
+function Sheet:setChanged( state )\
+self.changed = state ~= false\
+if state ~= false and self.parent and not self.parent.changed then\
+self.parent:setChanged()\
+end\
+return self\
+end\
+\
+function Sheet:setCursorBlink( x, y, colour )\
+colour = colour or 128\
+\
+functionParameters.check( 3, \"x\", \"number\", x, \"y\", \"number\", y, \"colour\", \"number\", colour )\
+\
+self.cursor_active = true\
+self.cursor_x = x\
+self.cursor_y = y\
+self.cursor_colour = colour\
+return self\
+end\
+\
+function Sheet:resetCursorBlink()\
+self.cursor_active = false\
+return self\
+end\
+\
+function Sheet:tostring()\
+return \"[Instance] \" .. self.class:type() .. \" \" .. tostring( self.id )\
+end\
+\
+function Sheet:onParentResized() end\
+\
+function Sheet:update( dt )\
+local c = {}\
 local children = self.children\
 \
-functionParameters.check( 1, \"child\", View, child )\
+self:updateAnimations( dt )\
 \
-child.parent = self\
-self:setChanged()\
+if self.onUpdate then\
+self:onUpdate( dt )\
+end\
 \
 for i = 1, #children do\
-if children[i].z > child.z then\
-table.insert( children, i, child )\
-return child\
+c[i] = children[i]\
+end\
+\
+for i = #c, 1, -1 do\
+c[i]:update( dt )\
 end\
 end\
 \
-children[#children + 1] = child\
-return child\
+function Sheet:draw()\
+if self.changed then\
+\
+local children = self.children\
+local cx, cy, cc\
+\
+self:resetCursorBlink()\
+\
+if self.onPreDraw then\
+self:onPreDraw()\
 end\
 \
-function Application:isChildVisible( child )\
-functionParameters.check( 1, \"child\", View, child )\
+for i = 1, #children do\
+local child = children[i]\
+child:draw()\
+child.canvas:drawTo( self.canvas, child.x, child.y )\
 \
-return child.x - self.viewportX + child.width > 0 and child.y - self.viewportY + child.height > 0 and child.x - self.viewportX < self.width and child.y - self.viewportY < self.height\
-end","sheets.Application",nil,_ENV)if not __f then error(__err,0)end __f()
+if child.cursor_active then\
+cx, cy, cc = child.x + child.cursor_x, child.y + child.cursor_y, child.cursor_colour\
+end\
+end\
+\
+if cx then\
+self:setCursorBlink( cx, cy, cc )\
+end\
+\
+if self.onPostDraw then\
+self:onPostDraw()\
+end\
+\
+self.changed = false\
+end\
+end\
+\
+function Sheet:handle( event )\
+local c = {}\
+local children = self.children\
+for i = 1, #children do\
+c[i] = children[i]\
+end\
+\
+if event:typeOf( MouseEvent ) then\
+local within = event:isWithinArea( 0, 0, self.width, self.height )\
+for i = #c, 1, -1 do\
+c[i]:handle( event:clone( c[i].x, c[i].y, within ) )\
+end\
+else\
+for i = #c, 1, -1 do\
+c[i]:handle( event )\
+end\
+end\
+\
+if event:typeOf( MouseEvent ) then\
+if event:is( EVENT_MOUSE_PING ) and event:isWithinArea( 0, 0, self.width, self.height ) and event.within then\
+event.button[#event.button + 1] = self\
+end\
+self:onMouseEvent( event )\
+elseif event:typeOf( KeyboardEvent ) and self.handlesKeyboard and self.onKeyboardEvent then\
+self:onKeyboardEvent( event )\
+elseif event:typeOf( TextEvent ) and self.handlesText and self.onTextEvent then\
+self:onTextEvent( event )\
+end\
+end\
+\
+function Sheet:onMouseEvent( event )\
+if not event.handled and event:isWithinArea( 0, 0, self.width, self.height ) and event.within then\
+if not event:is( EVENT_MOUSE_DRAG ) and not event:is( EVENT_MOUSE_SCROLL ) then\
+event:handle( self )\
+end\
+end\
+end","sheets.Sheet",nil,_ENV)if not __f then error(__err,0)end __f()
 local __f,__err=load("\
 \
 \
@@ -3100,133 +3268,6 @@ end\
 return template[self.object.class][default]\
 end","sheets.Style",nil,_ENV)if not __f then error(__err,0)end __f()
 
-local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
-class \"KeyboardEvent\" implements (IEvent) {\
-key = 0;\
-held = {};\
-}\
-\
-function KeyboardEvent:KeyboardEvent( event, key, held )\
-self:IEvent( event )\
-self.key = key\
-self.held = held\
-end\
-\
-function KeyboardEvent:matches( hotkey )\
-local t\
-\
-for segment in hotkey:gmatch \"(.*)%-\" do\
-if not self.held[segment] or ( t and self.held[segment] < t ) then\
-return false\
-end\
-t = self.held[segment]\
-end\
-\
-return self.key == keys[hotkey:gsub( \".+%-\", \"\" )]\
-end\
-\
-function KeyboardEvent:isHeld( key )\
-return self.key == keys[key] or self.held[key]\
-end\
-\
-function KeyboardEvent:tostring()\
-return \"KeyboardEvent\"\
-end","sheets.events.KeyboardEvent",nil,_ENV)if not __f then error(__err,0)end __f()
-local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
-class \"MiscEvent\" implements (IEvent) {\
-key = 0;\
-meta = {};\
-}\
-\
-function MiscEvent:MiscEvent( ... )\
-self:IEvent( event )\
-self.parameters = { ... }\
-end","sheets.events.MiscEvent",nil,_ENV)if not __f then error(__err,0)end __f()
-local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-class \"MouseEvent\" implements (IEvent) {\
-x = 0;\
-y = 0;\
-button = 0;\
-within = true;\
-}\
-\
-function MouseEvent:MouseEvent( event, x, y, button, within )\
-self:IEvent( event )\
-self.x = x\
-self.y = y\
-self.button = button\
-self.within = within\
-end\
-\
-function MouseEvent:isWithinArea( x, y, width, height )\
-functionParameters.check( 4,\
-\"x\", \"number\", x,\
-\"y\", \"number\", y,\
-\"width\", \"number\", width,\
-\"height\", \"number\", height\
-)\
-\
-return self.x >= x and self.y >= y and self.x < x + width and self.y < y + height\
-end\
-\
-function MouseEvent:clone( x, y, within )\
-functionParameters.check( 2,\
-\"x\", \"number\", x,\
-\"y\", \"number\", y\
-)\
-\
-local sub = MouseEvent( self.event, self.x - x, self.y - y, self.button, self.within and within or false )\
-sub.handled = self.handled\
-\
-function sub.handle()\
-sub.handled = true\
-self:handle()\
-end\
-\
-return sub\
-end","sheets.events.MouseEvent",nil,_ENV)if not __f then error(__err,0)end __f()
-local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
-class \"TextEvent\" implements (IEvent) {\
-text = \"\";\
-}\
-\
-function TextEvent:TextEvent( event, text )\
-self:IEvent( event )\
-self.text = text\
-end","sheets.events.TextEvent",nil,_ENV)if not __f then error(__err,0)end __f()
 
 local __f,__err=load("\
 \
@@ -3237,224 +3278,7 @@ local __f,__err=load("\
 \
 \
 \
--- undefined callbacks\
-\
--- function Sheet:onPreDraw() end\
--- function Sheet:onPostDraw() end\
--- function Sheet:onUpdate( dt ) end\
--- function Sheet:onKeyboardEvent( event ) end\
--- function Sheet:onTextEvent( event ) end\
-\
-class \"Sheet\"\
-implements (IAnimation)\
-implements (ICommon)\
-implements (IChildContainer)\
-implements (IHasParent)\
-implements (IPosition)\
-implements (IPositionAnimator)\
-{\
-canvas = nil\
-;\
-handlesKeyboard = false;\
-handlesText = false;\
-}\
-\
-function Sheet:Sheet( x, y, width, height )\
-functionParameters.checkConstructor( self.class, 4,\
-\"x\", \"number\", x,\
-\"y\", \"number\", y,\
-\"width\", \"number\", width,\
-\"height\", \"number\", height\
-)\
-\
-self:IAnimation()\
-self:IChildContainer()\
-self:ICommon()\
-self:IPosition( x, y, width, height )\
-\
-self.canvas = DrawingCanvas( width, height )\
-end\
-\
-function Sheet:tostring()\
-return \"[Instance] \" .. self.class:type() .. \" \" .. tostring( self.id )\
-end\
-\
-function Sheet:onParentResized() end\
-\
-function Sheet:draw()\
-if self.changed then\
-\
-local children = self.children\
-local cx, cy, cc\
-\
-self:resetCursorBlink()\
-\
-if self.onPreDraw then\
-self:onPreDraw()\
-end\
-\
-for i = 1, #children do\
-local child = children[i]\
-child:draw()\
-child.canvas:drawTo( self.canvas, child.x, child.y )\
-\
-if child.cursor_active then\
-cx, cy, cc = child.x + child.cursor_x, child.y + child.cursor_y, child.cursor_colour\
-end\
-end\
-\
-if cx then\
-self:setCursorBlink( cx, cy, cc )\
-end\
-\
-if self.onPostDraw then\
-self:onPostDraw()\
-end\
-\
-self.changed = false\
-end\
-end\
-\
-function Sheet:handle( event )\
-local c = {}\
-local children = self.children\
-for i = 1, #children do\
-c[i] = children[i]\
-end\
-\
-if event:typeOf( MouseEvent ) then\
-local within = event:isWithinArea( 0, 0, self.width, self.height )\
-for i = #c, 1, -1 do\
-c[i]:handle( event:clone( c[i].x, c[i].y, within ) )\
-end\
-else\
-for i = #c, 1, -1 do\
-c[i]:handle( event )\
-end\
-end\
-\
-if event:typeOf( MouseEvent ) then\
-if event:is( EVENT_MOUSE_PING ) and event:isWithinArea( 0, 0, self.width, self.height ) and event.within then\
-event.button[#event.button + 1] = self\
-end\
-self:onMouseEvent( event )\
-elseif event:typeOf( KeyboardEvent ) and self.handlesKeyboard and self.onKeyboardEvent then\
-self:onKeyboardEvent( event )\
-elseif event:typeOf( TextEvent ) and self.handlesText and self.onTextEvent then\
-self:onTextEvent( event )\
-end\
-end\
-\
-function Sheet:onMouseEvent( event )\
-if not event.handled and event:isWithinArea( 0, 0, self.width, self.height ) and event.within then\
-if not event:is( EVENT_MOUSE_DRAG ) and not event:is( EVENT_MOUSE_SCROLL ) then\
-event:handle()\
-end\
-end\
-end","sheets.Sheet",nil,_ENV)if not __f then error(__err,0)end __f()
-local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
-class \"View\"\
-implements (IChildContainer)\
-implements (IPosition)\
-implements (IAnimation)\
-implements (IHasParent)\
-implements (IPositionAnimator)\
-implements (ICommon)\
-{\
-canvas = nil;\
-}\
-\
-function View:View( x, y, width, height )\
-functionParameters.checkConstructor( self.class, 4,\
-\"x\", \"number\", x,\
-\"y\", \"number\", y,\
-\"width\", \"number\", width,\
-\"height\", \"number\", height\
-)\
-\
-self:IPosition( x, y, width, height )\
-self:IChildContainer()\
-self:IAnimation()\
-self:ICommon()\
-\
-self.canvas = DrawingCanvas( width, height )\
-end\
-\
-function View:tostring()\
-return \"[Instance] View \" .. tostring( self.id )\
-end\
-\
-function View:draw()\
-if self.changed then\
-\
-local children = self.children\
-local canvas = self.canvas\
-local cx, cy, cc\
-\
-self:resetCursorBlink()\
-canvas:clear( self.style:getField \"colour\" )\
-\
-for i = 1, #children do\
-local child = children[i]\
-child:draw()\
-child.canvas:drawTo( canvas, child.x, child.y )\
-\
-if child.cursor_active then\
-cx, cy, cc = child.x + child.cursor_x, child.y + child.cursor_y, child.cursor_colour\
-end\
-end\
-\
-if cx then\
-self:setCursorBlink( cx, cy, cc )\
-end\
-\
-self.changed = false\
-end\
-end\
-\
-function View:handle( event )\
-local c = {}\
-local children = self.children\
-\
-for i = 1, #children do\
-c[i] = children[i]\
-end\
-\
-if event:typeOf( MouseEvent ) then\
-local within = event:isWithinArea( 0, 0, self.width, self.height )\
-for i = #c, 1, -1 do\
-c[i]:handle( event:clone( c[i].x, c[i].y, within ) )\
-end\
-else\
-for i = #c, 1, -1 do\
-c[i]:handle( event )\
-end\
-end\
-end\
-\
-Style.addToTemplate( View, {\
-colour = 1;\
-} )","sheets.View",nil,_ENV)if not __f then error(__err,0)end __f()
-
-
-local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
-class \"Button\" extends \"Sheet\" implements (IHasText) {\
+class \"Button\" extends \"Sheet\" implements \"IHasText\" {\
 down = false;\
 }\
 \
@@ -3648,7 +3472,7 @@ local __f,__err=load("\
 \
 \
 \
-class \"Draggable\" extends \"Sheet\" implements (IHasText) {\
+class \"Draggable\" extends \"Sheet\" implements \"IHasText\" {\
 down = false;\
 }\
 \
@@ -3725,7 +3549,7 @@ local __f,__err=load("\
 \
 \
 \
-class \"Image\" extends \"Sheet\" implements (IHasText) {\
+class \"Image\" extends \"Sheet\" {\
 down = false;\
 image = nil;\
 fill = nil;\
@@ -4141,19 +3965,19 @@ local px, py = self:getScrollbarPositions( cWidth, cHeight, h, v )\
 local sx, sy = self:getScrollbarSizes( cWidth, cHeight, h, v )\
 \
 if h then\
-local c1 = self.style:getField( self.class, \"horizontal-bar\", \"default\" )\
+local c1 = self.style:getField \"horizontal-bar\"\
 local c2 = self.heldScrollbar == \"h\" and\
-self.style:getField( self.class, \"horizontal-bar\", \"active\" )\
-or self.style:getField( self.class, \"horizontal-bar\", \"bar\" )\
+self.style:getField \"horizontal-bar.active\"\
+or self.style:getField \"horizontal-bar.bar\"\
 \
 self.canvas:mapColour( self.canvas:getArea( 4, 0, self.height - 1, self:getDisplayWidth( h, v ) ), c1 )\
 self.canvas:mapColour( self.canvas:getArea( 4, px, self.height - 1, sx ), c2 )\
 end\
 if v then\
-local c1 = self.style:getField( self.class, \"vertical-bar\", \"default\" )\
+local c1 = self.style:getField \"vertical-bar\"\
 local c2 = self.heldScrollbar == \"v\" and\
-self.style:getField( self.class, \"vertical-bar\", \"active\" )\
-or self.style:getField( self.class, \"vertical-bar\", \"bar\" )\
+self.style:getField \"vertical-bar.active\"\
+or self.style:getField \"vertical-bar.bar\"\
 \
 self.canvas:mapColour( self.canvas:getArea( 3, self.width - 1, 0, self.height ), c1 )\
 self.canvas:mapColour( self.canvas:getArea( 3, self.width - 1, py, sy ), c2 )\
@@ -4209,7 +4033,7 @@ local __f,__err=load("\
 \
 \
 \
-class \"Text\" extends \"Sheet\" implements (IHasText) {}\
+class \"Text\" extends \"Sheet\" implements \"IHasText\" {}\
 \
 function Text:Text( x, y, width, height, text )\
 self.text = text\

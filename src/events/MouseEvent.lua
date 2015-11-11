@@ -8,7 +8,8 @@
 
  -- @print Including sheets.events.MouseEvent
 
-class "MouseEvent" implements (IEvent) {
+class "MouseEvent" {
+	event = "MouseEvent";
 	x = 0;
 	y = 0;
 	button = 0;
@@ -16,7 +17,7 @@ class "MouseEvent" implements (IEvent) {
 }
 
 function MouseEvent:MouseEvent( event, x, y, button, within )
-	self:IEvent( event )
+	self.event = event
 	self.x = x
 	self.y = y
 	self.button = button
@@ -49,4 +50,13 @@ function MouseEvent:clone( x, y, within )
 	end
 
 	return sub
+end
+
+function MouseEvent:is( event )
+	return self.event == event
+end
+
+function MouseEvent:handle( handler )
+	self.handled = true
+	self.handler = handler
 end

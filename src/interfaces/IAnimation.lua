@@ -7,7 +7,7 @@
 
  -- @print Including sheets.interfaces.IAnimation
 
-IAnimation = {}
+interface "IAnimation" {}
 
 function IAnimation:IAnimation()
 	self.animations = {}

@@ -98,30 +98,27 @@ alignment = {
  -- @require sheets.timer
  -- @require sheets.clipboard
 
- -- @require sheets.exception
+ -- @require sheets.exceptions.Exception
+ -- @require sheets.exceptions.IncorrectParameterException
+ -- @require sheets.exceptions.IncorrectConstructorException
  -- @require sheets.functionParameters
 
- -- @require sheets.interfaces.core.IAnimation
- -- @require sheets.interfaces.core.IChildContainer
- -- @require sheets.interfaces.core.ICommon
- -- @require sheets.interfaces.core.IEvent
- -- @require sheets.interfaces.core.IHasParent
- -- @require sheets.interfaces.core.IPosition
- -- @require sheets.interfaces.core.IPositionAnimator
-
+ -- @require sheets.interfaces.IAnimation
+ -- @require sheets.interfaces.IChildContainer
+ -- @require sheets.interfaces.ISize
+ -- @require sheets.interfaces.IPositionAnimator
  -- @require sheets.interfaces.IHasText
-
- -- @require sheets.Animation
- -- @require sheets.Application
- -- @require sheets.Style
 
  -- @require sheets.events.KeyboardEvent
  -- @require sheets.events.MiscEvent
  -- @require sheets.events.MouseEvent
  -- @require sheets.events.TextEvent
 
+ -- @require sheets.Animation
+ -- @require sheets.Application
+ -- @require sheets.Screen
  -- @require sheets.Sheet
- -- @require sheets.View
+ -- @require sheets.Style
 
  -- @if SHEETS_BUTTON
 	 -- @require sheets.elements.Button

@@ -7,12 +7,21 @@
 
  -- @print Including sheets.events.MiscEvent
 
-class "MiscEvent" implements (IEvent) {
-	key = 0;
-	meta = {};
+class "MiscEvent" {
+	event = "MiscEvent";
+	parameters = {};
 }
 
-function MiscEvent:MiscEvent( ... )
-	self:IEvent( event )
+function MiscEvent:MiscEvent( event, ... )
+	self.event = event
 	self.parameters = { ... }
+end
+
+function MiscEvent:is( event )
+	return self.event == event
+end
+
+function MiscEvent:handle( handler )
+	self.handled = true
+	self.handler = handler
 end

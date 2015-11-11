@@ -9,7 +9,7 @@
 
 local wrapline, wrap
 
-IHasText = {
+interface "IHasText" {
 	text = "";
 	text_lines = nil;
 }

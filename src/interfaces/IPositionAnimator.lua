@@ -37,7 +37,7 @@ local function animateElementInOrOut( self, mode, vertical, current, to, time )
 	return a
 end
 
-IPositionAnimator = {}
+interface "IPositionAnimator" {}
 
 function IPositionAnimator:animateX( to, time, easing )
 	return animateAttribute( self, "x", self.setX, self.x, to, time, easing )
