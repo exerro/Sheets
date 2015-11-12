@@ -104,9 +104,9 @@ alignment = {
  -- @require sheets.functionParameters
 
  -- @require sheets.interfaces.IAnimation
+ -- @require sheets.interfaces.IAttributeAnimator
  -- @require sheets.interfaces.IChildContainer
  -- @require sheets.interfaces.ISize
- -- @require sheets.interfaces.IPositionAnimator
  -- @require sheets.interfaces.IHasText
 
  -- @require sheets.events.KeyboardEvent

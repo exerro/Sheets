@@ -2,10 +2,10 @@
  -- @once
 
  -- @ifndef __INCLUDE_sheets
-	-- @error 'sheets' must be included before including 'sheets.interfaces.IPositionAnimator'
+	-- @error 'sheets' must be included before including 'sheets.interfaces.IAttributeAnimator'
  -- @endif
 
- -- @print Including sheets.interfaces.IPositionAnimator
+ -- @print Including sheets.interfaces.IAttributeAnimator
 
 local function animateAttribute( self, label, setter, from, to, time, easing )
 	easing = easing or SHEETS_DEFAULT_TRANSITION_EASING
@@ -37,29 +37,40 @@ local function animateElementInOrOut( self, mode, vertical, current, to, time )
 	return a
 end
 
-interface "IPositionAnimator" {}
+interface "IAttributeAnimator" {}
 
-function IPositionAnimator:animateX( to, time, easing )
+function IAttributeAnimator:animateValue( value, from, to, time, easing, rounded )
+	easing = easing or SHEETS_DEFAULT_TRANSITION_EASING
+
+	functionParameters.check( 5, "value", "string", value, "from", "number", from, "to", "number", to, "time", "number", time or 0, "easing", type( easing ) == "string" and "string" or "function", easing )
+
+	local animation = ( rounded and Animation():setRounded() or Animation() ):addKeyFrame( from, to, time, easing )
+	local setter = self["set" .. value:sub( 1, 1 ):upper() .. value:sub( 2 )]
+
+	return self:addAnimation( value, setter, animation )
+end
+
+function IAttributeAnimator:animateX( to, time, easing )
 	return animateAttribute( self, "x", self.setX, self.x, to, time, easing )
 end
 
-function IPositionAnimator:animateY( to, time, easing )
+function IAttributeAnimator:animateY( to, time, easing )
 	return animateAttribute( self, "y", self.setY, self.y, to, time, easing )
 end
 
-function IPositionAnimator:animateZ( to, time, easing )
+function IAttributeAnimator:animateZ( to, time, easing )
 	return animateAttribute( self, "z", self.setZ, self.z, to, time, easing )
 end
 
-function IPositionAnimator:animateWidth( to, time, easing )
+function IAttributeAnimator:animateWidth( to, time, easing )
 	return animateAttribute( self, "width", self.setWidth, self.width, to, time, easing )
 end
 
-function IPositionAnimator:animateHeight( to, time, easing )
+function IAttributeAnimator:animateHeight( to, time, easing )
 	return animateAttribute( self, "height", self.setHeight, self.height, to, time, easing )
 end
 
-function IPositionAnimator:animateIn( side, to, time )
+function IAttributeAnimator:animateIn( side, to, time )
 	side = side or "top"
 	time = time or SHEETS_DEFAULT_TRANSITION_TIME
 
@@ -78,7 +89,7 @@ function IPositionAnimator:animateIn( side, to, time )
 	end
 end
 
-function IPositionAnimator:animateOut( side, to, time )
+function IAttributeAnimator:animateOut( side, to, time )
 	side = side or "top"
 	time = time or SHEETS_DEFAULT_TRANSITION_TIME
 

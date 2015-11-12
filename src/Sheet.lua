@@ -19,7 +19,7 @@ class "Sheet"
 	implements "IAnimation"
 	implements "IChildContainer"
 	implements "ISize"
-	implements "IPositionAnimator"
+	implements "IAttributeAnimator"
 {
 	x = 0;
 	y = 0;

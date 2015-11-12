@@ -1,6 +1,6 @@
 
 interface "IChildContainer" {
-	children = {}
+	children = {};
 }
 
 function IChildContainer:IChildContainer()
