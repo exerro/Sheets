@@ -8,23 +8,6 @@ Right now, Sheets adds in some core elements commonly used in GUIs, like buttons
 
 In the future, a markup language (`Sheets Markup Language`) will be included, so entire views will be able to be loaded from an xml-like format.
 
-> Note, this uses the [graphics library](https://github.com/Exerro/CC-Graphics-Library).
-> Things from the graphics library are available under the `sheets` namespace, i.e. `sheets.Button` and `sheets.Canvas`.
+Check out the [wiki](https://github.com/Exerro/Sheets/wiki) for more information.
 
-Sheets is a pretty large WIP at the moment. Many more elements will be added, as well as layout helpers, SML, and an updated theming system.
-
-### Direct graphics access.
-
-As sheets uses the graphics library (pretty extensively), you can do pretty much anything you would with the graphics library, with the added benefit of event handling and automatic rendering.
-
-Each sheet has its own canvas that you can draw to. Most elements leave the `onPostDraw()` callback undefined, so you can use that, or by using a plain `Sheet`, you can make use of both `onPreDraw()` and `onPostDraw()` to customise how your element looks.
-
-This makes making games easy as pie. You can make a custom `GameRenderer` class that does completely custom drawing with any number of arbitrary shapes, and put other elements over the top. Drawing and events are both localised, so there's no complicated code to get things to work. They just work.
-
-### Getting Started
-
-Take a look in the `/builds` folder. To use the library as an API, download `api.lua`, or to use it as a library, download `lib.lua`
-
-Alternatively, to use with Annex, you can download the `src` folder and place it under `sheets` in one of your include paths when building. By doing this, the library will not be localised to `sheets` by default. You'll also need to download the `src` folder of the graphics library to do this, and place that under `graphics` in one of your include paths.
-
-Take a look at the example application to see how things work.
+> Note, this uses the [graphics library](https://github.com/Exerro/CC-Graphics-Library). Also, Sheets is a pretty large WIP at the moment. Many more elements will be added, as well as layout helpers, and SML, so if things seem bare, it won't last long.

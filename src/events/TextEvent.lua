@@ -7,7 +7,7 @@
 
  -- @print Including sheets.events.TextEvent
 
-class "TextEvent" {
+class "TextEvent" extends "Event" {
 	event = "TextEvent";
 	text = "";
 }
@@ -15,13 +15,4 @@ class "TextEvent" {
 function TextEvent:TextEvent( event, text )
 	self.event = event
 	self.text = text
-end
-
-function TextEvent:is( event )
-	return self.event == event
-end
-
-function TextEvent:handle( handler )
-	self.handled = true
-	self.handler = handler
 end

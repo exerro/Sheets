@@ -109,6 +109,7 @@ alignment = {
  -- @require sheets.interfaces.ISize
  -- @require sheets.interfaces.IHasText
 
+ -- @require sheets.events.Event
  -- @require sheets.events.KeyboardEvent
  -- @require sheets.events.MiscEvent
  -- @require sheets.events.MouseEvent

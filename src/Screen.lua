@@ -58,6 +58,8 @@ function Screen:removeMonitor( side )
 		self.monitors[side] = nil
 		self:removeTerminal( mon )
 	end
+
+	return self
 end
 
 function Screen:usesMonitor( side )
@@ -79,6 +81,8 @@ function Screen:removeTerminal( t )
 			return table.remove( self.terminals, i )
 		end
 	end
+
+	return self
 end
 
 function Screen:draw()

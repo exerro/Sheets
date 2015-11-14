@@ -14,7 +14,7 @@ local thrown
 
 local function handler( t )
 	for i = 1, #t do
-		if t[i].catch == thrown.name or t[i].default then
+		if t[i].catch == thrown.name or t[i].default or t[i].catch == thrown.class then
 			return t[i].handler( thrown )
 		end
 	end

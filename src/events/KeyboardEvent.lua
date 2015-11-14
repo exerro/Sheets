@@ -7,7 +7,7 @@
 
  -- @print Including sheets.events.KeyboardEvent
 
-class "KeyboardEvent" {
+class "KeyboardEvent" extends "Event" {
 	event = "KeyboardEvent";
 	key = 0;
 	held = {};
@@ -34,17 +34,4 @@ end
 
 function KeyboardEvent:isHeld( key )
 	return self.key == keys[key] or self.held[key]
-end
-
-function KeyboardEvent:tostring()
-	return "KeyboardEvent"
-end
-
-function KeyboardEvent:is( event )
-	return self.event == event
-end
-
-function KeyboardEvent:handle( handler )
-	self.handled = true
-	self.handler = handler
 end

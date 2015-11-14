@@ -1,13 +1,12 @@
-Rethink TextInput selection.
-Update all the exceptions.
+Not all Screens should get term events.
+Application class coroutine manager.
+Dynamic values.
 ColourSelector class.
-Docy doc doc.
 Label class.
 RadioButton class.
 Tabs class.
 Toggle class.
 Window class.
-Dynamic values.
 Menu class.
 Terminal class.
-Application class coroutine manager.
+Rethink TextInput selection.
