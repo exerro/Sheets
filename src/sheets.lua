@@ -180,7 +180,9 @@ colour = {
  -- @require sheets.exceptions.Exception
  -- @require sheets.exceptions.IncorrectParameterException
  -- @require sheets.exceptions.IncorrectConstructorException
- -- @require sheets.functionParameters
+ -- @require sheets.exceptions.ResourceLoadException
+ -- @require sheets.exceptions.ThreadRuntimeException
+ -- @require sheets.parameters
 
  -- @require sheets.interfaces.IAnimation
  -- @require sheets.interfaces.IAttributeAnimator

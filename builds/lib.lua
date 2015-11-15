@@ -35,15 +35,6 @@
 
 
 
-	local env = setmetatable( {}, { __index = _ENV } )
-	local function f()
-		local _ENV = env
-		if setfenv then
-			setfenv( 1, env )
-		end
-
-
-
 
 
 
@@ -92,6 +83,27 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	local env = setmetatable( {}, { __index = _ENV } )
+	local function f()
+		local _ENV = env
+		if setfenv then
+			setfenv( 1, env )
+		end
 
 
 event = {
@@ -209,35 +221,23 @@ if not o then return error\"no class to modify\"elseif not a[d]then return error
 tostring(d)..\"'\")end for l,u in pairs(a[d])do o[l]=u end return h end","sheets.class",nil,_ENV)if not __f then error(__err,0)end __f()
 local __f,__err=load("timer={}local e={}local a=0 local o,i=os.clock()\
 function timer.new(t)\
-functionParameters.check(1,\"n\",\"number\",t)local n,s=o+t,false\
+parameters.check(1,\"n\",\"number\",t)local n,s=o+t,false\
 for h=1,#e do if e[h].time==n then s=e[h].ID break end end return s or os.startTimer(t)end\
 function timer.queue(t,n)\
-functionParameters.check(2,\"n\",\"number\",t,\"response\",\"function\",n)local s,h=o+t,false\
+parameters.check(2,\"n\",\"number\",t,\"response\",\"function\",n)local s,h=o+t,false\
 for r=1,#e do if e[r].time==s then h=e[r].ID break end end local a=h or os.startTimer(t)\
 e[#e+1]={time=s,response=n,ID=a}return a end\
-function timer.cancel(t)\
-functionParameters.check(1,\"ID\",\"number\",t)for n=#e,1,-1 do\
-if e[n].ID==t then return table.remove(e,n).time-o end end return 0 end function timer.step()i=o o=os.clock()end\
+function timer.cancel(t)parameters.check(1,\"ID\",\"number\",t)for n=#e,1,-1 do\
+if\
+e[n].ID==t then return table.remove(e,n).time-o end end return 0 end function timer.step()i=o o=os.clock()end\
 function timer.getDelta()return o-i end function timer.update(a)local t=false for n=#e,1,-1 do if e[n].ID==a then\
 table.remove(e,n).response()t=true end end\
 return t end\
 timer.step()","sheets.timer",nil,_ENV)if not __f then error(__err,0)end __f()
 local __f,__err=load("local e={}clipboard={}function clipboard.put(t)\
-functionParameters.check(1,\"modes\",\"table\",t)e=t end function clipboard.get(t)\
-functionParameters.check(1,\"mode\",\"string\",t)return e[t]end\
+parameters.check(1,\"modes\",\"table\",t)e=t end function clipboard.get(t)\
+parameters.check(1,\"mode\",\"string\",t)return e[t]end\
 function clipboard.clear()e={}end","sheets.clipboard",nil,_ENV)if not __f then error(__err,0)end __f()
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -668,45 +668,51 @@ self:Exception(\"IncorrectParameterException\",e,t)end","sheets.exceptions.Incor
 local __f,__err=load("class\"IncorrectConstructorException\"extends\"Exception\"\
 function IncorrectConstructorException:IncorrectConstructorException(e,t)return\
 self:Exception(\"IncorrectConstructorException\",e,t)end","sheets.exceptions.IncorrectConstructorException",nil,_ENV)if not __f then error(__err,0)end __f()
-local __f,__err=load("functionParameters={}\
-function functionParameters.checkConstructor(e,t,...)local a={...}\
-for o=1,t*3,3 do local i=a[o]\
-local n=a[o+1]local s=a[o+2]\
+local __f,__err=load("class\"ResourceLoadException\"extends\"Exception\"\
+function ResourceLoadException:ResourceLoadException(e,t)return\
+self:Exception(\"ResourceLoadException\",e,t)end","sheets.exceptions.ResourceLoadException",nil,_ENV)if not __f then error(__err,0)end __f()
+local __f,__err=load("class\"ThreadRuntimeException\"extends\"Exception\"\
+function ThreadRuntimeException:ThreadRuntimeException(e,t)return\
+self:Exception(\"ThreadRuntimeException\",e,t)end","sheets.exceptions.ThreadRuntimeException",nil,_ENV)if not __f then error(__err,0)end __f()
+local __f,__err=load("parameters={}\
+function parameters.checkConstructor(e,t,...)local a={...}\
+for o=1,t*3,3 do local i=a[o]local n=a[o+1]\
+local s=a[o+2]\
 if type(n)==\"string\"then if type(s)~=n then\
-Exception.throw(IncorrectConstructorException,\
-e:type()..\" expects \"..n..\
-\" \"..i..\" when created, got \"..class.type(s),4)end else\
+Exception.throw(IncorrectConstructorException,e:type()..\" expects \"..n..\
+\" \"..i..\
+\" when created, got \"..class.type(s),4)end else\
 if not\
 class.typeOf(s,n)then\
 Exception.throw(IncorrectConstructorException,e:type()..\" expects \"..\
 n:type()..\" \"..i..\" when created, got \"..\
 class.type(s),4)end end end end\
-function functionParameters.check(e,...)local t={...}\
+function parameters.check(e,...)local t={...}\
 for a=1,e*3,3 do local o=t[a]local i=t[a+1]local n=t[a+2]\
 if\
 type(i)==\"string\"then if type(n)~=i then\
-Exception.throw(IncorrectParameterException,\"expected \"..i..\" \"..o..\", got \"..\
-class.type(n),3)end else if not\
+Exception.throw(IncorrectParameterException,\"expected \"..i..\" \"..\
+o..\", got \"..class.type(n),3)end else if not\
 class.typeOf(n,i)then\
 Exception.throw(IncorrectParameterException,\"expected \"..i:type()..\" \"..o..\
-\", got \"..class.type(n),3)end end end end","sheets.functionParameters",nil,_ENV)if not __f then error(__err,0)end __f()
+\", got \"..class.type(n),3)end end end end","sheets.parameters",nil,_ENV)if not __f then error(__err,0)end __f()
 
 local __f,__err=load("interface\"IAnimation\"{}\
 function IAnimation:IAnimation()self.animations={}end\
 function IAnimation:addAnimation(e,t,a)\
-functionParameters.check(3,\"label\",\"string\",e,\"setter\",\"function\",t,\"animation\",Animation,a)self.animations[e]={setter=t,animation=a}if a.value then\
+parameters.check(3,\"label\",\"string\",e,\"setter\",\"function\",t,\"animation\",Animation,a)self.animations[e]={setter=t,animation=a}if a.value then\
 t(self,a.value)end return a end\
 function IAnimation:stopAnimation(e)\
-functionParameters.check(1,\"label\",\"string\",e)local t=self.animations[e]self.animations[e]=nil return t end\
-function IAnimation:updateAnimations(e)\
-functionParameters.check(1,\"dt\",\"number\",e)local t={}local a=self.animations local o,i=next(a)\
-while a[o]do local n=i.animation\
-n:update(e)if n.value then i.setter(self,n.value)end if n:finished()then\
-t[#t+1]=o end o,i=next(a,o)end for n=1,#t do self.animations[t[n]]=nil end end","sheets.interfaces.IAnimation",nil,_ENV)if not __f then error(__err,0)end __f()
+parameters.check(1,\"label\",\"string\",e)local t=self.animations[e]self.animations[e]=nil return t end\
+function IAnimation:updateAnimations(e)parameters.check(1,\"dt\",\"number\",e)\
+local t={}local a=self.animations local o,i=next(a)while a[o]do local n=i.animation n:update(e)if n.value then\
+i.setter(self,n.value)end if n:finished()then t[#t+1]=o end\
+o,i=next(a,o)end for n=1,#t do self.animations[t[n]]=\
+nil end end","sheets.interfaces.IAnimation",nil,_ENV)if not __f then error(__err,0)end __f()
 local __f,__err=load("\
 local function e(a,o,i,n,s,h,r)r=r or\"transition\"\
-functionParameters.check(3,\"to\",\"number\",s,\"time\",\"number\",h or 0,\"easing\",type(r)==\
-\"string\"and\"string\"or\"function\",r)\
+parameters.check(3,\"to\",\"number\",s,\"time\",\"number\",h or 0,\"easing\",\
+type(r)==\"string\"and\"string\"or\"function\",r)\
 local d=Animation():setRounded():addKeyFrame(n,s,h or.3,r)a:addAnimation(o,i,d)return d end\
 local function t(a,o,i,n,s,h)if not a.parent then return end\
 local r=Animation():setRounded():addKeyFrame(n,s,h,\
@@ -715,8 +721,8 @@ a:addAnimation(\"x\",a.setX,r)end if o==\"exit\"then\
 function r.onFinish()a:remove()end end return r end interface\"IAttributeAnimator\"{}\
 function IAttributeAnimator:animateValue(a,o,i,n,s,h)s=\
 s or\"transition\"\
-functionParameters.check(5,\"value\",\"string\",a,\"from\",\"number\",o,\"to\",\"number\",i,\"time\",\"number\",n or\
-0,\"easing\",type(s)==\"string\"and\"string\"or\"function\",s)\
+parameters.check(5,\"value\",\"string\",a,\"from\",\"number\",o,\"to\",\"number\",i,\"time\",\"number\",n or 0,\"easing\",\
+type(s)==\"string\"and\"string\"or\"function\",s)\
 local r=(h and Animation():setRounded()or Animation()):addKeyFrame(o,i,n,s)\
 local d=self[\"set\"..a:sub(1,1):upper()..a:sub(2)]return self:addAnimation(a,d,r)end function IAttributeAnimator:animateX(a,o,i)\
 return e(self,\"x\",self.setX,self.x,a,o,i)end function IAttributeAnimator:animateY(a,o,i)return\
@@ -727,7 +733,7 @@ e(self,\"width\",self.setWidth,self.width,a,o,i)end function IAttributeAnimator:
 return e(self,\"height\",self.setHeight,self.height,a,o,i)end\
 function IAttributeAnimator:animateIn(a,o,i)a=\
 a or\"top\"i=i or.3\
-functionParameters.check(3,\"side\",\"string\",a,\"to\",\"number\",o or 0,\"time\",\"number\",i)\
+parameters.check(3,\"side\",\"string\",a,\"to\",\"number\",o or 0,\"time\",\"number\",i)\
 if a==\"top\"then return t(self,\"in\",true,self.y,o or 0,i)elseif a==\"left\"then return t(self,\"in\",false,self.x,\
 o or 0,i)elseif a==\"right\"then\
 return t(self,\"in\",false,self.x,o or\
@@ -735,8 +741,7 @@ self.parent.width-self.width,i)elseif a==\"bottom\"then return\
 t(self,\"in\",true,self.y,o or self.parent.height-self.height,i)else\
 throw(IncorrectParameterException(\"invalid side '\"..a..\"'\",2))end end\
 function IAttributeAnimator:animateOut(a,o,i)a=a or\"top\"i=i or.3\
-functionParameters.check(3,\"side\",\"string\",a,\"to\",\"number\",\
-o or 0,\"time\",\"number\",i)\
+parameters.check(3,\"side\",\"string\",a,\"to\",\"number\",o or 0,\"time\",\"number\",i)\
 if a==\"top\"then\
 return t(self,\"out\",true,self.y,o or-self.height,i)elseif a==\"left\"then\
 return t(self,\"out\",false,self.x,o or-self.width,i)elseif a==\"right\"then\
@@ -747,31 +752,31 @@ local __f,__err=load("interface\"IChildContainer\"{children={}}\
 function IChildContainer:IChildContainer()\
 self.children={}self.meta.__add=self.addChild function self.meta:__concat(e)\
 self:addChild(e)return self end end\
-function IChildContainer:addChild(e)\
-functionParameters.check(1,\"child\",Sheet,e)local t=self.children\
-if e.parent then e.parent:removeChild(e)end e.parent=self self:setChanged()for a=1,#t do if t[a].z>e.z then\
-table.insert(t,a,e)return e end end\
-t[#t+1]=e return e end\
+function IChildContainer:addChild(e)parameters.check(1,\"child\",Sheet,e)\
+local t=self.children if e.parent then e.parent:removeChild(e)end\
+e.parent=self self:setChanged()for a=1,#t do\
+if t[a].z>e.z then table.insert(t,a,e)return e end end t[#t+1]=e return e end\
 function IChildContainer:removeChild(e)\
 for t=1,#self.children do if self.children[t]==e then\
 e.parent=nil self:setChanged()\
-return table.remove(self.children,t)end end end\
+return table.remove(self.children,t)end end end function IChildContainer:getChildren()local e={}local t=self.children for a=1,#t do e[a]=t[a]end\
+return e end\
 function IChildContainer:getChildById(e)\
-functionParameters.check(1,\"id\",\"string\",e)\
+parameters.check(1,\"id\",\"string\",e)\
 for t=#self.children,1,-1 do\
 local a=self.children[t]:getChildById(e)\
 if a then return a elseif self.children[t].id==e then return self.children[t]end end end\
 function IChildContainer:getChildrenById(e)\
-functionParameters.check(1,\"id\",\"string\",e)local a={}\
+parameters.check(1,\"id\",\"string\",e)local a={}\
 for t=#self.children,1,-1 do\
 local o=self.children[t]:getChildrenById(e)for t=1,#o do a[#a+1]=o[t]end if self.children[t].id==e then\
 a[#a+1]=self.children[t]end end return a end\
 function IChildContainer:getChildrenAt(e,t)\
-functionParameters.check(2,\"x\",\"number\",e,\"y\",\"number\",t)local a={}local o=self.children for n=1,#o do a[n]=o[n]end local i={}for n=#a,1,-1 do\
-a[n]:handle(MouseEvent(EVENT_MOUSE_PING,\
-e-a[n].x,t-a[n].y,i,true))end return i end\
+parameters.check(2,\"x\",\"number\",e,\"y\",\"number\",t)local a=self:getChildren()local o={}for n=#a,1,-1 do\
+a[n]:handle(MouseEvent(EVENT_MOUSE_PING,e-a[n].x,t-\
+a[n].y,o,true))end return o end\
 function IChildContainer:isChildVisible(e)\
-functionParameters.check(1,\"child\",Sheet,e)\
+parameters.check(1,\"child\",Sheet,e)\
 return\
 e.x+e.width>0 and e.y+e.height>0 and e.x<self.width and e.y<self.height end\
 function IChildContainer:repositionChildZIndex(e)local t=self.children\
@@ -782,20 +787,20 @@ while\
 t[a+1]and t[a+1].z<e.z do t[a+1],t[a]=e,t[a+1]a=a+1 end self:setChanged()break end end end","sheets.interfaces.IChildContainer",nil,_ENV)if not __f then error(__err,0)end __f()
 local __f,__err=load("interface\"ISize\"{width=0,height=0}\
 function ISize:setWidth(e)\
-functionParameters.check(1,\"width\",\"number\",e)\
+parameters.check(1,\"width\",\"number\",e)\
 if self.width~=e then self.width=e self.canvas:setWidth(e)\
 self:setChanged()for t=1,#self.children do\
 self.children[t]:onParentResized()end end return self end\
-function ISize:setHeight(e)\
-functionParameters.check(1,\"height\",\"number\",e)if self.height~=e then self.height=e self.canvas:setHeight(e)\
-for t=1,#\
-self.children do self.children[t]:onParentResized()end end return self end","sheets.interfaces.ISize",nil,_ENV)if not __f then error(__err,0)end __f()
+function ISize:setHeight(e)parameters.check(1,\"height\",\"number\",e)if\
+self.height~=e then self.height=e self.canvas:setHeight(e)\
+for t=1,#self.children\
+do self.children[t]:onParentResized()end end return self end","sheets.interfaces.ISize",nil,_ENV)if not __f then error(__err,0)end __f()
 local __f,__err=load("local e,t\
 interface\"IHasText\"{text=\"\",text_lines=nil}\
 function IHasText:autoHeight()\
 if not self.text_lines then self:wrapText(true)end return self:setHeight(#self.text_lines)end\
-function IHasText:setText(a)\
-functionParameters.check(1,\"text\",\"string\",a)self.text=a self:wrapText()self:setChanged()return self end function IHasText:wrapText(a)\
+function IHasText:setText(a)parameters.check(1,\"text\",\"string\",a)\
+self.text=a self:wrapText()self:setChanged()return self end function IHasText:wrapText(a)\
 self.text_lines=t(self.text,self.width,not a and self.height)end\
 function IHasText:drawText(a)\
 local o,i=0,self.text_lines a=a or\"default\"\
@@ -834,10 +839,10 @@ local __f,__err=load("class\"MouseEvent\"\
 extends\"Event\"{event=\"MouseEvent\",x=0,y=0,button=0,within=true}function MouseEvent:MouseEvent(e,t,a,o,i)self.event=e self.x=t self.y=a self.button=o\
 self.within=i end\
 function MouseEvent:isWithinArea(e,t,a,o)\
-functionParameters.check(4,\"x\",\"number\",e,\"y\",\"number\",t,\"width\",\"number\",a,\"height\",\"number\",o)return self.x>=e and self.y>=t and self.x<e+a and\
+parameters.check(4,\"x\",\"number\",e,\"y\",\"number\",t,\"width\",\"number\",a,\"height\",\"number\",o)return self.x>=e and self.y>=t and self.x<e+a and\
 self.y<t+o end\
 function MouseEvent:clone(e,t,a)\
-functionParameters.check(2,\"x\",\"number\",e,\"y\",\"number\",t)\
+parameters.check(2,\"x\",\"number\",e,\"y\",\"number\",t)\
 local o=MouseEvent(self.event,self.x-e,self.y-t,self.button,self.within and a or false)o.handled=self.handled\
 function o.handle()o.handled=true self:handle()end return o end","sheets.events.MouseEvent",nil,_ENV)if not __f then error(__err,0)end __f()
 local __f,__err=load("class\"TextEvent\"\
@@ -852,36 +857,55 @@ s~=false return self end\
 function Animation:addKeyFrame(s,h,r,d)r=\
 r or.5 d=d or o\
 if not d or d==\"transition\"then d=o elseif d==\"entrance\"then d=n elseif d==\"exit\"then d=i end\
-functionParameters.check(4,\"initial\",\"number\",s,\"final\",\"number\",h,\"duration\",\"number\",r,\"easing\",\"function\",d)local l={ease=true,clock=0,duration=r,initial=s,difference=h-s,easing=d}self.frames[\
+parameters.check(4,\"initial\",\"number\",s,\"final\",\"number\",h,\"duration\",\"number\",r,\"easing\",\"function\",d)local l={ease=true,clock=0,duration=r,initial=s,difference=h-s,easing=d}self.frames[\
 #self.frames+1]=l if#self.frames==1 then\
 self.value=s end return self end\
 function Animation:addPause(s)s=s or 1\
-functionParameters.check(1,\"pause\",\"number\",s)local h={clock=0,duration=s}\
+parameters.check(1,\"pause\",\"number\",s)local h={clock=0,duration=s}\
 self.frames[#self.frames+1]=h return self end\
 function Animation:frameFinished()if type(self.onFrameFinished)==\"function\"then\
 self:onFrameFinished(self.frame)end self.frame=self.frame+1 if\
 not\
 self.frames[self.frame]and type(self.onFinish)==\"function\"then self:onFinish()end end\
-function Animation:update(s)\
-functionParameters.check(1,\"dt\",\"number\",s)local h=self.frames[self.frame]\
-if h then\
-h.clock=math.min(h.clock+s,h.duration)\
-if h.ease then\
-local r=h.easing(h.initial,h.difference,h.clock/h.duration)if self.rounded then r=math.floor(r+.5)end self.value=r if h.clock>=\
-h.duration then self:frameFinished()end end\
+function Animation:update(s)parameters.check(1,\"dt\",\"number\",s)\
+local h=self.frames[self.frame]\
+if h then h.clock=math.min(h.clock+s,h.duration)\
+if h.ease then local r=h.easing(h.initial,h.difference,\
+h.clock/h.duration)if\
+self.rounded then r=math.floor(r+.5)end self.value=r if\
+h.clock>=h.duration then self:frameFinished()end end\
 if h.clock>=h.duration then self:frameFinished()end end end\
 function Animation:finished()return not self.frames[self.frame]end","sheets.Animation",nil,_ENV)if not __f then error(__err,0)end __f()
 local __f,__err=load("local function e(a)return error(tostring(a),0)end local t\
 class\"Application\"{name=\"UnNamed Application\",path=\"\",terminateable=true,running=true,screens={},screen=\
-nil,mouse=nil,keys={},changed=false}\
-function Application:Application()\
-self.screens={Screen(self,term.getSize()):addTerminal(term)}self.screen=self.screens[1]self.keys={}end\
-function Application:isKeyPressed(a)\
-functionParameters.check(1,\"key\",\"string\",a)return self.keys[a]~=nil end function Application:stop()self.running=false return self end\
+nil,resource_loaders={},extensions={},mouse=nil,keys={},changed=false}\
+function Application:Application(a,o)\
+self.screens={Screen(self,term.getSize()):addTerminal(term)}self.screen=self.screens[1]self.name=a self.path=o or a\
+self.resource_loaders={}self.extensions={}self.keys={}end\
+function Application:registerResourceLoader(a,o)\
+parameters.check(2,\"type\",\"string\",a,\"loader\",\"function\",o)self.resource_loaders[a]=o end\
+function Application:unregisterResourceLoader(a)\
+parameters.check(1,\"type\",\"string\",a)self.resource_loaders[a]=nil end\
+function Application:registerFileExtension(a,o)\
+parameters.check(2,\"extension\",\"string\",a,\"type\",\"string\",o)self.extensions[a]=o end\
+function Application:unregisterFileExtension(a)\
+parameters.check(1,\"extension\",\"string\",a)self.extensions[a]=nil end\
+function Application:loadResource(a,o)\
+parameters.check(2,\"resource\",\"string\",a,\"type\",\"string\",o or\"\")if not o then\
+o=self.extensions[a:match(\"%.(%w+)$\")or\"txt\"]or\"text.plain\"end\
+if self.resource_loaders[o]then local i=\
+fs.open(fs.combine(self.path,a),\"r\")or fs.open(a,\"r\")\
+if i then\
+local n=i.readAll()i.close()return self.resource_loaders[o](n)else\
+Exception.throw(ResourceLoadException,\
+\"failed to open file '\"..a..\"': not found under / or \"..self.path,2)end else\
+Exception.throw(ResourceLoadException,\"no loader for type '\"..o..\"'\",2)end end\
+function Application:isKeyPressed(a)parameters.check(1,\"key\",\"string\",a)\
+self.resource_loaders={}self.extensions={}return self.keys[a]~=nil end function Application:stop()self.running=false return self end\
 function Application:addScreen()\
 local a=Screen(self,term.getSize())self.screens[#self.screens+1]=a return a end\
 function Application:removeScreen(a)\
-functionParameters.check(1,\"screen\",Screen,a)\
+parameters.check(1,\"screen\",Screen,a)\
 for o=#self.screens,1,-1 do if self.screens[o]==a then\
 return table.remove(self.screens,o)end end end\
 function Application:event(a,...)local o={...}local i={}\
@@ -930,19 +954,19 @@ function Screen:Screen(e,t,a)self.parent=e self.terminals={}self.monitors={}\
 self.canvas=ScreenCanvas(t,a)self.width=t self.height=a end function Screen:setChanged(e)self.changed=e~=false\
 if e~=false then self.parent.changed=true end return self end\
 function Screen:addMonitor(e)\
-functionParameters.check(1,\"side\",\"string\",e)if peripheral.getType(e)~=\"monitor\"then\
+parameters.check(1,\"side\",\"string\",e)if peripheral.getType(e)~=\"monitor\"then\
 throw(IncorrectParameterException,\
 \"expected monitor on side '\"..e..\"', got \"..peripheral.getType(e),2)end\
 local t=peripheral.wrap(e)self.monitors[e]=t return self:addTerminal(t)end\
-function Screen:removeMonitor(e)\
-functionParameters.check(1,\"side\",\"string\",e)local t=self.monitors[e]if t then self.monitors[e]=nil\
-self:removeTerminal(t)end return self end\
+function Screen:removeMonitor(e)parameters.check(1,\"side\",\"string\",e)\
+local t=self.monitors[e]\
+if t then self.monitors[e]=nil self:removeTerminal(t)end return self end\
 function Screen:usesMonitor(e)return self.monitors[e]~=nil end\
-function Screen:addTerminal(e)\
-functionParameters.check(1,\"terminal\",\"table\",e)self.terminals[#self.terminals+1]=e return\
+function Screen:addTerminal(e)parameters.check(1,\"terminal\",\"table\",e)self.terminals[\
+#self.terminals+1]=e return\
 self:setChanged()end\
 function Screen:removeTerminal(e)\
-functionParameters.check(1,\"terminal\",\"table\",e)\
+parameters.check(1,\"terminal\",\"table\",e)\
 for t=#self.terminals,1,-1 do if self.terminals[t]==e then self:setChanged()return\
 table.remove(self.terminals,t)end end return self end\
 function Screen:draw()\
@@ -967,20 +991,19 @@ local __f,__err=load("class\"Sheet\"implements\"IAnimation\"\
 implements\"IAttributeAnimator\"implements\"IChildContainer\"\
 implements\"ISize\"{x=0,y=0,z=0,id=\"ID\",style=nil,parent=nil,canvas=nil,changed=true,cursor_x=0,cursor_y=0,cursor_colour=0,cursor_active=false,handlesKeyboard=false,handlesText=false}\
 function Sheet:Sheet(e,t,a,o)\
-functionParameters.checkConstructor(self.class,4,\"x\",\"number\",e,\"y\",\"number\",t,\"width\",\"number\",a,\"height\",\"number\",o)self.x=e self.y=t self.width=a self.height=o self:IAnimation()\
+parameters.checkConstructor(self.class,4,\"x\",\"number\",e,\"y\",\"number\",t,\"width\",\"number\",a,\"height\",\"number\",o)self.x=e self.y=t self.width=a self.height=o self:IAnimation()\
 self:IChildContainer()self.style=Style(self)self.canvas=DrawingCanvas(a,o)end\
-function Sheet:setX(e)\
-functionParameters.check(1,\"x\",\"number\",e)if self.x~=e then self.x=e if self.parent then\
-self.parent:setChanged(true)end end return self end\
-function Sheet:setY(e)\
-functionParameters.check(1,\"y\",\"number\",e)if self.y~=e then self.y=e if self.parent then\
-self.parent:setChanged(true)end end return self end\
-function Sheet:setZ(e)\
-functionParameters.check(1,\"z\",\"number\",e)\
-if self.z~=e then self.z=e if self.parent then\
-self.parent:repositionChildZIndex(self)end end return self end function Sheet:setID(e)self.id=tostring(e)return self end\
+function Sheet:setX(e)parameters.check(1,\"x\",\"number\",e)if self.x~=e then\
+self.x=e\
+if self.parent then self.parent:setChanged(true)end end return self end\
+function Sheet:setY(e)parameters.check(1,\"y\",\"number\",e)if self.y~=e then\
+self.y=e\
+if self.parent then self.parent:setChanged(true)end end return self end\
+function Sheet:setZ(e)parameters.check(1,\"z\",\"number\",e)if self.z~=e then\
+self.z=e\
+if self.parent then self.parent:repositionChildZIndex(self)end end return self end function Sheet:setID(e)self.id=tostring(e)return self end\
 function Sheet:setStyle(e,t)\
-functionParameters.check(1,\"style\",Style,e)self.style=e:clone(self)\
+parameters.check(1,\"style\",Style,e)self.style=e:clone(self)\
 if t and self.children then for a=1,#self.children do\
 self.children[a]:setStyle(e,true)end end self:setChanged(true)return self end\
 function Sheet:setParent(e)\
@@ -998,26 +1021,26 @@ e~=false\
 if\
 e~=false and self.parent and not self.parent.changed then self.parent:setChanged()end return self end\
 function Sheet:setCursorBlink(e,t,a)a=a or 128\
-functionParameters.check(3,\"x\",\"number\",e,\"y\",\"number\",t,\"colour\",\"number\",a)self.cursor_active=true self.cursor_x=e self.cursor_y=t\
+parameters.check(3,\"x\",\"number\",e,\"y\",\"number\",t,\"colour\",\"number\",a)self.cursor_active=true self.cursor_x=e self.cursor_y=t\
 self.cursor_colour=a return self end\
 function Sheet:resetCursorBlink()self.cursor_active=false return self end\
 function Sheet:tostring()return\"[Instance] \"..\
 self.class:type()..\" \"..tostring(self.id)end function Sheet:onParentResized()end\
-function Sheet:update(e)local t={}local a=self.children\
-self:updateAnimations(e)if self.onUpdate then self:onUpdate(e)end\
-for o=1,#a do t[o]=a[o]end for o=#t,1,-1 do t[o]:update(e)end end\
+function Sheet:update(e)local t=self:getChildren()\
+self:updateAnimations(e)if self.onUpdate then self:onUpdate(e)end for a=#t,1,-1 do\
+t[a]:update(e)end end\
 function Sheet:draw()\
-if self.changed then local e=self.children local t,a,o\
+if self.changed then local e=self:getChildren()local t,a,o\
 self:resetCursorBlink()if self.onPreDraw then self:onPreDraw()end\
 for n=1,#e do local i=e[n]\
 i:draw()i.canvas:drawTo(self.canvas,i.x,i.y)\
 if i.cursor_active then t,a,o=i.x+\
 i.cursor_x,i.y+i.cursor_y,i.cursor_colour end end if t then self:setCursorBlink(t,a,o)end if self.onPostDraw then\
 self:onPostDraw()end self.changed=false end end\
-function Sheet:handle(e)local t={}local a=self.children for o=1,#a do t[o]=a[o]end\
-if\
-e:typeOf(MouseEvent)then local o=e:isWithinArea(0,0,self.width,self.height)for n=#t,1,-1 do\
-t[n]:handle(e:clone(t[n].x,t[n].y,o))end else for o=#t,1,-1 do t[o]:handle(e)end end\
+function Sheet:handle(e)local t=self:getChildren()\
+if e:typeOf(MouseEvent)then\
+local a=e:isWithinArea(0,0,self.width,self.height)for o=#t,1,-1 do\
+t[o]:handle(e:clone(t[o].x,t[o].y,a))end else for a=#t,1,-1 do t[a]:handle(e)end end\
 if e:typeOf(MouseEvent)then\
 if\
 e:is(EVENT_MOUSE_PING)and\
@@ -1046,11 +1069,11 @@ a[o.class]or{}self.fields={}self.object=o end\
 function Style:clone(o)if not class.isInstance(o)then\
 throw(IncorrectInitialiserException(\"expected Instance object, got \"..\
 class.type(o),2))end\
-local i=Style(o or self.object)for n,s in pairs(self.fields)do i.fields[n]=s end return i end function Style:setField(o,i)\
-functionParameters.check(1,\"field\",\"string\",o)self.fields[e(o)]=i self.object:setChanged()\
-return self end\
-function Style:getField(o)\
-functionParameters.check(1,\"field\",\"string\",o)o=e(o)local i=t(o)\
+local i=Style(o or self.object)for n,s in pairs(self.fields)do i.fields[n]=s end return i end\
+function Style:setField(o,i)parameters.check(1,\"field\",\"string\",o)\
+self.fields[e(o)]=i self.object:setChanged()return self end\
+function Style:getField(o)parameters.check(1,\"field\",\"string\",o)\
+o=e(o)local i=t(o)\
 if self.fields[o]~=nil then return self.fields[o]elseif\
 self.fields[i]~=nil then return self.fields[i]elseif\
 a[self.object.class][o]~=nil then return a[self.object.class][o]end return a[self.object.class][i]end","sheets.Style",nil,_ENV)if not __f then error(__err,0)end __f()
@@ -1141,7 +1164,7 @@ function Image:Image(e,t,a)\
 if type(a)==\"string\"then if fs.exists(a)then local n=fs.open(a,\"r\")if n then\
 a=n.readAll()n.close()end end\
 a=image.decodePaintutils(a)elseif type(a)~=\"table\"then\
-functionParameters.checkConstructor(self.class,1,\"image\",\"string\",a)end local o,i=# (a[1]or\"\"),#a self.image=a\
+parameters.checkConstructor(self.class,1,\"image\",\"string\",a)end local o,i=# (a[1]or\"\"),#a self.image=a\
 return self:Sheet(e,t,o,i)end function Image:setWidth()end function Image:setHeight()end\
 function Image:onPreDraw()\
 local e=self.style:getField(\
@@ -1163,9 +1186,9 @@ local __f,__err=load("class\"KeyHandler\"\
 extends\"Sheet\"{shortcuts={},handlesKeyboard=true}\
 function KeyHandler:KeyHandler()self.shortcuts={}return self:Sheet(0,0,0,0)end\
 function KeyHandler:addShortcut(e,t)\
-functionParameters.check(2,\"shortcut\",\"string\",e,\"handler\",\"function\",t)self.shortcuts[e]=t end\
+parameters.check(2,\"shortcut\",\"string\",e,\"handler\",\"function\",t)self.shortcuts[e]=t end\
 function KeyHandler:removeShortcut(e)\
-functionParameters.check(1,\"shortcut\",\"string\",e)self.shortcuts[e]=nil end\
+parameters.check(1,\"shortcut\",\"string\",e)self.shortcuts[e]=nil end\
 function KeyHandler:onKeyboardEvent(e)\
 if not e.handled and e:is(7)then local t=self.shortcuts\
 local a,o=next(t)while a do if e:matches(a)then e:handle()o(self)return end\
@@ -1181,12 +1204,12 @@ local __f,__err=load("class\"ScrollContainer\"\
 extends\"Sheet\"{scrollX=0,scrollY=0,horizontalPadding=0,verticalPadding=0,heldScrollbar=false,down=false}\
 function ScrollContainer:ScrollContainer(e,t,a,o,i)if class.typeOf(e,Sheet)then i=e\
 e,t,a,o=e.x,e.y,e.width,e.height i.x,i.y=0,0 end\
-functionParameters.checkConstructor(self.class,4,\"x\",\"number\",e,\"y\",\"number\",t,\"width\",\"number\",a,\"height\",\"number\",o,\"element\",\
+parameters.checkConstructor(self.class,4,\"x\",\"number\",e,\"y\",\"number\",t,\"width\",\"number\",a,\"height\",\"number\",o,\"element\",\
 i and Sheet,i)self:Sheet(e,t,a,o)if i then self:addChild(i)end end\
 function ScrollContainer:setScrollX(e)\
-functionParameters.check(1,\"scroll\",\"number\",e)self.scrollX=e return self:setChanged()end\
+parameters.check(1,\"scroll\",\"number\",e)self.scrollX=e return self:setChanged()end\
 function ScrollContainer:setScrollY(e)\
-functionParameters.check(1,\"scroll\",\"number\",e)self.scrollY=e return self:setChanged()end\
+parameters.check(1,\"scroll\",\"number\",e)self.scrollY=e return self:setChanged()end\
 function ScrollContainer:getContentWidth()local e=self.horizontalPadding local t=self.children for a=1,#\
 self.children do\
 local o=t[a].x+t[a].width+self.horizontalPadding if o>e then e=o end end return e end\
@@ -1278,11 +1301,11 @@ self.style:getField\"vertical-bar.bar\"\
 self.canvas:mapColour(self.canvas:getArea(3,self.width-1,0,self.height),r)\
 self.canvas:mapColour(self.canvas:getArea(3,self.width-1,n,h),d)end end end\
 function ScrollContainer:getChildrenAt(e,t)\
-functionParameters.check(2,\"x\",\"number\",e,\"y\",\"number\",t)local a={}local o,i=self.scrollX,self.scrollY local n=self.children\
+parameters.check(2,\"x\",\"number\",e,\"y\",\"number\",t)local a={}local o,i=self.scrollX,self.scrollY local n=self.children\
 for h=1,#n do a[h]=n[h]end local s={}for h=#a,1,-1 do\
 a[h]:handle(MouseEvent(EVENT_MOUSE_PING,e-a[h].x-o,t-a[h].y-i,s,true))end return s end\
 function ScrollContainer:isChildVisible(e)\
-functionParameters.check(1,\"child\",Sheet,e)local t,a=self.scrollX,self.scrollY\
+parameters.check(1,\"child\",Sheet,e)local t,a=self.scrollX,self.scrollY\
 return\
 e.x+e.width-t>0 and\
 e.y+e.height-a>0 and e.x-t<self.width and e.y-a<self.height end\
@@ -1306,17 +1329,17 @@ class\"TextInput\"\
 extends\"Sheet\"{text=\"\",cursor=0,scroll=0,selection=false,focussed=false,handlesKeyboard=true,handlesText=true,doubleClickData=false}\
 function TextInput:TextInput(o,i,n)return self:Sheet(o,i,n,1)end\
 function TextInput:setText(o)self.text=tostring(o)return self:setChanged()end\
-function TextInput:setScroll(o)\
-functionParameters.check(1,\"scroll\",\"number\",o)self.scroll=o return self:setChanged()end\
-function TextInput:setCursor(o)\
-functionParameters.check(1,\"cursor\",\"number\",o)\
-self.cursor=math.min(math.max(o,0),#self.text)\
-if self.cursor==self.selection then self.selection=nil end\
-if self.cursor-self.scroll<1 then\
-self.scroll=math.max(self.cursor-1,0)elseif self.cursor-self.scroll>self.width-1 then self.scroll=self.cursor-\
-self.width+1 end return self:setChanged()end\
+function TextInput:setScroll(o)parameters.check(1,\"scroll\",\"number\",o)\
+self.scroll=o return self:setChanged()end\
+function TextInput:setCursor(o)parameters.check(1,\"cursor\",\"number\",o)self.cursor=math.min(math.max(o,0),\
+#self.text)if\
+self.cursor==self.selection then self.selection=nil end\
+if self.cursor-self.scroll<\
+1 then self.scroll=math.max(self.cursor-1,0)elseif\
+self.cursor-self.scroll>self.width-1 then self.scroll=\
+self.cursor-self.width+1 end return self:setChanged()end\
 function TextInput:setSelection(o)\
-functionParameters.check(1,\"position\",\"number\",o)self.selection=o return self:setChanged()end\
+parameters.check(1,\"position\",\"number\",o)self.selection=o return self:setChanged()end\
 function TextInput:getSelectedText()\
 return self.selection and\
 self.text:sub(\

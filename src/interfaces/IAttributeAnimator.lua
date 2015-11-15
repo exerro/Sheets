@@ -10,7 +10,7 @@
 local function animateAttribute( self, label, setter, from, to, time, easing )
 	easing = easing or SHEETS_DEFAULT_TRANSITION_EASING
 
-	functionParameters.check( 3, "to", "number", to, "time", "number", time or 0, "easing", type( easing ) == "string" and "string" or "function", easing )
+	parameters.check( 3, "to", "number", to, "time", "number", time or 0, "easing", type( easing ) == "string" and "string" or "function", easing )
 
 	local a = Animation():setRounded()
 		:addKeyFrame( from, to, time or SHEETS_DEFAULT_TRANSITION_TIME, easing )
@@ -42,7 +42,7 @@ interface "IAttributeAnimator" {}
 function IAttributeAnimator:animateValue( value, from, to, time, easing, rounded )
 	easing = easing or SHEETS_DEFAULT_TRANSITION_EASING
 
-	functionParameters.check( 5, "value", "string", value, "from", "number", from, "to", "number", to, "time", "number", time or 0, "easing", type( easing ) == "string" and "string" or "function", easing )
+	parameters.check( 5, "value", "string", value, "from", "number", from, "to", "number", to, "time", "number", time or 0, "easing", type( easing ) == "string" and "string" or "function", easing )
 
 	local animation = ( rounded and Animation():setRounded() or Animation() ):addKeyFrame( from, to, time, easing )
 	local setter = self["set" .. value:sub( 1, 1 ):upper() .. value:sub( 2 )]
@@ -74,7 +74,7 @@ function IAttributeAnimator:animateIn( side, to, time )
 	side = side or "top"
 	time = time or SHEETS_DEFAULT_TRANSITION_TIME
 
-	functionParameters.check( 3, "side", "string", side, "to", "number", to or 0, "time", "number", time )
+	parameters.check( 3, "side", "string", side, "to", "number", to or 0, "time", "number", time )
 
 	if side == "top" then
 		return animateElementInOrOut( self, "in", true, self.y, to or 0, time )
@@ -93,7 +93,7 @@ function IAttributeAnimator:animateOut( side, to, time )
 	side = side or "top"
 	time = time or SHEETS_DEFAULT_TRANSITION_TIME
 
-	functionParameters.check( 3, "side", "string", side, "to", "number", to or 0, "time", "number", time )
+	parameters.check( 3, "side", "string", side, "to", "number", to or 0, "time", "number", time )
 
 	if side == "top" then
 		return animateElementInOrOut( self, "out", true, self.y, to or -self.height, time )

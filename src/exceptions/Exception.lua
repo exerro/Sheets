@@ -53,11 +53,15 @@ function Exception:getTraceback( initial, format )
 end
 
 function Exception:getDataAndTraceback( indent )
-	return textutils.serialize( self.data ) .. "\n" .. self:getTraceback( (" "):rep( indent or 1 ) .. "in ", "\n" .. (" "):rep( indent or 1 ) .. "in " )
+	if type( self.data ) == "string" or class.isClass( self.data ) or class.isInstance( self.data ) then
+		return tostring( self.data ) .. "\n" .. self:getTraceback( (" "):rep( indent or 1 ) .. "in ", "\n" .. (" "):rep( indent or 1 ) .. "in " )
+	else
+		return textutils.serialize( self.data ) .. "\n" .. self:getTraceback( (" "):rep( indent or 1 ) .. "in ", "\n" .. (" "):rep( indent or 1 ) .. "in " )
+	end
 end
 
 function Exception:tostring()
-	return tostring( self.name ) .. " exception:\n " .. self:getDataAndTraceback( 2 )
+	return tostring( self.name ) .. " exception:\n  " .. self:getDataAndTraceback( 4 )
 end
 
 function Exception.getExceptionById( ID )

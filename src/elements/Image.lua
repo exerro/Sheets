@@ -24,7 +24,7 @@ function Image:Image( x, y, img )
 		end
 		img = image.decodePaintutils( img )
 	elseif type( img ) ~= "table" then
-		functionParameters.checkConstructor( self.class, 1, "image", "string", img ) -- definitely error
+		parameters.checkConstructor( self.class, 1, "image", "string", img ) -- definitely error
 	end
 
 	local width, height = #( img[1] or "" ), #img

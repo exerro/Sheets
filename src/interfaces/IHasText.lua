@@ -22,7 +22,7 @@ function IHasText:autoHeight()
 end
 
 function IHasText:setText( text )
-	functionParameters.check( 1, "text", "string", text )
+	parameters.check( 1, "text", "string", text )
 
 	self.text = text
 	self:wrapText()

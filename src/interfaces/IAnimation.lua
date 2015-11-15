@@ -14,7 +14,7 @@ function IAnimation:IAnimation()
 end
 
 function IAnimation:addAnimation( label, setter, animation )
-	functionParameters.check( 3,
+	parameters.check( 3,
 		"label", "string", label,
 		"setter", "function", setter,
 		"animation", Animation, animation
@@ -32,7 +32,7 @@ function IAnimation:addAnimation( label, setter, animation )
 end
 
 function IAnimation:stopAnimation( label )
-	functionParameters.check( 1, "label", "string", label )
+	parameters.check( 1, "label", "string", label )
 
 	local a = self.animations[label]
 	self.animations[label] = nil
@@ -40,7 +40,7 @@ function IAnimation:stopAnimation( label )
 end
 
 function IAnimation:updateAnimations( dt )
-	functionParameters.check( 1, "dt", "number", dt )
+	parameters.check( 1, "dt", "number", dt )
 
 	local finished = {}
 	local animations = self.animations

@@ -58,14 +58,14 @@ function TextInput:setText( text )
 end
 
 function TextInput:setScroll( scroll )
-	functionParameters.check( 1, "scroll", "number", scroll )
+	parameters.check( 1, "scroll", "number", scroll )
 
 	self.scroll = scroll
 	return self:setChanged()
 end
 
 function TextInput:setCursor( cursor )
-	functionParameters.check( 1, "cursor", "number", cursor )
+	parameters.check( 1, "cursor", "number", cursor )
 
 	self.cursor = math.min( math.max( cursor, 0 ), #self.text )
 	if self.cursor == self.selection then
@@ -80,7 +80,7 @@ function TextInput:setCursor( cursor )
 end
 
 function TextInput:setSelection( position )
-	functionParameters.check( 1, "position", "number", position )
+	parameters.check( 1, "position", "number", position )
 
 	self.selection = position
 	return self:setChanged()

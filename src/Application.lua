@@ -24,22 +24,80 @@ class "Application"
 	screens = {};
 	screen = nil;
 
+	resource_loaders = {};
+	extensions = {};
+
 	mouse = nil;
 	keys = {};
 	changed = false;
 }
 
-function Application:Application()
-	-- self:IAnimation()
-
+function Application:Application( name, path )
 	self.screens = { Screen( self, term.getSize() ):addTerminal( term ) }
 	self.screen = self.screens[1]
 
+	self.name = name
+	self.path = path or name
+
+	self.resource_loaders = {}
+	self.extensions = {}
 	self.keys = {}
 end
 
+function Application:registerResourceLoader( type, loader )
+	parameters.check( 2, "type", "string", type, "loader", "function", loader )
+
+	self.resource_loaders[type] = loader
+end
+
+function Application:unregisterResourceLoader( type )
+	parameters.check( 1, "type", "string", type )
+	self.resource_loaders[type] = nil
+end
+
+function Application:registerFileExtension( extension, type )
+	parameters.check( 2, "extension", "string", extension, "type", "string", type )
+
+	self.extensions[extension] = type
+end
+
+function Application:unregisterFileExtension( extension )
+	parameters.check( 1, "extension", "string", extension )
+
+	self.extensions[extension] = nil
+end
+
+function Application:loadResource( resource, type )
+	parameters.check( 2, "resource", "string", resource, "type", "string", type or "" )
+	
+	if not type then
+		type = self.extensions[resource:match( "%.(%w+)$" ) or "txt"] or "text.plain"
+	end
+
+	if self.resource_loaders[type] then
+
+		local h = fs.open( fs.combine( self.path, resource ), "r" ) or fs.open( resource, "r" )
+		if h then
+
+			local content = h.readAll()
+			h.close()
+
+			return self.resource_loaders[type]( content )
+
+		else
+			Exception.throw( ResourceLoadException, "Failed to open file '" .. resource .. "': not found under '/'' or '" .. self.path .. "'", 2 )
+		end
+
+	else
+		Exception.throw( ResourceLoadException, "No loader for resource type '" .. type .. "'", 2 )
+	end
+end
+
 function Application:isKeyPressed( key )
-	functionParameters.check( 1, "key", "string", key )
+	parameters.check( 1, "key", "string", key )
+
+	self.resource_loaders = {}
+	self.extensions = {}
 
 	return self.keys[key] ~= nil
 end
@@ -59,7 +117,7 @@ end
 
 function Application:removeScreen( screen )
 
-	functionParameters.check( 1, "screen", Screen, screen )
+	parameters.check( 1, "screen", Screen, screen )
 
 	for i = #self.screens, 1, -1 do
 		if self.screens[i] == screen then

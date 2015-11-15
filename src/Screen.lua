@@ -38,7 +38,7 @@ function Screen:setChanged( state )
 end
 
 function Screen:addMonitor( side )
-	functionParameters.check( 1, "side", "string", side )
+	parameters.check( 1, "side", "string", side )
 
 	if peripheral.getType( side ) ~= "monitor" then
 		throw( IncorrectParameterException, "expected monitor on side '" .. side .. "', got " .. peripheral.getType( side ), 2 )
@@ -51,7 +51,7 @@ function Screen:addMonitor( side )
 end
 
 function Screen:removeMonitor( side )
-	functionParameters.check( 1, "side", "string", side )
+	parameters.check( 1, "side", "string", side )
 
 	local mon = self.monitors[side]
 	if mon then
@@ -67,13 +67,13 @@ function Screen:usesMonitor( side )
 end
 
 function Screen:addTerminal( t )
-	functionParameters.check( 1, "terminal", "table", t )
+	parameters.check( 1, "terminal", "table", t )
 	self.terminals[#self.terminals + 1] = t
 	return self:setChanged()
 end
 
 function Screen:removeTerminal( t )
-	functionParameters.check( 1, "terminal", "table", t )
+	parameters.check( 1, "terminal", "table", t )
 
 	for i = #self.terminals, 1, -1 do
 		if self.terminals[i] == t then

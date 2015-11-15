@@ -54,7 +54,7 @@ function Style:clone( object )
 end
 
 function Style:setField( field, value )
-	functionParameters.check( 1, "field", "string", field )
+	parameters.check( 1, "field", "string", field )
 
 	self.fields[formatFieldName( field )] = value
 	self.object:setChanged()
@@ -62,7 +62,7 @@ function Style:setField( field, value )
 end
 
 function Style:getField( field )
-	functionParameters.check( 1, "field", "string", field )
+	parameters.check( 1, "field", "string", field )
 
 	field = formatFieldName( field )
 	local default = getDefaultFieldName( field )

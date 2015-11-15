@@ -25,7 +25,7 @@ function MouseEvent:MouseEvent( event, x, y, button, within )
 end
 
 function MouseEvent:isWithinArea( x, y, width, height )
-	functionParameters.check( 4,
+	parameters.check( 4,
 		"x", "number", x,
 		"y", "number", y,
 		"width", "number", width,
@@ -36,7 +36,7 @@ function MouseEvent:isWithinArea( x, y, width, height )
 end
 
 function MouseEvent:clone( x, y, within )
-	functionParameters.check( 2,
+	parameters.check( 2,
 		"x", "number", x,
 		"y", "number", y
 	)

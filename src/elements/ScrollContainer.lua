@@ -27,7 +27,7 @@ function ScrollContainer:ScrollContainer( x, y, width, height, element )
 		element.x, element.y = 0, 0
 	end
 
-	functionParameters.checkConstructor( self.class, 4,
+	parameters.checkConstructor( self.class, 4,
 		"x", "number", x,
 		"y", "number", y,
 		"width", "number", width,
@@ -43,14 +43,14 @@ function ScrollContainer:ScrollContainer( x, y, width, height, element )
 end
 
 function ScrollContainer:setScrollX( scroll )
-	functionParameters.check( 1, "scroll", "number", scroll )
+	parameters.check( 1, "scroll", "number", scroll )
 
 	self.scrollX = scroll
 	return self:setChanged()
 end
 
 function ScrollContainer:setScrollY( scroll )
-	functionParameters.check( 1, "scroll", "number", scroll )
+	parameters.check( 1, "scroll", "number", scroll )
 
 	self.scrollY = scroll
 	return self:setChanged()
@@ -283,7 +283,7 @@ function ScrollContainer:onPostDraw()
 end
 
 function ScrollContainer:getChildrenAt( x, y )
-	functionParameters.check( 2, "x", "number", x, "y", "number", y )
+	parameters.check( 2, "x", "number", x, "y", "number", y )
 
 	local c = {}
 	local ox, oy = self.scrollX, self.scrollY
@@ -303,7 +303,7 @@ function ScrollContainer:getChildrenAt( x, y )
 end
 
 function ScrollContainer:isChildVisible( child )
-	functionParameters.check( 1, "child", Sheet, child )
+	parameters.check( 1, "child", Sheet, child )
 
 	local ox, oy = self.scrollX, self.scrollY
 

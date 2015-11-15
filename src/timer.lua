@@ -6,7 +6,7 @@ local timerID = 0
 local t, lt = os.clock()
 
 function timer.new( n )
-	functionParameters.check( 1, "n", "number", n )
+	parameters.check( 1, "n", "number", n )
 
 	local finish, ID = t + n, false -- avoids duplicating timer events
 	for i = 1, #timers do
@@ -19,7 +19,7 @@ function timer.new( n )
 end
 
 function timer.queue( n, response )
-	functionParameters.check( 2, "n", "number", n, "response", "function", response )
+	parameters.check( 2, "n", "number", n, "response", "function", response )
 
 	local finish, ID = t + n, false -- avoids duplicating timer events
 	for i = 1, #timers do
@@ -35,7 +35,7 @@ function timer.queue( n, response )
 end
 
 function timer.cancel( ID )
-	functionParameters.check( 1, "ID", "number", ID )
+	parameters.check( 1, "ID", "number", ID )
 
 	for i = #timers, 1, -1 do
 		if timers[i].ID == ID then

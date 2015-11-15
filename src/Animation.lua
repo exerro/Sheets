@@ -50,7 +50,7 @@ function Animation:addKeyFrame( initial, final, duration, easing )
 		easing = easing_exit
 	end
 
-	functionParameters.check( 4,
+	parameters.check( 4,
 		"initial", "number", initial,
 		"final", "number", final,
 		"duration", "number", duration,
@@ -77,7 +77,7 @@ end
 
 function Animation:addPause( pause )
 	pause = pause or 1
-	functionParameters.check( 1, "pause", "number", pause )
+	parameters.check( 1, "pause", "number", pause )
 
 	local frame = {
 		clock = 0;
@@ -102,7 +102,7 @@ function Animation:frameFinished()
 end
 
 function Animation:update( dt )
-	functionParameters.check( 1, "dt", "number", dt )
+	parameters.check( 1, "dt", "number", dt )
 	
 	local frame = self.frames[self.frame]
 

@@ -15,7 +15,7 @@ function IChildContainer:IChildContainer()
 end
 
 function IChildContainer:addChild( child )
-	functionParameters.check( 1, "child", Sheet, child )
+	parameters.check( 1, "child", Sheet, child )
 
 	local children = self.children
 
@@ -47,8 +47,19 @@ function IChildContainer:removeChild( child )
 	end
 end
 
+function IChildContainer:getChildren()
+	local c = {}
+	local children = self.children
+
+	for i = 1, #children do
+		c[i] = children[i]
+	end
+
+	return c
+end
+
 function IChildContainer:getChildById( id )
-	functionParameters.check( 1, "id", "string", id )
+	parameters.check( 1, "id", "string", id )
 
 	for i = #self.children, 1, -1 do
 		local c = self.children[i]:getChildById( id )
@@ -61,7 +72,7 @@ function IChildContainer:getChildById( id )
 end
 
 function IChildContainer:getChildrenById( id )
-	functionParameters.check( 1, "id", "string", id )
+	parameters.check( 1, "id", "string", id )
 
 	local t = {}
 	for i = #self.children, 1, -1 do
@@ -77,14 +88,9 @@ function IChildContainer:getChildrenById( id )
 end
 
 function IChildContainer:getChildrenAt( x, y )
-	functionParameters.check( 2, "x", "number", x, "y", "number", y )
+	parameters.check( 2, "x", "number", x, "y", "number", y )
 
-	local c = {}
-	local children = self.children
-	for i = 1, #children do
-		c[i] = children[i]
-	end
-
+	local c = self:getChildren()
 	local elements = {}
 
 	for i = #c, 1, -1 do
@@ -95,7 +101,7 @@ function IChildContainer:getChildrenAt( x, y )
 end
 
 function IChildContainer:isChildVisible( child )
-	functionParameters.check( 1, "child", Sheet, child )
+	parameters.check( 1, "child", Sheet, child )
 
 	return child.x + child.width > 0 and child.y + child.height > 0 and child.x < self.width and child.y < self.height
 end

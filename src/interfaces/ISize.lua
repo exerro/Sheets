@@ -13,7 +13,7 @@ interface "ISize" {
 }
 
 function ISize:setWidth( width )
-	functionParameters.check( 1, "width", "number", width )
+	parameters.check( 1, "width", "number", width )
 
 	if self.width ~= width then
 		self.width = width
@@ -27,7 +27,7 @@ function ISize:setWidth( width )
 end
 
 function ISize:setHeight( height )
-	functionParameters.check( 1, "height", "number", height )
+	parameters.check( 1, "height", "number", height )
 
 	if self.height ~= height then
 		self.height = height

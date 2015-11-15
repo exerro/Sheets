@@ -42,7 +42,7 @@ class "Sheet"
 }
 
 function Sheet:Sheet( x, y, width, height )
-	functionParameters.checkConstructor( self.class, 4,
+	parameters.checkConstructor( self.class, 4,
 		"x", "number", x,
 		"y", "number", y,
 		"width", "number", width,
@@ -62,7 +62,7 @@ function Sheet:Sheet( x, y, width, height )
 end
 
 function Sheet:setX( x )
-	functionParameters.check( 1, "x", "number", x )
+	parameters.check( 1, "x", "number", x )
 	
 	if self.x ~= x then
 		self.x = x
@@ -72,7 +72,7 @@ function Sheet:setX( x )
 end
 
 function Sheet:setY( y )
-	functionParameters.check( 1, "y", "number", y )
+	parameters.check( 1, "y", "number", y )
 	
 	if self.y ~= y then
 		self.y = y
@@ -82,7 +82,7 @@ function Sheet:setY( y )
 end
 
 function Sheet:setZ( z )
-	functionParameters.check( 1, "z", "number", z )
+	parameters.check( 1, "z", "number", z )
 
 	if self.z ~= z then
 		self.z = z
@@ -97,7 +97,7 @@ function Sheet:setID( id )
 end
 
 function Sheet:setStyle( style, children )
-	functionParameters.check( 1, "style", Style, style )
+	parameters.check( 1, "style", Style, style )
 
 	self.style = style:clone( self )
 	
@@ -151,7 +151,7 @@ end
 function Sheet:setCursorBlink( x, y, colour )
 	colour = colour or GREY
 
-	functionParameters.check( 3, "x", "number", x, "y", "number", y, "colour", "number", colour )
+	parameters.check( 3, "x", "number", x, "y", "number", y, "colour", "number", colour )
 
 	self.cursor_active = true
 	self.cursor_x = x
@@ -172,8 +172,7 @@ end
 function Sheet:onParentResized() end
 
 function Sheet:update( dt )
-	local c = {}
-	local children = self.children
+	local children = self:getChildren()
 
 	self:updateAnimations( dt )
 
@@ -181,19 +180,15 @@ function Sheet:update( dt )
 		self:onUpdate( dt )
 	end
 
-	for i = 1, #children do
-		c[i] = children[i]
-	end
-
-	for i = #c, 1, -1 do
-		c[i]:update( dt )
+	for i = #children, 1, -1 do
+		children[i]:update( dt )
 	end
 end
 
 function Sheet:draw()
 	if self.changed then
 
-		local children = self.children
+		local children = self:getChildren()
 		local cx, cy, cc
 
 		self:resetCursorBlink()
@@ -225,20 +220,16 @@ function Sheet:draw()
 end
 
 function Sheet:handle( event )
-	local c = {}
-	local children = self.children
-	for i = 1, #children do
-		c[i] = children[i]
-	end
+	local children = self:getChildren()
 
 	if event:typeOf( MouseEvent ) then
 		local within = event:isWithinArea( 0, 0, self.width, self.height )
-		for i = #c, 1, -1 do
-			c[i]:handle( event:clone( c[i].x, c[i].y, within ) )
+		for i = #children, 1, -1 do
+			children[i]:handle( event:clone( children[i].x, children[i].y, within ) )
 		end
 	else
-		for i = #c, 1, -1 do
-			c[i]:handle( event )
+		for i = #children, 1, -1 do
+			children[i]:handle( event )
 		end
 	end
 

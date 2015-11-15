@@ -1,5 +1,6 @@
 Not all Screens should get term events.
 Application class coroutine manager.
+Thread class?
 When a monitor is added to a screen, redraw entirely.
 Dynamic values.
 ColourSelector class.
@@ -11,26 +12,20 @@ Window class.
 Menu class.
 Terminal class.
 Rethink TextInput selection.
-
 Graphics
 	Image
 		load
 		loadString
 		save
 		saveString
-
 	area.lua
 		area.triangle implemented
-
 	DrawingCanvas
 		drawEllipse
 		drawArc
-
 		floodFill
-
 		drawSurfacePart
 		drawSurfaceScaled
 		drawSurfaceRotated
-
 	TermCanvas
 		getRedirect

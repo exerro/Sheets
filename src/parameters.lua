@@ -1,7 +1,7 @@
 
-functionParameters = {}
+parameters = {}
 
-function functionParameters.checkConstructor( _class, argc, ... )
+function parameters.checkConstructor( _class, argc, ... )
 	local args = { ... }
 	for i = 1, argc * 3, 3 do
 		local name = args[i]
@@ -20,7 +20,7 @@ function functionParameters.checkConstructor( _class, argc, ... )
 	end
 end
 
-function functionParameters.check( argc, ... )
+function parameters.check( argc, ... )
 	local args = { ... }
 	for i = 1, argc * 3, 3 do
 		local name = args[i]

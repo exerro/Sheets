@@ -19,7 +19,7 @@ function KeyHandler:KeyHandler()
 end
 
 function KeyHandler:addShortcut( shortcut, handler )
-	functionParameters.check( 2,
+	parameters.check( 2,
 		"shortcut", "string", shortcut,
 		"handler", "function", handler
 	)
@@ -27,7 +27,7 @@ function KeyHandler:addShortcut( shortcut, handler )
 end
 
 function KeyHandler:removeShortcut( shortcut )
-	functionParameters.check( 1,
+	parameters.check( 1,
 		"shortcut", "string", shortcut
 	)
 	self.shortcuts[shortcut] = nil
