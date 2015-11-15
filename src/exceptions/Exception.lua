@@ -22,7 +22,6 @@ class "Exception" {
 	name = "undefined";
 	data = "undefined";
 	trace = {};
-	ID = 0;
 }
 
 function Exception:Exception( name, data, level )
@@ -45,13 +44,18 @@ function Exception:Exception( name, data, level )
 	end
 end
 
-function Exception:getTraceback( initial, format )
+function Exception:getTraceback( initial, delimiter )
 	initial = initial or ""
-	format = format or "\n"
-	return initial .. table.concat( self.trace, format )
+	delimiter = delimiter or "\n"
+
+	parameters.check( 2, "initial", "string", initial, "delimiter", "string", delimiter )
+
+	return initial .. table.concat( self.trace, delimiter )
 end
 
 function Exception:getDataAndTraceback( indent )
+	parameters.check( 1, "indent", "number", indent or 1 )
+
 	if type( self.data ) == "string" or class.isClass( self.data ) or class.isInstance( self.data ) then
 		return tostring( self.data ) .. "\n" .. self:getTraceback( (" "):rep( indent or 1 ) .. "in ", "\n" .. (" "):rep( indent or 1 ) .. "in " )
 	else

@@ -125,10 +125,10 @@ return function()
 
 	s.stack = {}
 
-	loadModule( s, "sheets/build/conditional.lua", "conditional" )
-	loadModule( s, "sheets/build/console.lua", "error" )
-	loadModule( s, "sheets/build/define.lua", "define" )
-	loadModule( s, "sheets/build/include.lua", "include" )
+	loadModule( s, "sheets/build/instructions/conditional.lua", "conditional" )
+	loadModule( s, "sheets/build/instructions/console.lua", "error" )
+	loadModule( s, "sheets/build/instructions/define.lua", "define" )
+	loadModule( s, "sheets/build/instructions/include.lua", "include" )
 
 	return setmetatable( s, { __index = preprocessor } )
 

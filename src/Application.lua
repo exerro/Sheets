@@ -70,7 +70,7 @@ function Application:unregisterFileExtension( extension )
 	self.extensions[extension] = nil
 end
 
-function Application:loadResource( resource, type )
+function Application:loadResource( resource, type, ... )
 	parameters.check( 2, "resource", "string", resource, "type", "string", type or "" )
 
 	if not type then
@@ -85,7 +85,7 @@ function Application:loadResource( resource, type )
 			local content = h.readAll()
 			h.close()
 
-			return self.resource_loaders[type]( content )
+			return self.resource_loaders[type]( self, resource, content, ... )
 
 		else
 			Exception.throw( ResourceLoadException, "Failed to open file '" .. resource .. "': not found under '/'' or '" .. self.path .. "'", 2 )

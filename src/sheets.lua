@@ -6,7 +6,7 @@
  -- @defineifndef SHEETS_DEFAULT_TRANSITION_TIME .3
  -- @defineifndef SHEETS_DEFAULT_TRANSITION_EASING "transition"
  -- @defineifndef SHEETS_MINIFY
- 
+
  -- @if SHEETS_CORE_ELEMENTS
 	 -- @define SHEETS_BUTTON
 	 -- @define SHEETS_CHECKBOX

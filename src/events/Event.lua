@@ -11,10 +11,6 @@ class "Event" {
 	event = "Event";
 }
 
-function Event:tostring()
-	return self.name
-end
-
 function Event:is( event )
 	return self.event == event
 end

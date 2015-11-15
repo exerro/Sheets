@@ -1,6 +1,4 @@
 Not all Screens should get term events.
-Application class coroutine manager.
-Thread class?
 When a monitor is added to a screen, redraw entirely.
 Dynamic values.
 ColourSelector class.
