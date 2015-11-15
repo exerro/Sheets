@@ -6,6 +6,8 @@
 
 
 
+ 
+
 
 
 
@@ -632,36 +634,56 @@ for n=0,\
 math.min(#t,a.height)-1 do local h=n*a.width for r=1,math.min(#t[n+1],a.width)do\
 o[s]=t[n+1][r]i[s]=h+r s=s+1 end end a:mapPixels(i,o)end","sheets.graphics.image",nil,_ENV)if not __f then error(__err,0)end __f()
 
-local __f,__err=load("local e={}local t\
-local function a(o)for n=1,#o do\
-if o[n].catch==t.name or o[n].default or\
-o[n].catch==t.class then return o[n].handler(t)end end return\
-Exception.throw(t)end\
+local __f,__err=load("\
+class\"Thread\"{running=true,f=nil,co=nil,filter=nil}\
+function Thread:Thread(e,...)if type(e)==\"string\"then e=load(e)elseif type(e)~=\"function\"then\
+parameters.check(1,\"f\",\"function/string\",e)end self.f=e\
+self.co=coroutine.create(e)self:resume(...)end function Thread:stop()self.running=false end\
+function Thread:restart()\
+self.running=true self.co=coroutine.create(self.f)end\
+function Thread:resume(e,...)if not self.running or\
+(self.filter~=nil and e~=self.filter)then return end\
+local t,a=coroutine.resume(self.co,e,...)\
+if t then\
+if coroutine.status(self.co)==\"dead\"then self.running=false end self.filter=a else\
+if\
+a==\"SHEETS_EXCEPTION\\nPut code in a try block to catch the exception.\"then return Exception.throw(Exception.thrown())end return Exception.throw(ThreadRuntimeException,a,0)end end","sheets.Thread",nil,_ENV)if not __f then error(__err,0)end __f()
+
+local __f,__err=load("local e\
+local function t(a)\
+for o=1,#a do if\
+a[o].catch==e.name or a[o].default or a[o].catch==e.class then return a[o].handler(e)end end return Exception.throw(e)end\
 class\"Exception\"{name=\"undefined\",data=\"undefined\",trace={},ID=0}\
-function Exception:Exception(o,i,n)self.name=o self.data=i self.trace={}n=(n or 1)+2\
-for s=1,5 do\
-local h=select(2,pcall(error,\"\",\
-n+s)):gsub(\": $\",\"\")if h==\"pcall\"then break else self.trace[s]=h end end end function Exception:getTraceback(o,i)o=o or\"\"i=i or\"\\n\"return\
-o..table.concat(self.trace,i)end\
-function Exception:getDataAndTraceback(o)\
+function Exception:Exception(a,o,i)self.name=a self.data=o self.trace={}i=(i or 1)+2 if\
+i>2 then\
+for n=1,5 do\
+local s=select(2,pcall(error,\"\",i+n)):gsub(\": $\",\"\")if s==\"pcall\"or s==\"\"then break else self.trace[n]=s end end end end function Exception:getTraceback(a,o)a=a or\"\"o=o or\"\\n\"return\
+a..table.concat(self.trace,o)end\
+function Exception:getDataAndTraceback(a)\
+if\
+type(self.data)==\"string\"or class.isClass(self.data)or\
+class.isInstance(self.data)then return\
+tostring(self.data)..\"\\n\"..\
+self:getTraceback((\" \"):rep(\
+a or 1)..\"in \",\"\\n\".. (\" \"):rep(a or 1)..\"in \")else\
 return\
 textutils.serialize(self.data)..\
-\"\\n\"..self:getTraceback((\" \"):rep(o or 1)..\"in \",\"\\n\"..\
-(\" \"):rep(o or 1)..\"in \")end\
+\"\\n\"..self:getTraceback((\" \"):rep(a or 1)..\"in \",\"\\n\"..\
+(\" \"):rep(a or 1)..\"in \")end end\
 function Exception:tostring()return tostring(self.name)..\
-\" exception:\\n \"..self:getDataAndTraceback(2)end function Exception.getExceptionById(o)return e[o]end\
-function Exception.throw(o,i,n)\
-if\
-class.isClass(o)then o=o(i,(n or 1)+1)elseif type(o)==\"string\"then\
-o=Exception(o,i,(n or 1)+1)elseif not class.typeOf(o,Exception)then return\
+\" exception:\\n  \"..self:getDataAndTraceback(4)end function Exception.thrown()return e end\
+function Exception.throw(a,o,i)\
+if class.isClass(a)then a=a(o,\
+(i or 1)+1)elseif type(a)==\"string\"then\
+a=Exception(a,o,(i or 1)+1)elseif not class.typeOf(a,Exception)then return\
 Exception.throw(\"IncorrectParameterException\",\
-\"expected class, string, or Exception e, got \"..class.type(o))end t=o\
+\"expected class, string, or Exception e, got \"..class.type(a))end e=a\
 error(\"SHEETS_EXCEPTION\\nPut code in a try block to catch the exception.\",0)end\
-function Exception.try(o)local i,n=pcall(o)\
-if not i and\
-n==\"SHEETS_EXCEPTION\\nPut code in a try block to catch the exception.\"then return a end return error(n,0)end function Exception.catch(o)\
-return function(a)return{catch=o,handler=a}end end function Exception.default(a)\
-return{default=true,handler=a}end","sheets.exceptions.Exception",nil,_ENV)if not __f then error(__err,0)end __f()
+function Exception.try(a)local o,i=pcall(a)\
+if not o and\
+i==\"SHEETS_EXCEPTION\\nPut code in a try block to catch the exception.\"then return t end return error(i,0)end function Exception.catch(a)\
+return function(t)return{catch=a,handler=t}end end function Exception.default(t)\
+return{default=true,handler=t}end","sheets.exceptions.Exception",nil,_ENV)if not __f then error(__err,0)end __f()
 local __f,__err=load("class\"IncorrectParameterException\"extends\"Exception\"\
 function IncorrectParameterException:IncorrectParameterException(e,t)return\
 self:Exception(\"IncorrectParameterException\",e,t)end","sheets.exceptions.IncorrectParameterException",nil,_ENV)if not __f then error(__err,0)end __f()
@@ -878,10 +900,10 @@ if h.clock>=h.duration then self:frameFinished()end end end\
 function Animation:finished()return not self.frames[self.frame]end","sheets.Animation",nil,_ENV)if not __f then error(__err,0)end __f()
 local __f,__err=load("local function e(a)return error(tostring(a),0)end local t\
 class\"Application\"{name=\"UnNamed Application\",path=\"\",terminateable=true,running=true,screens={},screen=\
-nil,resource_loaders={},extensions={},mouse=nil,keys={},changed=false}\
+nil,resource_loaders={},extensions={},threads={},mouse=nil,keys={},changed=false}\
 function Application:Application(a,o)\
 self.screens={Screen(self,term.getSize()):addTerminal(term)}self.screen=self.screens[1]self.name=a self.path=o or a\
-self.resource_loaders={}self.extensions={}self.keys={}end\
+self.resource_loaders={}self.extensions={}self.threads={}self.keys={}end\
 function Application:registerResourceLoader(a,o)\
 parameters.check(2,\"type\",\"string\",a,\"loader\",\"function\",o)self.resource_loaders[a]=o end\
 function Application:unregisterResourceLoader(a)\
@@ -898,8 +920,11 @@ fs.open(fs.combine(self.path,a),\"r\")or fs.open(a,\"r\")\
 if i then\
 local n=i.readAll()i.close()return self.resource_loaders[o](n)else\
 Exception.throw(ResourceLoadException,\
-\"failed to open file '\"..a..\"': not found under / or \"..self.path,2)end else\
-Exception.throw(ResourceLoadException,\"no loader for type '\"..o..\"'\",2)end end\
+\"Failed to open file '\"..\
+a..\"': not found under '/'' or '\"..self.path..\"'\",2)end else\
+Exception.throw(ResourceLoadException,\"No loader for resource type '\"..o..\"'\",2)end end\
+function Application:addThread(a)parameters.check(1,\"thread\",Thread,a)self.threads[\
+#self.threads+1]=a return a end\
 function Application:isKeyPressed(a)parameters.check(1,\"key\",\"string\",a)\
 self.resource_loaders={}self.extensions={}return self.keys[a]~=nil end function Application:stop()self.running=false return self end\
 function Application:addScreen()\
@@ -946,7 +971,10 @@ keys.getName(n[1])or n[1]]=nil\
 o(KeyboardEvent(8,n[1],a.keys))elseif i==\"term_resize\"then a.width,a.height=term.getSize()for s=1,#a.screens do\
 a.screens[s]:onParentResized()end elseif\
 i==\"timer\"and n[1]==a.mouse.timer then\
-o(MouseEvent(3,a.mouse.x,a.mouse.y,a.mouse.button,true))else o(MiscEvent(i,...))end end","sheets.Application",nil,_ENV)if not __f then error(__err,0)end __f()
+o(MouseEvent(3,a.mouse.x,a.mouse.y,a.mouse.button,true))else local s=MiscEvent(i,...)o(s)if not s.handled then\
+for h=#a.threads,1,-1 do if\
+a.threads[h].running then a.threads[h]:resume(i,...)else\
+table.remove(a.threads,h)end end end end end","sheets.Application",nil,_ENV)if not __f then error(__err,0)end __f()
 local __f,__err=load("class\"Screen\"implements\"IAnimation\"implements\"IChildContainer\"\
 implements\"ISize\"{terminals={},monitors={},canvas=\
 nil,parent=nil,changed=true}\

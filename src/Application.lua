@@ -27,6 +27,8 @@ class "Application"
 	resource_loaders = {};
 	extensions = {};
 
+	threads = {};
+
 	mouse = nil;
 	keys = {};
 	changed = false;
@@ -41,6 +43,7 @@ function Application:Application( name, path )
 
 	self.resource_loaders = {}
 	self.extensions = {}
+	self.threads = {}
 	self.keys = {}
 end
 
@@ -69,7 +72,7 @@ end
 
 function Application:loadResource( resource, type )
 	parameters.check( 2, "resource", "string", resource, "type", "string", type or "" )
-	
+
 	if not type then
 		type = self.extensions[resource:match( "%.(%w+)$" ) or "txt"] or "text.plain"
 	end
@@ -91,6 +94,14 @@ function Application:loadResource( resource, type )
 	else
 		Exception.throw( ResourceLoadException, "No loader for resource type '" .. type .. "'", 2 )
 	end
+end
+
+function Application:addThread( thread )
+	parameters.check( 1, "thread", Thread, thread )
+
+	self.threads[#self.threads + 1] = thread
+	
+	return thread
 end
 
 function Application:isKeyPressed( key )
@@ -271,6 +282,17 @@ function handleEvent( self, handle, event, params, ... )
 		handle( MouseEvent( SHEETS_EVENT_MOUSE_HOLD, self.mouse.x, self.mouse.y, self.mouse.button, true ) )
 
 	else
-		handle( MiscEvent( event, ... ) )
+		local ev = MiscEvent( event, ... )
+		handle( ev )
+
+		if not ev.handled then
+			for i = #self.threads, 1, -1 do
+				if self.threads[i].running then
+					self.threads[i]:resume( event, ... )
+				else
+					table.remove( self.threads, i )
+				end
+			end
+		end
 	end
 end

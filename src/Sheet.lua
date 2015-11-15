@@ -7,14 +7,6 @@
 
  -- @print Including sheets.Sheet
 
--- undefined callbacks
-
- -- function Sheet:onPreDraw() end
- -- function Sheet:onPostDraw() end
- -- function Sheet:onUpdate( dt ) end
- -- function Sheet:onKeyboardEvent( event ) end
- -- function Sheet:onTextEvent( event ) end
-
 class "Sheet"
 	implements "IAnimation"
 	implements "IAttributeAnimator"

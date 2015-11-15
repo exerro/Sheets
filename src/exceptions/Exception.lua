@@ -7,9 +7,6 @@
 
  -- @print Including sheets.exceptions.Exception
 
- -- @define SHEETS_EXCEPTION_ERROR "SHEETS_EXCEPTION\nPut code in a try block to catch the exception."
-
-local exceptions = {}
 local thrown
 
 local function handler( t )
@@ -35,13 +32,15 @@ function Exception:Exception( name, data, level )
 
 	level = ( level or 1 ) + 2
 
-	for i = 1, 5 do
-		local src = select( 2, pcall( error, "", level + i ) ):gsub( ": $", "" )
+	if level > 2 then
+		for i = 1, 5 do
+			local src = select( 2, pcall( error, "", level + i ) ):gsub( ": $", "" )
 
-		if src == "pcall" then
-			break
-		else
-			self.trace[i] = src
+			if src == "pcall" or src == "" then
+				break
+			else
+				self.trace[i] = src
+			end
 		end
 	end
 end
@@ -64,8 +63,8 @@ function Exception:tostring()
 	return tostring( self.name ) .. " exception:\n  " .. self:getDataAndTraceback( 4 )
 end
 
-function Exception.getExceptionById( ID )
-	return exceptions[ID]
+function Exception.thrown()
+	return thrown
 end
 
 function Exception.throw( e, data, level )

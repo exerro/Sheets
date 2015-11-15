@@ -6,7 +6,7 @@
  -- @defineifndef SHEETS_DEFAULT_TRANSITION_TIME .3
  -- @defineifndef SHEETS_DEFAULT_TRANSITION_EASING "transition"
  -- @defineifndef SHEETS_MINIFY
-
+ 
  -- @if SHEETS_CORE_ELEMENTS
 	 -- @define SHEETS_BUTTON
 	 -- @define SHEETS_CHECKBOX
@@ -37,6 +37,8 @@
  -- @once
  -- @define __INCLUDE_sheets
  -- @print Including sheets (minify: $SHEETS_MINIFY, transition-time: $SHEETS_DEFAULT_TRANSITION_TIME, transition-easing: $SHEETS_DEFAULT_TRANSITION_EASING animation-fps: $SHEETS_ANIMATION_FRAMERATE, low resolution: $SHEETS_LOWRES, wrap: $SHEETS_WRAP, external: $SHEETS_EXTERNAL)
+
+ -- @define SHEETS_EXCEPTION_ERROR "SHEETS_EXCEPTION\nPut code in a try block to catch the exception."
 
  -- @define SHEETS_EVENT_MOUSE_DOWN 0
  -- @define SHEETS_EVENT_MOUSE_UP 1
@@ -176,6 +178,8 @@ colour = {
  -- @require sheets.graphics.DrawingCanvas
  -- @require sheets.graphics.ScreenCanvas
  -- @require sheets.graphics.image
+
+ -- @require sheets.Thread
 
  -- @require sheets.exceptions.Exception
  -- @require sheets.exceptions.IncorrectParameterException
