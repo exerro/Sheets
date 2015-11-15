@@ -1,7 +1,4 @@
 
- -- @load sheets.preprocessor.noindent
- -- @noindent
-
  -- @defineifndef SHEETS_LOWRES true
  -- @defineifndef SHEETS_ANIMATION_FRAMERATE .05
  -- @defineifndef SHEETS_WRAP false
@@ -9,10 +6,6 @@
  -- @defineifndef SHEETS_DEFAULT_TRANSITION_TIME .3
  -- @defineifndef SHEETS_DEFAULT_TRANSITION_EASING "transition"
  -- @defineifndef SHEETS_MINIFY
-
- -- @if SHEETS_MINIFY
-	 -- @load sheets.preprocessor.minify
- -- @endif
 
  -- @if SHEETS_CORE_ELEMENTS
 	 -- @define SHEETS_BUTTON
@@ -156,11 +149,33 @@ colour = {
 	black = BLACK;
 }
 
- -- @require class
+ -- @require sheets.class
  -- @require sheets.timer
  -- @require sheets.clipboard
 
- -- @include sheets.graphics
+ -- @if SHEETS_LOWRES
+	 -- @define BLANK_PIXEL { WHITE, WHITE, " " }
+ -- @else
+ 	 -- @define BLANK_PIXEL WHITE
+ -- @endif
+
+ -- @if SHEETS_LOWRES
+	 -- @define CIRCLE_CORRECTION 1.5
+ -- @else
+	 -- @define CIRCLE_CORRECTION 1
+ -- @endif
+
+ -- @ifn SHEETS_LOWRES
+	 -- @define GRAPHICS_DEFAULT_FONT _graphics_default_font
+	 -- @require graphics.Font
+	GRAPHICS_DEFAULT_FONT = Font()
+ -- @endif
+
+ -- @include sheets.graphics.shader
+ -- @require sheets.graphics.Canvas
+ -- @require sheets.graphics.DrawingCanvas
+ -- @require sheets.graphics.ScreenCanvas
+ -- @require sheets.graphics.image
 
  -- @require sheets.exceptions.Exception
  -- @require sheets.exceptions.IncorrectParameterException

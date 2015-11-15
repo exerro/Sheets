@@ -35,19 +35,12 @@
 
 
 
-
-
-
-
-
-
-local env = setmetatable( {}, { __index = _ENV } )
-local function f()
-local _ENV = env
-if setfenv then
-setfenv( 1, env )
-end
-
+	local env = setmetatable( {}, { __index = _ENV } )
+	local function f()
+		local _ENV = env
+		if setfenv then
+			setfenv( 1, env )
+		end
 
 
 
@@ -73,6 +66,7 @@ end
 
 
 
+ 
 
 
 
@@ -101,58 +95,58 @@ end
 
 
 event = {
-mouse_down = 0;
-mouse_up = 1;
-mouse_click = 2;
-mouse_hold = 3;
-mouse_drag = 4;
-mouse_scroll = 5;
-mouse_ping = 6;
-key_down = 7;
-key_up = 8;
-text = 9;
-voice = 10;
-paste = 11;
+	mouse_down = 0;
+	mouse_up = 1;
+	mouse_click = 2;
+	mouse_hold = 3;
+	mouse_drag = 4;
+	mouse_scroll = 5;
+	mouse_ping = 6;
+	key_down = 7;
+	key_up = 8;
+	text = 9;
+	voice = 10;
+	paste = 11;
 }
 
 alignment = {
-left = 0;
-centre = 1;
-center = 1;
-right = 2;
-top = 3;
-bottom = 4;
+	left = 0;
+	centre = 1;
+	center = 1;
+	right = 2;
+	top = 3;
+	bottom = 4;
 }
 
 area = {
-box = 0;
-circle = 1;
-line = 2;
-vline = 3;
-hline = 4;
-fill = 5;
-point = 6;
-ccircle = 7;
+	box = 0;
+	circle = 1;
+	line = 2;
+	vline = 3;
+	hline = 4;
+	fill = 5;
+	point = 6;
+	ccircle = 7;
 }
 
 colour = {
-transparent = 0;
-white = 1;
-orange = 2;
-magenta = 4;
-lightBlue = 8;
-yellow = 16;
-lime = 32;
-pink = 64;
-grey = 128;
-lightGrey = 256;
-cyan = 512;
-purple = 1024;
-blue = 2048;
-brown = 4096;
-green = 8192;
-red = 16384;
-black = 32768;
+	transparent = 0;
+	white = 1;
+	orange = 2;
+	magenta = 4;
+	lightBlue = 8;
+	yellow = 16;
+	lime = 32;
+	pink = 64;
+	grey = 128;
+	lightGrey = 256;
+	cyan = 512;
+	purple = 1024;
+	blue = 2048;
+	brown = 4096;
+	green = 8192;
+	red = 16384;
+	black = 32768;
 }
 
 local __f,__err=load("class={}local e=setmetatable({},{__index=class})local t={}local a={}\
@@ -212,7 +206,7 @@ error(\"expected table t, got \"..class.type(l))end\
 _ENV[d]=l a[d]=l end end\
 function implements(d)\
 if not o then return error\"no class to modify\"elseif not a[d]then return error(\"no interface by name '\"..\
-tostring(d)..\"'\")end for l,u in pairs(a[d])do o[l]=u end return h end","class",nil,_ENV)if not __f then error(__err,0)end __f()
+tostring(d)..\"'\")end for l,u in pairs(a[d])do o[l]=u end return h end","sheets.class",nil,_ENV)if not __f then error(__err,0)end __f()
 local __f,__err=load("timer={}local e={}local a=0 local o,i=os.clock()\
 function timer.new(t)\
 functionParameters.check(1,\"n\",\"number\",t)local n,s=o+t,false\
@@ -234,13 +228,31 @@ functionParameters.check(1,\"mode\",\"string\",t)return e[t]end\
 function clipboard.clear()e={}end","sheets.clipboard",nil,_ENV)if not __f then error(__err,0)end __f()
 
 
-local i={[1]=256,[2]=16384,[4]=1024,[8]=512,[16]=2,[32]=8192,[64]=4,[128]=32768,[256]=128,[512]=2048,[1024]=128,[2048]=128,[4096]=32768,[8192]=128,[16384]=4096,[32768]=32768}
-local n={[1]=1,[2]=16,[4]=64,[8]=1,[16]=1,[32]=1,[64]=1,[128]=256,[256]=1,[512]=8,[1024]=4,[2048]=512,[4096]=16384,[8192]=32,[16384]=2,[32768]=128}
-local s={[1]=1,[2]=256,[4]=256,[8]=256,[16]=1,[32]=256,[64]=1,[128]=128,[256]=256,[512]=128,[1024]=128,[2048]=128,[4096]=32768,[8192]=128,[16384]=128,[32768]=32768}
-local h={[1]=32768,[2]=2048,[4]=8192,[8]=4096,[16]=2048,[32]=1024,[64]=8192,[128]=256,[256]=128,[512]=16384,[1024]=8192,[2048]=16,[4096]=8,[8192]=1024,[16384]=512,[32768]=1}shader={}function shader.darken(e,...)return i[e]or e,...end function shader.lighten(e,...)return n[e]or
-e,...end
-function shader.greyscale(e,...)return s[e]or e,...end function shader.inverse(e,...)return h[e]or e,...end
-local r,d=load("\
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+local e={[1]=256,[2]=16384,[4]=1024,[8]=512,[16]=2,[32]=8192,[64]=4,[128]=32768,[256]=128,[512]=2048,[1024]=128,[2048]=128,[4096]=32768,[8192]=128,[16384]=4096,[32768]=32768}
+local t={[1]=1,[2]=16,[4]=64,[8]=1,[16]=1,[32]=1,[64]=1,[128]=256,[256]=1,[512]=8,[1024]=4,[2048]=512,[4096]=16384,[8192]=32,[16384]=2,[32768]=128}
+local a={[1]=1,[2]=256,[4]=256,[8]=256,[16]=1,[32]=256,[64]=1,[128]=128,[256]=256,[512]=128,[1024]=128,[2048]=128,[4096]=32768,[8192]=128,[16384]=128,[32768]=32768}
+local o={[1]=32768,[2]=2048,[4]=8192,[8]=4096,[16]=2048,[32]=1024,[64]=8192,[128]=256,[256]=128,[512]=16384,[1024]=8192,[2048]=16,[4096]=8,[8192]=1024,[16384]=512,[32768]=1}shader={}function shader.darken(i,...)return e[i]or i,...end function shader.lighten(i,...)return t[i]or
+i,...end
+function shader.greyscale(i,...)return a[i]or i,...end function shader.inverse(i,...)return o[i]or i,...end
+local __f,__err=load("\
 local e,t=load(\"local function e(l,u,m,f)local d=l>m and l or m\\\
 local c=(l+u<m+f and l+u or m+f)-d return d,c end local t,a,o,i local function n(d)return\\\
 setmetatable(d,{__add=t,__sub=a,__mod=o,__tostring=i})end\\\
@@ -451,9 +463,8 @@ error(\"expected number y, got \"..class.type(m))end if type(f)~=\
 \"number\"then return\
 error(\"expected number radius, got \"..class.type(f))end return\
 a.correctedCircle(u,m,f)else\
-return error(\"unexpected mode: \"..tostring(l))end end","sheets.graphics.Canvas",
-nil,_ENV)if not r then error(d,0)end r()
-local r,d=load("class\"DrawingCanvas\"extends\"Canvas\"{}\
+return error(\"unexpected mode: \"..tostring(l))end end","sheets.graphics.Canvas",nil,_ENV)if not __f then error(__err,0)end __f()
+local __f,__err=load("class\"DrawingCanvas\"extends\"Canvas\"{}\
 function DrawingCanvas:drawPoint(e,t,a)if\
 type(e)~=\"number\"then return\
 error(\"expected number x, got \"..class.type(e))end if type(t)~=\
@@ -581,9 +592,8 @@ return error(\
 return end local s=self.width\
 local h=t*s+ (e>0 and e or 0)local r=e>=0 and 0 or-e local d,l={},{}\
 local u,c=s- (e>0 and e or 0),#a-r\
-for m=1,u<c and u or c do d[m]={i,n,a:sub(m+r,m+r)}l[m]=h+m end self:drawPixels(l,d)end","sheets.graphics.DrawingCanvas",
-nil,_ENV)if not r then error(d,0)end r()
-local r,d=load("local e=term.redirect local t={}\
+for m=1,u<c and u or c do d[m]={i,n,a:sub(m+r,m+r)}l[m]=h+m end self:drawPixels(l,d)end","sheets.graphics.DrawingCanvas",nil,_ENV)if not __f then error(__err,0)end __f()
+local __f,__err=load("local e=term.redirect local t={}\
 for a=0,15 do t[2^a]=(\"%x\"):format(a)end class\"ScreenCanvas\"extends\"Canvas\"{last={}}\
 function ScreenCanvas:ScreenCanvas(a,o)a=\
 a or 0 o=o or 0\
@@ -610,9 +620,8 @@ for f=1,r do local w=s[n]u[f]=t[w[1]]or\"0\"\
 c[f]=t[w[2]]or\"0\"m[f]=w[3]==\"\"and\" \"or w[3]n=n+1 end for n=1,#a do a[n].setCursorPos(o+1,i+d)\
 a[n].blit(table.concat(m),table.concat(c),table.concat(u))end end end end\
 function ScreenCanvas:drawToTerminal(a,o,i)return self:drawToTerminals({a},o,i)end\
-function ScreenCanvas:drawToScreen(a,o)return self:drawToTerminal(term,a,o)end","sheets.graphics.ScreenCanvas",
-nil,_ENV)if not r then error(d,0)end r()
-local r,d=load("local e={}\
+function ScreenCanvas:drawToScreen(a,o)return self:drawToTerminal(term,a,o)end","sheets.graphics.ScreenCanvas",nil,_ENV)if not __f then error(__err,0)end __f()
+local __f,__err=load("local e={}\
 for t=0,15 do e[2^t]=(\"%x\"):format(t)e[(\"%x\"):format(t)]=\
 2^t e[(\"%X\"):format(t)]=2^t end image={}\
 function image.decodePaintutils(t,a)local o={}\
@@ -621,8 +630,7 @@ n[s]={e[i:sub(s,s)]or 0,1,\" \"}end o[#o+1]=n end return o end function image.en
 function image.apply(t,a)local o,i={},{}local s=1\
 for n=0,\
 math.min(#t,a.height)-1 do local h=n*a.width for r=1,math.min(#t[n+1],a.width)do\
-o[s]=t[n+1][r]i[s]=h+r s=s+1 end end a:mapPixels(i,o)end","sheets.graphics.image",
-nil,_ENV)if not r then error(d,0)end r()
+o[s]=t[n+1][r]i[s]=h+r s=s+1 end end a:mapPixels(i,o)end","sheets.graphics.image",nil,_ENV)if not __f then error(__err,0)end __f()
 
 local __f,__err=load("local e={}local t\
 local function a(o)for n=1,#o do\
@@ -1418,12 +1426,12 @@ Style.addToTemplate(TextInput,{[\"colour\"]=256,[\"colour.focussed\"]=256,[\"col
 
 
 
-end
-f()
-local sheets = {}
-for k, v in pairs( env ) do
-sheets[k] = v
-end
+	end
+	f()
+	local sheets = {}
+	for k, v in pairs( env ) do
+		sheets[k] = v
+	end
 
 
-return sheets
+ 	return sheets
