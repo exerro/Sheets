@@ -30,6 +30,7 @@ local function animateElementInOrOut( self, mode, vertical, current, to, time )
 	else
 		self:addAnimation( "x", self.setX, a )
 	end
+
 	if mode == "exit" then
 		function a.onFinish() self:remove() end
 	end
@@ -85,7 +86,7 @@ function IAttributeAnimator:animateIn( side, to, time )
 	elseif side == "bottom" then
 		return animateElementInOrOut( self, "in", true, self.y, to or self.parent.height - self.height, time )
 	else
-		throw( IncorrectParameterException( "invalid side '" .. side .. "'", 2 ) )
+		Exception.throw( IncorrectParameterException, "invalid side '" .. side .. "'", 2 )
 	end
 end
 
@@ -104,6 +105,6 @@ function IAttributeAnimator:animateOut( side, to, time )
 	elseif side == "bottom" then
 		return animateElementInOrOut( self, "out", true, self.y, to or self.parent.height, time )
 	else
-		throw( IncorrectParameterException( "invalid side '" .. side .. "'", 2 ) )
+		Exception.throw( IncorrectParameterException, "invalid side '" .. side .. "'", 2 )
 	end
 end

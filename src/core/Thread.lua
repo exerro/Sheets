@@ -2,10 +2,10 @@
  -- @once
 
  -- @ifndef __INCLUDE_sheets
-	-- @error 'sheets' must be included before including 'sheets.Thread'
+	-- @error 'sheets' must be included before including 'sheets.core.Thread'
  -- @endif
 
- -- @print Including sheets.Thread
+ -- @print Including sheets.core.Thread
 
 class "Thread" {
 	running = true;

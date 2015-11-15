@@ -41,7 +41,7 @@ end
 
 function ScreenCanvas:reset()
 	local t = {}
-	for i = 1, width * height do
+	for i = 1, self.width * self.height do
 		self.last[i] = t
 	end
 end

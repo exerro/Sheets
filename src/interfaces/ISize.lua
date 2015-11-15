@@ -19,6 +19,7 @@ function ISize:setWidth( width )
 		self.width = width
 		self.canvas:setWidth( width )
 		self:setChanged()
+
 		for i = 1, #self.children do
 			self.children[i]:onParentResized()
 		end
@@ -32,6 +33,8 @@ function ISize:setHeight( height )
 	if self.height ~= height then
 		self.height = height
 		self.canvas:setHeight( height )
+		self:setChanged()
+		
 		for i = 1, #self.children do
 			self.children[i]:onParentResized()
 		end

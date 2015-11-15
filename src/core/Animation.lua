@@ -2,10 +2,10 @@
  -- @once
 
  -- @ifndef __INCLUDE_sheets
-	-- @error 'sheets' must be included before including 'sheets.Animation'
+	-- @error 'sheets' must be included before including 'sheets.core.Animation'
  -- @endif
 
- -- @print Including sheets.Animation
+ -- @print Including sheets.core.Animation
 
 local sin, cos = math.sin, math.cos
 local halfpi = math.pi / 2

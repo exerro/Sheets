@@ -2,10 +2,10 @@
  -- @once
 
  -- @ifndef __INCLUDE_sheets
-	-- @error 'sheets' must be included before including 'sheets.Sheet'
+	-- @error 'sheets' must be included before including 'sheets.core.Sheet'
  -- @endif
 
- -- @print Including sheets.Sheet
+ -- @print Including sheets.core.Sheet
 
 class "Sheet"
 	implements "IAnimation"

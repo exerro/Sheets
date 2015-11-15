@@ -1,6 +1,5 @@
-Not all Screens should get term events.
-When a monitor is added to a screen, redraw entirely.
 Dynamic values.
+Fix events to Screens.
 ColourSelector class.
 Label class.
 RadioButton class.

@@ -2,10 +2,10 @@
  -- @once
 
  -- @ifndef __INCLUDE_sheets
-	-- @error 'sheets' must be included before including 'sheets.Style'
+	-- @error 'sheets' must be included before including 'sheets.core.Style'
  -- @endif
 
- -- @print Including sheets.Style
+ -- @print Including sheets.core.Style
 
 local function formatFieldName( name )
 	if not name:find "%." then

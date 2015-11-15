@@ -2,10 +2,10 @@
  -- @once
 
  -- @ifndef __INCLUDE_sheets
-	-- @error 'sheets' must be included before including 'sheets.Application'
+	-- @error 'sheets' must be included before including 'sheets.core.Application'
  -- @endif
 
- -- @print Including sheets.Application
+ -- @print Including sheets.core.Application
 
 local function exceptionHandler( e )
 	return error( tostring( e ), 0 )

@@ -163,9 +163,10 @@ colour = {
 	black = BLACK;
 }
 
- -- @require sheets.class
- -- @require sheets.timer
- -- @require sheets.clipboard
+ -- @require sheets.lib.class
+ -- @require sheets.lib.timer
+ -- @require sheets.lib.clipboard
+ -- @require sheets.lib.parameters
 
  -- @ifn SHEETS_LOWRES
 	 -- @define GRAPHICS_DEFAULT_FONT _graphics_default_font
@@ -179,14 +180,11 @@ colour = {
  -- @require sheets.graphics.ScreenCanvas
  -- @require sheets.graphics.image
 
- -- @require sheets.Thread
-
  -- @require sheets.exceptions.Exception
  -- @require sheets.exceptions.IncorrectParameterException
  -- @require sheets.exceptions.IncorrectConstructorException
  -- @require sheets.exceptions.ResourceLoadException
  -- @require sheets.exceptions.ThreadRuntimeException
- -- @require sheets.parameters
 
  -- @require sheets.interfaces.IAnimation
  -- @require sheets.interfaces.IAttributeAnimator
@@ -200,11 +198,12 @@ colour = {
  -- @require sheets.events.MouseEvent
  -- @require sheets.events.TextEvent
 
- -- @require sheets.Animation
- -- @require sheets.Application
- -- @require sheets.Screen
- -- @require sheets.Sheet
- -- @require sheets.Style
+ -- @require sheets.core.Animation
+ -- @require sheets.core.Application
+ -- @require sheets.core.Screen
+ -- @require sheets.core.Sheet
+ -- @require sheets.core.Style
+ -- @require sheets.core.Thread
 
  -- @if SHEETS_BUTTON
 	 -- @require sheets.elements.Button

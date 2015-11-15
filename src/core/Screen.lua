@@ -2,10 +2,10 @@
  -- @once
 
  -- @ifndef __INCLUDE_sheets
-	-- @error 'sheets' must be included before including 'sheets.Screen'
+	-- @error 'sheets' must be included before including 'sheets.core.Screen'
  -- @endif
 
- -- @print Including sheets.Screen
+ -- @print Including sheets.core.Screen
 
 class "Screen"
 	implements "IAnimation"
@@ -27,6 +27,15 @@ function Screen:Screen( application, width, height )
 	self.canvas = ScreenCanvas( width, height )
 	self.width = width
 	self.height = height
+end
+
+function Screen:getsTermEvents()
+	for i = 1, #self.terminals do
+		if self.terminals[i] == term then
+			return true
+		end
+	end
+	return false
 end
 
 function Screen:setChanged( state )
@@ -68,7 +77,10 @@ end
 
 function Screen:addTerminal( t )
 	parameters.check( 1, "terminal", "table", t )
+
 	self.terminals[#self.terminals + 1] = t
+	self.canvas:reset()
+
 	return self:setChanged()
 end
 
