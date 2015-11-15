@@ -1,6 +1,5 @@
 
- -- @define __INCLUDE_class
- -- @print Including Annex.lib.class
+ -- @print Including sheets.class
 
 class = {}
 local classobj = setmetatable( {}, { __index = class } )

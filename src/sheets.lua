@@ -34,15 +34,6 @@
 	 -- @define GRAPHICS_NO_TEXT true
  -- @endif
 
- -- @if SHEETS_WRAP
-	local env = setmetatable( {}, { __index = _ENV } )
-	local function f()
-		local _ENV = env
-		if setfenv then
-			setfenv( 1, env )
-		end
- -- @endif
-
  -- @once
  -- @define __INCLUDE_sheets
  -- @print Including sheets (minify: $SHEETS_MINIFY, transition-time: $SHEETS_DEFAULT_TRANSITION_TIME, transition-easing: $SHEETS_DEFAULT_TRANSITION_EASING animation-fps: $SHEETS_ANIMATION_FRAMERATE, low resolution: $SHEETS_LOWRES, wrap: $SHEETS_WRAP, external: $SHEETS_EXTERNAL)
@@ -93,6 +84,27 @@
  -- @define GREEN 8192
  -- @define RED 16384
  -- @define BLACK 32768
+
+ -- @if SHEETS_LOWRES
+	 -- @define BLANK_PIXEL { WHITE, WHITE, " " }
+ -- @else
+ 	 -- @define BLANK_PIXEL WHITE
+ -- @endif
+
+ -- @if SHEETS_LOWRES
+	 -- @define CIRCLE_CORRECTION 1.5
+ -- @else
+	 -- @define CIRCLE_CORRECTION 1
+ -- @endif
+
+ -- @if SHEETS_WRAP
+	local env = setmetatable( {}, { __index = _ENV } )
+	local function f()
+		local _ENV = env
+		if setfenv then
+			setfenv( 1, env )
+		end
+ -- @endif
 
 event = {
 	mouse_down = SHEETS_EVENT_MOUSE_DOWN;
@@ -152,18 +164,6 @@ colour = {
  -- @require sheets.class
  -- @require sheets.timer
  -- @require sheets.clipboard
-
- -- @if SHEETS_LOWRES
-	 -- @define BLANK_PIXEL { WHITE, WHITE, " " }
- -- @else
- 	 -- @define BLANK_PIXEL WHITE
- -- @endif
-
- -- @if SHEETS_LOWRES
-	 -- @define CIRCLE_CORRECTION 1.5
- -- @else
-	 -- @define CIRCLE_CORRECTION 1
- -- @endif
 
  -- @ifn SHEETS_LOWRES
 	 -- @define GRAPHICS_DEFAULT_FONT _graphics_default_font
