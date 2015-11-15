@@ -36,12 +36,44 @@
 
 
 
+
+
+
+
+
 local env = setmetatable( {}, { __index = _ENV } )
 local function f()
 local _ENV = env
 if setfenv then
 setfenv( 1, env )
 end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -92,43 +124,16 @@ top = 3;
 bottom = 4;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+area = {
+box = 0;
+circle = 1;
+line = 2;
+vline = 3;
+hline = 4;
+fill = 5;
+point = 6;
+ccircle = 7;
+}
 
 colour = {
 transparent = 0;
@@ -149,4249 +154,1267 @@ green = 8192;
 red = 16384;
 black = 32768;
 }
-local __f,__err=load("\
-\
-\
-\
-class = {}\
-local classobj = setmetatable( {}, { __index = class } )\
-local names = {}\
-local interfaces = {}\
-local last_created\
-\
-local supportedMetaMethods = { __add = true, __sub = true, __mul = true, __div = true, __mod = true, __pow = true, __unm = true, __len = true, __eq = true, __lt = true, __lte = true, __tostring = true, __concat = true }\
-\
-local function _tostring( self )\
-return \"[Class] \" .. self:type()\
-end\
-local function _concat( a, b )\
-return tostring( a ) .. tostring( b )\
-end\
-\
-local function construct( t )\
-if not last_created then\
-return error \"no class to define\"\
-end\
-\
-for k, v in pairs( t ) do\
-last_created[k] = v\
-end\
-last_created = nil\
-end\
-\
-local function newSuper( object, super )\
-\
-local superProxy = {}\
-\
-if super.super then\
-superProxy.super = newSuper( object, super.super )\
-end\
-\
-setmetatable( superProxy, { __index = function( t, k )\
-\
-if type( super[k] ) == \"function\" then\
-return function( self, ... )\
-\
-if self == superProxy then\
-self = object\
-end\
-object.super = superProxy.super\
-local v = { super[k]( self, ... ) }\
-object.super = superProxy\
-return unpack( v )\
-\
-end\
-else\
-return super[k]\
-end\
-\
-end, __newindex = super, __tostring = function( self )\
-return \"[Super] \" .. tostring( super ) .. \" of \" .. tostring( object )\
-end } )\
-\
-return superProxy\
-\
-end\
-\
-function classobj:new( ... )\
-\
-local mt = { __index = self, __INSTANCE = true }\
-local instance = setmetatable( { class = self, meta = mt }, mt )\
-\
-if self.super then\
-instance.super = newSuper( instance, self.super )\
-end\
-\
-for k, v in pairs( self.meta ) do\
-if supportedMetaMethods[k] then\
-mt[k] = v\
-end\
-end\
-\
-if mt.__tostring == _tostring then\
-function mt:__tostring()\
-return self:tostring()\
-end\
-end\
-\
-function instance:type()\
-return self.class:type()\
-end\
-\
-function instance:typeOf( class )\
-return self.class:typeOf( class )\
-end\
-\
-if not self.tostring then\
-function instance:tostring()\
-return \"[Instance] \" .. self:type()\
-end\
-end\
-\
-local ob = self\
-while ob do\
-if ob[ob.meta.__type] then\
-ob[ob.meta.__type]( instance, ... )\
-break\
-end\
-ob = ob.super\
-end\
-\
-return instance\
-\
-end\
-\
-function classobj:extends( super )\
-self.super = super\
-self.meta.__index = super\
-end\
-\
-function classobj:type()\
-return tostring( self.meta.__type )\
-end\
-\
-function classobj:typeOf( super )\
-return super == self or ( self.super and self.super:typeOf( super ) ) or false\
-end\
-\
-function class:new( name )\
-\
-if type( name or self ) ~= \"string\" then\
-return error( \"expected string class name, got \" .. type( name or self ) )\
-end\
-\
-local mt = { __index = classobj, __CLASS = true, __tostring = _tostring, __concat = _concat, __call = classobj.new, __type = name or self }\
-local obj = setmetatable( { meta = mt }, mt )\
-\
-names[name] = obj\
-last_created = obj\
-\
-_ENV[name] = obj\
-\
-return function( t )\
-if not last_created then\
-return error \"no class to define\"\
-end\
-\
-for k, v in pairs( t ) do\
-last_created[k] = v\
-end\
-last_created = nil\
-end\
-\
-end\
-\
-function class.type( object )\
-local _type = type( object )\
-\
-if _type == \"table\" then\
-pcall( function()\
-local mt = getmetatable( object )\
-_type = ( ( mt.__CLASS or mt.__INSTANCE ) and object:type() ) or _type\
-end )\
-end\
-\
-return _type\
-end\
-\
-function class.typeOf( object, class )\
-if type( object ) == \"table\" then\
-local ok, v = pcall( function() return getmetatable( object ).__CLASS or getmetatable( object ).__INSTANCE or error() end )\
-return ok and object:typeOf( class )\
-end\
-\
-return false\
-end\
-\
-function class.isClass( object )\
-return pcall( function() if not getmetatable( object ).__CLASS then error() end end ), nil\
-end\
-\
-function class.isInstance( object )\
-return pcall( function() if not getmetatable( object ).__INSTANCE then error() end end ), nil\
-end\
-\
-setmetatable( class, {\
-__call = class.new;\
-} )\
-\
-function extends( name )\
-if not last_created then\
-return error \"no class to extend\"\
-elseif not names[name] then\
-return error( \"no such class '\" .. tostring( name ) .. \"'\" )\
-end\
-\
-last_created:extends( names[name] )\
-\
-return construct\
-end\
-\
-function interface( name )\
-interfaces[name] = {}\
-_ENV[name] = interfaces[name]\
-return function( t )\
-if type( t ) ~= \"table\" then\
-return error( \"expected table t, got \" .. class.type( t ) )\
-end\
-_ENV[name] = t\
-interfaces[name] = t\
-end\
-end\
-\
-function implements( name )\
-if not last_created then\
-return error \"no class to modify\"\
-elseif not interfaces[name] then\
-return error( \"no interface by name '\" .. tostring( name ) .. \"'\" )\
-end\
-\
-for k, v in pairs( interfaces[name] ) do\
-last_created[k] = v\
-end\
-\
-return construct\
-end","class",nil,_ENV)if not __f then error(__err,0)end __f()
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-area = {
-box = 0;
-circle = 1;
-line = 2;
-vline = 3;
-hline = 4;
-fill = 5;
-point = 6;
-ccircle = 7;
-}
-
-
-
-
-
-
-
-
-
-
-
-local shader_darken_lookup = {
-[1] = 256;
-[2] = 16384;
-[4] = 1024;
-[8] = 512;
-[16] = 2;
-[32] = 8192;
-[64] = 4;
-[128] = 32768;
-[256] = 128;
-[512] = 2048;
-[1024] = 128;
-[2048] = 128;
-[4096] = 32768;
-[8192] = 128;
-[16384] = 4096;
-[32768] = 32768;
-}
-local shader_lighten_lookup = {
-[1] = 1;
-[2] = 16;
-[4] = 64;
-[8] = 1;
-[16] = 1;
-[32] = 1;
-[64] = 1;
-[128] = 256;
-[256] = 1;
-[512] = 8;
-[1024] = 4;
-[2048] = 512;
-[4096] = 16384;
-[8192] = 32;
-[16384] = 2;
-[32768] = 128;
-}
-local shader_greyscale_lookup = {
-[1] = 1;
-[2] = 256;
-[4] = 256;
-[8] = 256;
-[16] = 1;
-[32] = 256;
-[64] = 1;
-[128] = 128;
-[256] = 256;
-[512] = 128;
-[1024] = 128;
-[2048] = 128;
-[4096] = 32768;
-[8192] = 128;
-[16384] = 128;
-[32768] = 32768;
-}
-local shader_inverse_lookup = {
-[1] = 32768;
-[2] = 2048;
-[4] = 8192;
-[8] = 4096;
-[16] = 2048;
-[32] = 1024;
-[64] = 8192;
-[128] = 256;
-[256] = 128;
-[512] = 16384;
-[1024] = 8192;
-[2048] = 16;
-[4096] = 8;
-[8192] = 1024;
-[16384] = 512;
-[32768] = 1;
-}
-
-shader = {}
-
-function shader.darken( col, ... )
-return shader_darken_lookup[col] or col, ...
-end
-
-function shader.lighten( col, ... )
-return shader_lighten_lookup[col] or col, ...
-end
-
-function shader.greyscale( col, ... )
-return shader_greyscale_lookup[col] or col, ...
-end
-
-function shader.inverse( col, ... )
-return shader_inverse_lookup[col] or col, ...
-end
-local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
-local __f,__err=load(\"\\\
-\\\
-\\\
-\\\
-\\\
-\\\
-\\\
-\\\
-\\\
-\\\
-\\\
-\\\
-\\\
-local function range( a, b, c, d )\\\
-local x = a > c and a or c\\\
-local y = ( a + b < c + d and a + b or c + d ) - x\\\
-return x, y\\\
-end\\\
-\\\
-local area__join, area__sub, area__intersect, area__tostring\\\
-\\\
-local function areamt( t )\\\
-return setmetatable( t, { __add = area__join, __sub = area__sub, __mod = area__intersect, __tostring = area__tostring } )\\\
-end\\\
-\\\
-function area__join( a, b )\\\
-local i1, i2, c = 1, 1, 0\\\
-local t = {}\\\
-while a[i1] or b[i2] do\\\
-if a[i1] and ( not b[i2] or a[i1] <= b[i2] ) then\\\
-if t[c] ~= a[i1] then\\\
-c = c + 1\\\
-t[c] = a[i1]\\\
-end\\\
-i1 = i1 + 1\\\
-elseif b[i2] and ( not a[i1] or a[i1] > b[i2] ) then\\\
-if t[c] ~= b[i2] then\\\
-c = c + 1\\\
-t[c] = b[i2]\\\
-end\\\
-i2 = i2 + 1\\\
-end\\\
-end\\\
-return areamt( t )\\\
-end\\\
-\\\
-function area__sub( a, b )\\\
-local i1, i2, c = 1, 1, 1\\\
-local t = {}\\\
-while a[i1] do\\\
-while b[i2] and b[i2] < a[i1] do\\\
-i2 = i2 + 1\\\
-end\\\
-if a[i1] ~= b[i2] then\\\
-t[c] = a[i1]\\\
-c = c + 1\\\
-end\\\
-i1 = i1 + 1\\\
-end\\\
-return areamt( t )\\\
-end\\\
-\\\
-function area__intersect( a, b )\\\
-local i1, i2, c = 1, 1, 1\\\
-local t = {}\\\
-while a[i1] do\\\
-while b[i2] and b[i2] < a[i1] do\\\
-i2 = i2 + 1\\\
-end\\\
-if a[i1] == b[i2] then\\\
-t[c] = a[i1]\\\
-c = c + 1\\\
-end\\\
-i1 = i1 + 1\\\
-end\\\
-return areamt( t )\\\
-end\\\
-\\\
-function area__tostring( a )\\\
-return \\\"Area of \\\" .. #a .. \\\" coordinates\\\"\\\
-end\\\
-\\\
-local width, height = term.getSize()\\\
-\\\
-local area = {}\\\
-\\\
-function area.setDimensions( w, h )\\\
-width, height = w, h\\\
-end\\\
-\\\
-function area.new( t )\\\
-return areamt( t )\\\
-end\\\
-\\\
-function area.blank()\\\
-return areamt {}\\\
-end\\\
-\\\
-function area.fill()\\\
-local t = {}\\\
-for i = 1, width * height do\\\
-t[i] = i\\\
-end\\\
-return areamt( t )\\\
-end\\\
-\\\
-function area.point( x, y )\\\
-if x >= 0 and x < width and y >= 0 and y < height then\\\
-return areamt { y * width + x + 1 }\\\
-end\\\
-return areamt {}\\\
-end\\\
-\\\
-function area.box( x, y, w, h )\\\
-x, w = range( 0, width, x, w )\\\
-y, h = range( 0, height, y, h )\\\
-\\\
-local pos = y * width + x\\\
-local t, i = {}, 1\\\
-\\\
-for _ = 1, h do\\\
-for x = 1, w do\\\
-t[i] = pos + x\\\
-i = i + 1\\\
-end\\\
-pos = pos + width\\\
-end\\\
-\\\
-return areamt( t )\\\
-end\\\
-\\\
-function area.circle( x, y, radius )\\\
-local radius2 = radius * radius\\\
-local t = {}\\\
-local i = 1\\\
-\\\
-for yy = math.floor( y - radius ), math.ceil( y + radius ) do\\\
-if yy > 0 and yy < height then\\\
-local diff = y - yy\\\
-local xdiff = ( radius2 - diff * diff ) ^ .5\\\
-\\\
-local ypos = yy * width + 1\\\
-local sx = math.floor( x - xdiff + .5 )\\\
-local a, b = range( 0, width, sx, math.ceil( x + xdiff - .5 ) - sx + 1 )\\\
-for xx = a, a + b - 1 do\\\
-t[i] = ypos + xx\\\
-i = i + 1\\\
-end\\\
-end\\\
-end\\\
-\\\
-return areamt( t )\\\
-end\\\
-\\\
-function area.correctedCircle( x, y, radius )\\\
-local radius2 = radius * radius\\\
-local t = {}\\\
-local i = 1\\\
-\\\
-for yy = math.floor( y - radius + 1 ), math.ceil( y + radius - 1 ) do\\\
-if yy >= 0 and yy < height then\\\
-local diff = y - yy\\\
-local xdiff = ( radius2 - diff * diff ) ^ .5 * 1.5\\\
-\\\
-local ypos = yy * width + 1\\\
-local sx = math.floor( x - xdiff + .5 )\\\
-local a, b = range( 0, width, sx, math.ceil( x + xdiff - .5 ) - sx + 1 )\\\
-for xx = a, a + b - 1 do\\\
-t[i] = ypos + xx\\\
-i = i + 1\\\
-end\\\
-end\\\
-end\\\
-\\\
-return areamt( t )\\\
-end\\\
-\\\
-function area.hLine( x, y, w )\\\
-if y >= 0 and y < height then\\\
-x, w = range( 0, width, x, w )\\\
-local pos = y * width + x\\\
-local t = {}\\\
-for i = 1, w do\\\
-t[i] = pos + i\\\
-end\\\
-return areamt( t )\\\
-end\\\
-return areamt {}\\\
-end\\\
-\\\
-function area.vLine( x, y, h )\\\
-if x >= 0 and x < width then\\\
-y, h = range( 0, height, y, h )\\\
-local pos = y * width + x + 1\\\
-local t = {}\\\
-for i = 1, h do\\\
-t[i] = pos\\\
-pos = pos + width\\\
-end\\\
-return areamt( t )\\\
-end\\\
-return areamt {}\\\
-end\\\
-\\\
-function area.line( x1, y1, x2, y2 )\\\
-if x1 > x2 then\\\
-x1, x2 = x2, x1\\\
-y1, y2 = y2, y1\\\
-end\\\
-\\\
-local dx, dy = x2 - x1, y2 - y1\\\
-\\\
-if dx == 0 then\\\
-if dy == 0 then\\\
-return newPointArea( x1, y1, width, height )\\\
-end\\\
-return newVLineArea( x1, y1, dy, width, height )\\\
-elseif dy == 0 then\\\
-return newHLineArea( x1, y1, dx, width, height )\\\
-end\\\
-\\\
-local points = {}\\\
-\\\
-if x1 >= 0 and x1 < width and y1 >= 0 and y1 < height then\\\
-points[1] = math.floor( y1 + .5 ) * width + math.floor( x1 + .5 ) + 1\\\
-if x2 >= 0 and x2 < width and y2 >= 0 and y2 < height then\\\
-points[2] = math.floor( y2 + .5 ) * width + math.floor( x2 + .5 ) + 1\\\
-end\\\
-elseif x2 >= 0 and x2 < width and y2 >= 0 and y2 < height then\\\
-points[1] = math.floor( y2 + .5 ) * width + math.floor( x2 + .5 ) + 1\\\
-end\\\
-\\\
-local m = dy / dx\\\
-local c = y1 - m * x1\\\
-local step = math.min( 1 / math.abs( m ), 1 )\\\
-\\\
-local i = #points + 1\\\
-\\\
-for x = math.max( x1, 0 ), math.min( x2, width - 1 ), step do\\\
-local y = math.floor( m * x + c + .5 )\\\
-if y > 0 and y < height then\\\
-points[i] = y * width + math.floor( x + .5 ) + 1\\\
-i = i + 1\\\
-end\\\
-end\\\
-\\\
-return areamt( points )\\\
-end\\\
-\\\
-return area\",\"area\",nil,_ENV)if not __f then error(__err,0)end local area=__f()\
-\
---[[ Need to do\
-Image\
-load\
-loadString\
-save\
-saveString\
-\
-area.lua\
-area.triangle implemented\
-\
-DrawingCanvas\
-drawEllipse\
-drawArc\
-\
-floodFill\
-\
-drawSurfacePart\
-drawSurfaceScaled\
-drawSurfaceRotated\
-\
-TermCanvas\
-getRedirect\
-]]\
-\
-local function range( a, b, c, d )\
-local x = a > c and a or c\
-local y = ( a + b < c + d and a + b or c + d ) - x\
-return x, y\
-end\
-\
-local insert, remove = table.insert, table.remove\
-local min, max = math.min, math.max\
-local floor = math.floor\
-\
-class \"Canvas\" {\
-width = 0;\
-height = 0;\
-\
-colour = 1;\
-\
-pixels = {};\
-}\
-\
-function Canvas:Canvas( width, height )\
-width = width or 0\
-height = height or 0\
-\
-\
-if type( width ) ~= \"number\" then return error( \"element attribute #1 'width' not a number (\" .. class.type( width ) .. \")\", 2 ) end\
-if type( height ) ~= \"number\" then return error( \"element attribute #2 'height' not a number (\" .. class.type( height ) .. \")\", 2 ) end\
-\
-\
-self.width = width\
-self.height = height\
-self.pixels = {}\
-\
-local px = { 1, 1, \" \" }\
-for i = 1, width * height do\
-self.pixels[i] = px\
-end\
-end\
-\
-function Canvas:setWidth( width )\
-\
-if type( width ) ~= \"number\" then return error( \"expected number width, got \" .. class.type( width ) ) end\
-\
-width = math.floor( width )\
-local height, pixels = self.height, self.pixels\
-local sWidth = self.width\
-local px = { self.colour, 1, \" \" }\
-\
-while sWidth < width do\
-for i = 1, height do\
-insert( pixels, ( sWidth + 1 ) * i, px )\
-end\
-sWidth = sWidth + 1\
-end\
-\
-while sWidth > width do\
-for i = height, 1, -1 do\
-remove( pixels, sWidth * i )\
-end\
-sWidth = sWidth - 1\
-end\
-\
-self.width = sWidth\
-end\
-\
-function Canvas:setHeight( height )\
-\
-if type( height ) ~= \"number\" then return error( \"expected number height, got \" .. class.type( height ) ) end\
-\
-height = math.floor( height )\
-local width, pixels = self.width, self.pixels\
-local sHeight = self.height\
-local px = { self.colour, 1, \" \" }\
-\
-while sHeight < height do\
-for i = 1, width do\
-pixels[#pixels + 1] = px\
-end\
-sHeight = sHeight + 1\
-end\
-\
-while sHeight > height do\
-for i = 1, width do\
-pixels[#pixels] = nil\
-end\
-sHeight = sHeight - 1\
-end\
-\
-self.height = sHeight\
-end\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-function Canvas:getPixel( x, y )\
-local sWidth = self.width\
-if x >= 0 and x < sWidth and y >= 0 and y < self.height then\
-local px = self.pixels[y * sWidth + x + 1]\
-return px[1], px[2], px[3]\
-end\
-end\
-\
-\
-function Canvas:mapColour( coords, colour )\
-\
-if type( coords ) ~= \"table\" then return error( \"expected table coords, got \" .. class.type( coords ) ) end\
-if type( colour ) ~= \"number\" then return error( \"expected number colour, got \" .. class.type( colour ) ) end\
-\
-local px = { colour, 1, \" \" }\
-local pxls = self.pixels\
-for i = 1, #coords do\
-pxls[coords[i]] = px\
-end\
-end\
-\
-function Canvas:mapColours( coords, colours )\
-\
-if type( coords ) ~= \"table\" then return error( \"expected table coords, got \" .. class.type( coords ) ) end\
-if type( colours ) ~= \"table\" then return error( \"expected table colours, got \" .. class.type( colours ) ) end\
-\
-local pxls = self.pixels\
-local l = #colours\
-for i = 1, #coords do\
-pxls[coords[i]] = { colours[( i - 1 ) % l + 1], 1, \" \" }\
-end\
-end\
-\
-\
-function Canvas:mapPixel( coords, pixel )\
-\
-if type( coords ) ~= \"table\" then return error( \"expected table coords, got \" .. class.type( coords ) ) end\
-if type( pixel ) ~= \"table\" then return error( \"expected table pixel, got \" .. class.type( pixel ) ) end\
-\
-local pxls = self.pixels\
-for i = 1, #coords do\
-pxls[coords[i]] = pixel\
-end\
-end\
-\
-function Canvas:mapPixels( coords, pixels )\
-\
-if type( coords ) ~= \"table\" then return error( \"expected table coords, got \" .. class.type( coords ) ) end\
-if type( pixels ) ~= \"table\" then return error( \"expected table pixels, got \" .. class.type( pixels ) ) end\
-\
-local pxls = self.pixels\
-for i = 1, #coords do\
-pxls[coords[i]] = pixels[i]\
-end\
-end\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-function Canvas:mapShader( coords, shader )\
-\
-if type( coords ) ~= \"table\" then return error( \"expected table coords, got \" .. class.type( coords ) ) end\
-if type( shader ) ~= \"function\" then return error( \"expected function shader, got \" .. class.type( shader ) ) end\
-\
-local pxls = self.pixels\
-local width = self.width\
-local changed = {}\
-\
-for i = 1, #coords do\
-local p = coords[i]\
-local px = pxls[p]\
-local rem = ( p - 1 ) % width\
-local bc, tc, char = shader( px[1], px[2], px[3], rem, ( p - 1 - rem ) / width )\
-\
-changed[i] = ( bc or tc or char ) and { bc or px[1], tc or px[2], char or px[3] }\
-end\
-\
-for i = 1, #coords do\
-local c = changed[i]\
-if c then\
-pxls[coords[i]] = c\
-end\
-end\
-end\
-\
-\
-function Canvas:shift( area, x, y, blank )\
-local sWidth = self.width\
-if type( area ) == \"number\" then\
-x, y, blank = area, x, y\
-area = {}\
-for i = 1, sWidth * self.height do\
-area[i] = i\
-end\
-end\
-local diff = y * sWidth + x\
-local pixels = self.pixels\
-for i = 1, #area do\
-pixels[i] = pixels[i + diff] or blank\
-end\
-end\
-\
-function Canvas:drawColour( coords, colour )\
-\
-if type( coords ) ~= \"table\" then return error( \"expected table coords, got \" .. class.type( coords ) ) end\
-if type( colour ) ~= \"number\" then return error( \"expected number colour, got \" .. class.type( colour ) ) end\
-\
-if colour == 0 then return end\
-local px = { colour, 1, \" \" }\
-local pixels = self.pixels\
-for i = 1, #coords do\
-pixels[coords[i]] = px\
-end\
-end\
-\
-function Canvas:drawColours( coords, colours )\
-\
-if type( coords ) ~= \"table\" then return error( \"expected table coords, got \" .. class.type( coords ) ) end\
-if type( colours ) ~= \"table\" then return error( \"expected table colours, got \" .. class.type( colours ) ) end\
-\
-local l = #colours\
-local pxls = self.pixels\
-for i = 1, #coords do\
-if colours[i] ~= 0 then\
-pxls[coords[i]] = { colours[( i - 1 ) % l + 1], 1, \" \" }\
-end\
-end\
-end\
-\
-\
-function Canvas:drawPixel( coords, pixel )\
-\
-if type( coords ) ~= \"table\" then return error( \"expected table coords, got \" .. class.type( coords ) ) end\
-if type( pixel ) ~= \"table\" then return error( \"expected table pixel, got \" .. class.type( pixel ) ) end\
-\
-local pxls = self.pixels\
-if pixel[1] == 0 and ( pixel[2] == 0 or pixel[3] == \"\" ) then\
-return -- not gonna draw anything\
-elseif pixel[1] == 0 or pixel[2] == 0 or pixel[3] == \"\" then\
-local bc, tc, char = pixel[1], pixel[2], pixel[3]\
-for i = 1, #coords do\
-local c = coords[i]\
-local cpx, cbc, ctc, cchar\
-if bc == 0 then\
-cpx = pxls[c]\
-cbc = cpx[1]\
-end\
-if tc == 0 or char == \"\" then\
-cpx = cpx or pxls[c]\
-ctc = cpx[2]\
-cchar = cpx[3]\
-end\
-pxls[c] = { cbc or bc, ctc or tc, cchar or char }\
-end\
-else\
-for i = 1, #coords do\
-pxls[coords[i]] = pixel\
-end\
-end\
-end\
-\
-function Canvas:drawPixels( coords, pixels )\
-\
-if type( coords ) ~= \"table\" then return error( \"expected table coords, got \" .. class.type( coords ) ) end\
-if type( pixels ) ~= \"table\" then return error( \"expected table pixels, got \" .. class.type( pixels ) ) end\
-\
-local l = #pixels\
-local pxls = self.pixels\
-local modNeeded = l < #coords\
-for i = 1, #coords do\
-local px = modNeeded and pixels[( i - 1 ) % l + 1] or pixels[i]\
-local bc, tc, char = px[1], px[2], px[3]\
-local cpx\
-if bc == 0 then\
-cpx = pxls[coords[i]]\
-bc = cpx[1]\
-end\
-if tc == 0 or char == \"\" then\
-cpx = cpx or pxls[coords[i]]\
-tc = cpx[2]\
-char = cpx[3]\
-end\
-pxls[coords[i]] = { bc, tc, char }\
-end\
-end\
-\
-\
-function Canvas:clear( colour )\
-\
-if colour and type( colour ) ~= \"number\" then return error( \"expected number colour, got \" .. class.type( colour ) ) end\
-\
-local px = { colour or self.colour, 0, \" \" }\
-for i = 1, self.width * self.height do\
-self.pixels[i] = px\
-end\
-end\
-\
-function Canvas:clone( _class )\
-\
-if _class and not class.isClass( _class ) then return error( \"expected Class class, got \" .. class.type( _class ) ) end\
-\
-local new = ( _class or self.class )( self.width, self.height )\
-new.pixels = self.pixels\
-return new\
-end\
-\
-function Canvas:copy( _class )\
-\
-if _class and not class.isClass( _class ) then return error( \"expected Class class, got \" .. class.type( _class ) ) end\
-\
-local new = ( _class or self.class )( self.width, self.height )\
-local b1, b2 = new.pixels, self.pixels\
-for i = 1, #b2 do\
-b1[i] = b2[i]\
-end\
-return new\
-end\
-\
-function Canvas:drawTo( canvas, offsetX, offsetY )\
-offsetX, offsetY = offsetX or 0, offsetY or 0\
-\
-if not class.typeOf( canvas, Canvas ) then return error( \"expected Canvas canvas, got \" .. class.type( canvas ) ) end\
-if type( offsetX ) ~= \"number\" then return error( \"expected number offsetX, got \" .. class.type( offsetX ) ) end\
-if type( offsetY ) ~= \"number\" then return error( \"expected number offsetY, got \" .. class.type( offsetY ) ) end\
-\
-local width, height = self.width, self.height\
-local otherWidth, otherHeight = canvas.width, canvas.height\
-\
-local toDrawCoords = {}\
-local toDrawPixels = {}\
-local pc = 1\
-local pixels = self.pixels\
-\
-local a, b = range( 0, otherWidth, offsetX, width )\
-\
-a = a - offsetX + 1\
-b = a + b - 1\
-\
-for y = 0, height - 1 do\
-local my = y + offsetY\
-if my >= 0 and my < otherHeight then\
-local coord = y * width\
-local otherCoord = my * otherWidth + offsetX\
-for i = a, b do\
-if pixels[coord + i] then\
-toDrawPixels[pc] = pixels[coord + i]\
-toDrawCoords[pc] = otherCoord + i\
-pc = pc + 1\
-end\
-end\
-end\
-end\
-\
-\
-\
-\
-canvas:drawPixels( toDrawCoords, toDrawPixels )\
-\
-end\
-\
-function Canvas:getArea( mode, a, b, c, d )\
-area.setDimensions( self.width, self.height )\
-if mode == 5 then\
-return area.fill()\
-elseif mode == 0 then\
-\
-if type( a ) ~= \"number\" then return error( \"expected number x, got \" .. class.type( a ) ) end\
-if type( b ) ~= \"number\" then return error( \"expected number y, got \" .. class.type( b ) ) end\
-if type( c ) ~= \"number\" then return error( \"expected number width, got \" .. class.type( c ) ) end\
-if type( d ) ~= \"number\" then return error( \"expected number height, got \" .. class.type( d ) ) end\
-\
-return area.box( a, b, c, d )\
-elseif mode == 6 then\
-\
-if type( a ) ~= \"number\" then return error( \"expected number x, got \" .. class.type( a ) ) end\
-if type( b ) ~= \"number\" then return error( \"expected number y, got \" .. class.type( b ) ) end\
-\
-return area.point( a, b )\
-elseif mode == 4 then\
-\
-if type( a ) ~= \"number\" then return error( \"expected number x, got \" .. class.type( a ) ) end\
-if type( b ) ~= \"number\" then return error( \"expected number y, got \" .. class.type( b ) ) end\
-if type( c ) ~= \"number\" then return error( \"expected number width, got \" .. class.type( c ) ) end\
-\
-return area.hLine( a, b, c )\
-elseif mode == 3 then\
-\
-if type( a ) ~= \"number\" then return error( \"expected number x, got \" .. class.type( a ) ) end\
-if type( b ) ~= \"number\" then return error( \"expected number y, got \" .. class.type( b ) ) end\
-if type( c ) ~= \"number\" then return error( \"expected number height, got \" .. class.type( c ) ) end\
-\
-return area.vLine( a, b, c )\
-elseif mode == 2 then\
-\
-if type( a ) ~= \"number\" then return error( \"expected number x1, got \" .. class.type( a ) ) end\
-if type( b ) ~= \"number\" then return error( \"expected number y1, got \" .. class.type( b ) ) end\
-if type( c ) ~= \"number\" then return error( \"expected number x2, got \" .. class.type( c ) ) end\
-if type( d ) ~= \"number\" then return error( \"expected number y2, got \" .. class.type( d ) ) end\
-\
-return area.line( a, b, c, d )\
-elseif mode == 1 then\
-\
-if type( a ) ~= \"number\" then return error( \"expected number x, got \" .. class.type( a ) ) end\
-if type( b ) ~= \"number\" then return error( \"expected number y, got \" .. class.type( b ) ) end\
-if type( c ) ~= \"number\" then return error( \"expected number radius, got \" .. class.type( c ) ) end\
-\
-return area.circle( a, b, c )\
-elseif mode == 7 then\
-\
-if type( a ) ~= \"number\" then return error( \"expected number x, got \" .. class.type( a ) ) end\
-if type( b ) ~= \"number\" then return error( \"expected number y, got \" .. class.type( b ) ) end\
-if type( c ) ~= \"number\" then return error( \"expected number radius, got \" .. class.type( c ) ) end\
-\
-return area.correctedCircle( a, b, c )\
-else\
-return error( \"unexpected mode: \" .. tostring( mode ) )\
-end\
-end","graphics.Canvas",nil,_ENV)if not __f then error(__err,0)end __f()
-local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-class \"DrawingCanvas\" extends \"Canvas\" {}\
-\
-function DrawingCanvas:drawPoint( x, y, options )\
-\
-if type( x ) ~= \"number\" then return error( \"expected number x, got \" .. class.type( x ) ) end\
-if type( y ) ~= \"number\" then return error( \"expected number y, got \" .. class.type( y ) ) end\
-if type( options ) ~= \"table\" then return error( \"expected table options, got \" .. class.type( options ) ) end\
-\
-local colour = options.colour or 0\
-local textColour = options.textColour or 1\
-local character = options.character or \" \"\
-\
-if type( colour ) ~= \"number\" then return error( \"expected number colour, got \" .. class.type( colour ) ) end\
-if type( textColour ) ~= \"number\" then return error( \"expected number textColour, got \" .. class.type( textColour ) ) end\
-if type( character ) ~= \"string\" then return error( \"expected string character, got \" .. class.type( character ) ) end\
-\
-if x >= 0 and y >= 0 and x < self.width and y < self.height then\
-self:drawPixel( { y * self.width + x + 1 }, { colour, textColour, character } )\
-end\
-end\
-\
-function DrawingCanvas:drawBox( x, y, width, height, options )\
-\
-if type( x ) ~= \"number\" then return error( \"expected number x, got \" .. class.type( x ) ) end\
-if type( y ) ~= \"number\" then return error( \"expected number y, got \" .. class.type( y ) ) end\
-if type( width ) ~= \"number\" then return error( \"expected number width, got \" .. class.type( width ) ) end\
-if type( height ) ~= \"number\" then return error( \"expected number height, got \" .. class.type( height ) ) end\
-if type( options ) ~= \"table\" then return error( \"expected table options, got \" .. class.type( options ) ) end\
-\
-local colour = options.colour or 0\
-local textColour = options.textColour or 1\
-local character = options.character or \" \"\
-\
-if type( colour ) ~= \"number\" then return error( \"expected number colour, got \" .. class.type( colour ) ) end\
-if type( textColour ) ~= \"number\" then return error( \"expected number textColour, got \" .. class.type( textColour ) ) end\
-if type( character ) ~= \"string\" then return error( \"expected string character, got \" .. class.type( character ) ) end\
-\
-if character == \" \" then\
-self:drawColour( self:getArea( 0, x, y, width, height ), colour )\
-else\
-self:drawPixel( self:getArea( 0, x, y, width, height ), { colour, textColour, character } )\
-end\
-end\
-\
-function DrawingCanvas:drawCircle( x, y, radius, options )\
-\
-if type( x ) ~= \"number\" then return error( \"expected number x, got \" .. class.type( x ) ) end\
-if type( y ) ~= \"number\" then return error( \"expected number y, got \" .. class.type( y ) ) end\
-if type( radius ) ~= \"number\" then return error( \"expected number radius, got \" .. class.type( radius ) ) end\
-if type( options ) ~= \"table\" then return error( \"expected table options, got \" .. class.type( options ) ) end\
-\
-local colour = options.colour or 0\
-local textColour = options.textColour or 1\
-local character = options.character or \" \"\
-local corrected = options.corrected or false\
-\
-if type( colour ) ~= \"number\" then return error( \"expected number colour, got \" .. class.type( colour ) ) end\
-if type( textColour ) ~= \"number\" then return error( \"expected number textColour, got \" .. class.type( textColour ) ) end\
-if type( character ) ~= \"string\" then return error( \"expected string character, got \" .. class.type( character ) ) end\
-\
-if character == \" \" then\
-self:drawColour( self:getArea( corrected and 7 or 1, x, y, radius ), colour )\
-else\
-self:drawPixel( self:getArea( corrected and 7 or 1, x, y, radius ), { colour, textColour, character } )\
-end\
-end\
-\
-function DrawingCanvas:drawLine( x1, y1, x2, y2, options )\
-\
-if type( x1 ) ~= \"number\" then return error( \"expected number x1, got \" .. class.type( x1 ) ) end\
-if type( y1 ) ~= \"number\" then return error( \"expected number y1, got \" .. class.type( y1 ) ) end\
-if type( x2 ) ~= \"number\" then return error( \"expected number x2, got \" .. class.type( x2 ) ) end\
-if type( y2 ) ~= \"number\" then return error( \"expected number y2, got \" .. class.type( y2 ) ) end\
-if type( options ) ~= \"table\" then return error( \"expected table options, got \" .. class.type( options ) ) end\
-\
-local colour = options.colour or 0\
-local textColour = options.textColour or 1\
-local character = options.character or \" \"\
-\
-if type( colour ) ~= \"number\" then return error( \"expected number colour, got \" .. class.type( colour ) ) end\
-if type( textColour ) ~= \"number\" then return error( \"expected number textColour, got \" .. class.type( textColour ) ) end\
-if type( character ) ~= \"string\" then return error( \"expected string character, got \" .. class.type( character ) ) end\
-\
-if character == \" \" then\
-self:drawColour( self:getArea( 2, x1, y1, x2, y2 ), colour )\
-else\
-self:drawPixel( self:getArea( 2, x1, y1, x2, y2 ), { colour, textColour, character } )\
-end\
-end\
-\
-function DrawingCanvas:drawHorizontalLine( x, y, width, options )\
-\
-if type( x ) ~= \"number\" then return error( \"expected number x, got \" .. class.type( x ) ) end\
-if type( y ) ~= \"number\" then return error( \"expected number y, got \" .. class.type( y ) ) end\
-if type( width ) ~= \"number\" then return error( \"expected number width, got \" .. class.type( width ) ) end\
-if type( options ) ~= \"table\" then return error( \"expected table options, got \" .. class.type( options ) ) end\
-\
-local colour = options.colour or 0\
-local textColour = options.textColour or 1\
-local character = options.character or \" \"\
-\
-if type( colour ) ~= \"number\" then return error( \"expected number colour, got \" .. class.type( colour ) ) end\
-if type( textColour ) ~= \"number\" then return error( \"expected number textColour, got \" .. class.type( textColour ) ) end\
-if type( character ) ~= \"string\" then return error( \"expected string character, got \" .. class.type( character ) ) end\
-\
-if character == \" \" then\
-self:drawColour( self:getArea( 4, x, y, width ), colour )\
-else\
-self:drawPixel( self:getArea( 4, x, y, width ), { colour, textColour, character } )\
-end\
-end\
-\
-function DrawingCanvas:drawVerticalLine( x, y, height, options )\
-\
-if type( x ) ~= \"number\" then return error( \"expected number x, got \" .. class.type( x ) ) end\
-if type( y ) ~= \"number\" then return error( \"expected number y, got \" .. class.type( y ) ) end\
-if type( height ) ~= \"number\" then return error( \"expected number height, got \" .. class.type( height ) ) end\
-if type( options ) ~= \"table\" then return error( \"expected table options, got \" .. class.type( options ) ) end\
-\
-local colour = options.colour or 0\
-local textColour = options.textColour or 1\
-local character = options.character or \" \"\
-\
-if type( colour ) ~= \"number\" then return error( \"expected number colour, got \" .. class.type( colour ) ) end\
-if type( textColour ) ~= \"number\" then return error( \"expected number textColour, got \" .. class.type( textColour ) ) end\
-if type( character ) ~= \"string\" then return error( \"expected string character, got \" .. class.type( character ) ) end\
-\
-if character == \" \" then\
-self:drawColour( self:getArea( 3, x, y, height ), colour )\
-else\
-self:drawPixel( self:getArea( 3, x, y, height ), { colour, textColour, character } )\
-end\
-end\
-\
-\
-\
-\
-\
-function DrawingCanvas:drawText( x, y, text, options )\
-\
-if type( x ) ~= \"number\" then return error( \"expected number x, got \" .. class.type( x ) ) end\
-if type( y ) ~= \"number\" then return error( \"expected number y, got \" .. class.type( y ) ) end\
-if type( text ) ~= \"string\" then return error( \"expected string text, got \" .. class.type( text ) ) end\
-if type( options ) ~= \"table\" then return error( \"expected table options, got \" .. class.type( options ) ) end\
-\
-local colour = options.colour or 0\
-local textColour = options.textColour or 1\
-\
-if type( colour ) ~= \"number\" then return error( \"expected number colour, got \" .. class.type( colour ) ) end\
-if type( textColour ) ~= \"number\" then return error( \"expected number textColour, got \" .. class.type( textColour ) ) end\
-\
-\
-if y < 0 or y >= self.height then return end -- no pixels to draw\
-\
-local sWidth = self.width\
-local ypos = y * sWidth + ( x > 0 and x or 0 )\
-local diff = x >= 0 and 0 or -x\
-local t, p = {}, {}\
-local w, w2 = sWidth - ( x > 0 and x or 0 ), #text - diff\
-\
-for i = 1, w < w2 and w or w2 do\
-t[i] = { colour, textColour, text:sub( i + diff, i + diff ) }\
-p[i] = ypos + i\
-end\
-\
-self:drawPixels( p, t )\
-end","graphics.DrawingCanvas",nil,_ENV)if not __f then error(__err,0)end __f()
-local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-local redirect = term.redirect\
-\
-local hex = {}\
-for i = 0, 15 do\
-hex[2 ^ i] = (\"%x\"):format( i )\
-end\
-\
-class \"ScreenCanvas\" extends \"Canvas\" {\
-last = {};\
-}\
-\
-function ScreenCanvas:ScreenCanvas( width, height )\
-width = width or 0\
-height = height or 0\
-\
-\
-if type( width ) ~= \"number\" then return error( \"element attribute #1 'width' not a number (\" .. class.type( width ) .. \")\", 2 ) end\
-if type( height ) ~= \"number\" then return error( \"element attribute #2 'height' not a number (\" .. class.type( height ) .. \")\", 2 ) end\
-\
-\
-local t = {}\
-\
-self.last = {}\
-for i = 1, width * height do\
-self.last[i] = t\
-end\
-\
-return self:Canvas( width, height )\
-end\
-\
-function ScreenCanvas:reset()\
-local t = {}\
-for i = 1, width * height do\
-self.last[i] = t\
-end\
-end\
-\
-function ScreenCanvas:drawToTerminals( terminals, sx, sy )\
-sx = sx or 0\
-sy = sy or 0\
-\
-if type( terminals ) ~= \"table\" then\
-return error( \"expected table terminals, got \" .. class.type( terminals ) )\
-end\
-if type( sx ) ~= \"number\" then return error( \"expected number x, got \" .. class.type( sx ) ) end\
-if type( sy ) ~= \"number\" then return error( \"expected number y, got \" .. class.type( sy ) ) end\
-\
-\
-local i = 1\
-local pixels, last = self.pixels, self.last\
-local sWidth = self.width\
-\
-for y = 1, self.height do\
-local changed = false\
-for x = 1, sWidth do\
-\
-local px = pixels[i]\
-local ltpx = last[i]\
-if px[1] ~= ltpx[1] or px[2] ~= ltpx[2] or px[3] ~= ltpx[3] then\
-changed = true\
-last[i] = px\
-end\
-\
-i = i + 1\
-end\
-\
-if changed then\
-local bc, tc, s = {}, {}, {}\
-i = i - sWidth\
-for x = 1, sWidth do\
-local px = pixels[i]\
-bc[x] = hex[px[1]] or \"0\"\
-tc[x] = hex[px[2]] or \"0\"\
-s[x] = px[3] == \"\" and \" \" or px[3]\
-i = i + 1\
-end\
-for i = 1, #terminals do\
-terminals[i].setCursorPos( sx + 1, sy + y )\
-terminals[i].blit( table.concat( s ), table.concat( tc ), table.concat( bc ) )\
-end\
-end\
-end\
-end\
-\
-function ScreenCanvas:drawToTerminal( term, sx, sy )\
-sx = sx or 0\
-sy = sy or 0\
-\
-if type( term ) ~= \"table\" or not pcall( function() redirect( redirect( term ) ) end ) then\
-return error( \"expected term-redirect t, got \" .. class.type( term ) )\
-end\
-if type( sx ) ~= \"number\" then return error( \"expected number x, got \" .. class.type( sx ) ) end\
-if type( sy ) ~= \"number\" then return error( \"expected number y, got \" .. class.type( sy ) ) end\
-\
-\
-local i = 1\
-local pixels, last = self.pixels, self.last\
-local sWidth = self.width\
-\
-for y = 1, self.height do\
-local changed = false\
-for x = 1, sWidth do\
-\
-local px = pixels[i]\
-local ltpx = last[i]\
-if px[1] ~= ltpx[1] or px[2] ~= ltpx[2] or px[3] ~= ltpx[3] then\
-changed = true\
-last[i] = px\
-end\
-\
-i = i + 1\
-end\
-\
-if changed then\
-local bc, tc, s = {}, {}, {}\
-i = i - sWidth\
-for x = 1, sWidth do\
-local px = pixels[i]\
-bc[x] = hex[px[1]] or \"0\"\
-tc[x] = hex[px[2]] or \"0\"\
-s[x] = px[3] == \"\" and \" \" or px[3]\
-i = i + 1\
-end\
-term.setCursorPos( sx + 1, sy + y )\
-term.blit( table.concat( s ), table.concat( tc ), table.concat( bc ) )\
-end\
-end\
-end\
-\
-function ScreenCanvas:drawToScreen( x, y )\
-return self:drawToTerminal( term, x, y )\
-end","graphics.ScreenCanvas",nil,_ENV)if not __f then error(__err,0)end __f()
-local __f,__err=load("\
-local hexLookup = {}\
-for i = 0, 15 do\
-hexLookup[2 ^ i] = (\"%x\"):format( i )\
-hexLookup[(\"%x\"):format( i )] = 2 ^ i\
-hexLookup[(\"%X\"):format( i )] = 2 ^ i\
-end\
-\
-image = {}\
-\
-function image.decodePaintutils( str, canvas )\
-local lines = {}\
-for line in str:gmatch \"[^\\n]+\" do\
-local decodedLine = {}\
-for i = 1, #line do\
-\
-\
-\
-decodedLine[i] = { hexLookup[ line:sub( i, i ) ] or 0, 1, \" \" }\
-\
-end\
-lines[#lines + 1] = decodedLine\
-end\
-return lines\
-end\
-\
-function image.encodePaintutils( canvas )\
-\
-end\
-\
-function image.apply( map, canvas )\
-local pixels, coords = {}, {}\
-local n = 1\
-\
-for y = 0, math.min( #map, canvas.height ) - 1 do\
-local pos = y * canvas.width\
-for x = 1, math.min( #map[y + 1], canvas.width ) do\
-pixels[n] = map[y + 1][x]\
-coords[n] = pos + x\
-n = n + 1\
-end\
-end\
-\
-\
-\
-\
-canvas:mapPixels( coords, pixels )\
-\
-end","graphics.image",nil,_ENV)if not __f then error(__err,0)end __f()
-
-local __f,__err=load("\
-timer = {}\
-\
-local timers = {}\
-local timerID = 0\
-local t, lt = os.clock()\
-\
-function timer.new( n )\
-functionParameters.check( 1, \"n\", \"number\", n )\
-\
-local finish, ID = t + n, false -- avoids duplicating timer events\
-for i = 1, #timers do\
-if timers[i].time == finish then\
-ID = timers[i].ID\
-break\
-end\
-end\
-return ID or os.startTimer( n )\
-end\
-\
-function timer.queue( n, response )\
-functionParameters.check( 2, \"n\", \"number\", n, \"response\", \"function\", response )\
-\
-local finish, ID = t + n, false -- avoids duplicating timer events\
-for i = 1, #timers do\
-if timers[i].time == finish then\
-ID = timers[i].ID\
-break\
-end\
-end\
-\
-local timerID = ID or os.startTimer( n )\
-timers[#timers + 1] = { time = finish, response = response, ID = timerID }\
-return timerID\
-end\
-\
-function timer.cancel( ID )\
-functionParameters.check( 1, \"ID\", \"number\", ID )\
-\
-for i = #timers, 1, -1 do\
-if timers[i].ID == ID then\
-return table.remove( timers, i ).time - t\
-end\
-end\
-return 0\
-end\
-\
-function timer.step()\
-lt = t\
-t = os.clock()\
-end\
-\
-function timer.getDelta()\
-return t - lt\
-end\
-\
-function timer.update( timerID )\
-local updated = false\
-for i = #timers, 1, -1 do\
-if timers[i].ID == timerID then\
-table.remove( timers, i ).response()\
-updated = true\
-end\
-end\
-return updated\
-end\
-\
+local __f,__err=load("class={}local e=setmetatable({},{__index=class})local t={}local a={}\
+local o\
+local i={__add=true,__sub=true,__mul=true,__div=true,__mod=true,__pow=true,__unm=true,__len=true,__eq=true,__lt=true,__lte=true,__tostring=true,__concat=true}local function n(d)return\"[Class] \"..d:type()end local function s(d,l)return tostring(d)..\
+tostring(l)end\
+local function h(d)if not o then\
+return error\"no class to define\"end for l,u in pairs(d)do o[l]=u end o=nil end\
+local function r(d,l)local u={}if l.super then u.super=r(d,l.super)end\
+setmetatable(u,{__index=function(c,m)\
+if type(l[m])==\
+\"function\"then\
+return function(f,...)if f==u then f=d end d.super=u.super local w={l[m](f,...)}\
+d.super=u return unpack(w)end else return l[m]end end,__newindex=l,__tostring=function(c)\
+return\
+\"[Super] \"..tostring(l)..\" of \"..tostring(d)end})return u end\
+function e:new(...)local d={__index=self,__INSTANCE=true}\
+local l=setmetatable({class=self,meta=d},d)if self.super then l.super=r(l,self.super)end for c,m in\
+pairs(self.meta)do if i[c]then d[c]=m end end if d.__tostring==n then function d:__tostring()return\
+self:tostring()end end function l:type()return\
+self.class:type()end function l:typeOf(c)\
+return self.class:typeOf(c)end\
+if not self.tostring then function l:tostring()return\
+\"[Instance] \"..self:type()end end local u=self while u do\
+if u[u.meta.__type]then u[u.meta.__type](l,...)break end u=u.super end return l end function e:extends(d)self.super=d self.meta.__index=d end function e:type()return\
+tostring(self.meta.__type)end function e:typeOf(d)return\
+d==self or(self.super and\
+self.super:typeOf(d))or false end\
+function class:new(d)\
+if type(\
+d or self)~=\"string\"then return\
+error(\"expected string class name, got \"..type(d or self))end\
+local l={__index=e,__CLASS=true,__tostring=n,__concat=s,__call=e.new,__type=d or self}local u=setmetatable({meta=l},l)t[d]=u o=u _ENV[d]=u return\
+function(c)if not o then return\
+error\"no class to define\"end for m,f in pairs(c)do o[m]=f end o=nil end end\
+function class.type(d)local l=type(d)if l==\"table\"then\
+pcall(function()local u=getmetatable(d)\
+l=(\
+(u.__CLASS or u.__INSTANCE)and d:type())or l end)end return l end\
+function class.typeOf(d,l)\
+if type(d)==\"table\"then\
+local u,c=pcall(function()\
+return getmetatable(d).__CLASS or\
+getmetatable(d).__INSTANCE or error()end)return u and d:typeOf(l)end return false end function class.isClass(d)\
+return pcall(function()\
+if not getmetatable(d).__CLASS then error()end end),nil end\
+function class.isInstance(d)return\
+pcall(function()if not\
+getmetatable(d).__INSTANCE then error()end end),nil end setmetatable(class,{__call=class.new})\
+function extends(d)\
+if not o then return\
+error\"no class to extend\"elseif not t[d]then return\
+error(\"no such class '\"..tostring(d)..\"'\")end o:extends(t[d])return h end\
+function interface(d)a[d]={}_ENV[d]=a[d]\
+return function(l)if type(l)~=\"table\"then return\
+error(\"expected table t, got \"..class.type(l))end\
+_ENV[d]=l a[d]=l end end\
+function implements(d)\
+if not o then return error\"no class to modify\"elseif not a[d]then return error(\"no interface by name '\"..\
+tostring(d)..\"'\")end for l,u in pairs(a[d])do o[l]=u end return h end","class",nil,_ENV)if not __f then error(__err,0)end __f()
+local __f,__err=load("timer={}local e={}local a=0 local o,i=os.clock()\
+function timer.new(t)\
+functionParameters.check(1,\"n\",\"number\",t)local n,s=o+t,false\
+for h=1,#e do if e[h].time==n then s=e[h].ID break end end return s or os.startTimer(t)end\
+function timer.queue(t,n)\
+functionParameters.check(2,\"n\",\"number\",t,\"response\",\"function\",n)local s,h=o+t,false\
+for r=1,#e do if e[r].time==s then h=e[r].ID break end end local a=h or os.startTimer(t)\
+e[#e+1]={time=s,response=n,ID=a}return a end\
+function timer.cancel(t)\
+functionParameters.check(1,\"ID\",\"number\",t)for n=#e,1,-1 do\
+if e[n].ID==t then return table.remove(e,n).time-o end end return 0 end function timer.step()i=o o=os.clock()end\
+function timer.getDelta()return o-i end function timer.update(a)local t=false for n=#e,1,-1 do if e[n].ID==a then\
+table.remove(e,n).response()t=true end end\
+return t end\
 timer.step()","sheets.timer",nil,_ENV)if not __f then error(__err,0)end __f()
-local __f,__err=load("\
-local c = {}\
-\
-clipboard = {}\
-\
-function clipboard.put( modes )\
-functionParameters.check( 1, \"modes\", \"table\", modes )\
-c = modes\
-end\
-\
-function clipboard.get( mode )\
-functionParameters.check( 1, \"mode\", \"string\", mode )\
-return c[mode]\
-end\
-\
-function clipboard.clear()\
-c = {}\
-end","sheets.clipboard",nil,_ENV)if not __f then error(__err,0)end __f()
+local __f,__err=load("local e={}clipboard={}function clipboard.put(t)\
+functionParameters.check(1,\"modes\",\"table\",t)e=t end function clipboard.get(t)\
+functionParameters.check(1,\"mode\",\"string\",t)return e[t]end\
+function clipboard.clear()e={}end","sheets.clipboard",nil,_ENV)if not __f then error(__err,0)end __f()
 
-local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-local exceptions = {}\
-local thrown\
-\
-local function handler( t )\
-for i = 1, #t do\
-if t[i].catch == thrown.name or t[i].default then\
-return t[i].handler( thrown )\
-end\
-end\
-return Exception.throw( thrown )\
-end\
-\
-class \"Exception\" {\
-name = \"undefined\";\
-data = \"undefined\";\
-trace = {};\
-ID = 0;\
-}\
-\
-function Exception:Exception( name, data, level )\
-self.name = name\
-self.data = data\
-self.trace = {}\
-\
-level = ( level or 1 ) + 2\
-\
-for i = 1, 5 do\
-local src = select( 2, pcall( error, \"\", level + i ) ):gsub( \": $\", \"\" )\
-\
-if src == \"pcall\" then\
-break\
-else\
-self.trace[i] = src\
-end\
-end\
-end\
-\
-function Exception:getTraceback( initial, format )\
-initial = initial or \"\"\
-format = format or \"\\n\"\
-return initial .. table.concat( self.trace, format )\
-end\
-\
-function Exception:getDataAndTraceback( indent )\
-return textutils.serialize( self.data ) .. \"\\n\" .. self:getTraceback( (\" \"):rep( indent or 1 ) .. \"in \", \"\\n\" .. (\" \"):rep( indent or 1 ) .. \"in \" )\
-end\
-\
-function Exception:tostring()\
-return tostring( self.name ) .. \" exception:\\n \" .. self:getDataAndTraceback( 2 )\
-end\
-\
-function Exception.getExceptionById( ID )\
-return exceptions[ID]\
-end\
-\
-function Exception.throw( e, data, level )\
-if class.isClass( e ) then\
-e = e( data, ( level or 1 ) + 1 )\
-elseif type( e ) == \"string\" then\
-e = Exception( e, data, ( level or 1 ) + 1 )\
-elseif not class.typeOf( e, Exception ) then\
-return Exception.throw( \"IncorrectParameterException\", \"expected class, string, or Exception e, got \" .. class.type( e ) )\
-end\
-thrown = e\
-error( \"SHEETS_EXCEPTION\\nPut code in a try block to catch the exception.\", 0 )\
-end\
-\
-function Exception.try( func )\
-local ok, err = pcall( func )\
-\
-if not ok and err == \"SHEETS_EXCEPTION\\nPut code in a try block to catch the exception.\" then\
-return handler\
-end\
-\
-return error( err, 0 )\
-end\
-\
-function Exception.catch( etype )\
-return function( handler )\
-return { catch = etype, handler = handler }\
-end\
-end\
-\
-function Exception.default( handler )\
-return { default = true, handler = handler }\
-end","sheets.exceptions.Exception",nil,_ENV)if not __f then error(__err,0)end __f()
-local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
-class \"IncorrectParameterException\" extends \"Exception\"\
-\
-function IncorrectParameterException:IncorrectParameterException( data, level )\
-return self:Exception( \"IncorrectParameterException\", data, level )\
-end","sheets.exceptions.IncorrectParameterException",nil,_ENV)if not __f then error(__err,0)end __f()
-local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
-class \"IncorrectConstructorException\" extends \"Exception\"\
-\
-function IncorrectConstructorException:IncorrectConstructorException( data, level )\
-return self:Exception( \"IncorrectConstructorException\", data, level )\
-end","sheets.exceptions.IncorrectConstructorException",nil,_ENV)if not __f then error(__err,0)end __f()
-local __f,__err=load("\
-functionParameters = {}\
-\
-function functionParameters.checkConstructor( _class, argc, ... )\
-local args = { ... }\
-for i = 1, argc * 3, 3 do\
-local name = args[i]\
-local expectedType = args[i + 1]\
-local value = args[i + 2]\
-\
-if type( expectedType ) == \"string\" then\
-if type( value ) ~= expectedType then\
-Exception.throw( IncorrectConstructorException, _class:type() .. \" expects \" .. expectedType .. \" \" .. name .. \" when created, got \" .. class.type( value ), 4 )\
-end\
-else\
-if not class.typeOf( value, expectedType ) then\
-Exception.throw( IncorrectConstructorException, _class:type() .. \" expects \" .. expectedType:type() .. \" \" .. name .. \" when created, got \" .. class.type( value ), 4 )\
-end\
-end\
-end\
-end\
-\
-function functionParameters.check( argc, ... )\
-local args = { ... }\
-for i = 1, argc * 3, 3 do\
-local name = args[i]\
-local expectedType = args[i + 1]\
-local value = args[i + 2]\
-\
-if type( expectedType ) == \"string\" then\
-if type( value ) ~= expectedType then\
-Exception.throw( IncorrectParameterException, \"expected \" .. expectedType .. \" \" .. name .. \", got \" .. class.type( value ), 3 )\
-end\
-else\
-if not class.typeOf( value, expectedType ) then\
-Exception.throw( IncorrectParameterException, \"expected \" .. expectedType:type() .. \" \" .. name .. \", got \" .. class.type( value ), 3 )\
-end\
-end\
-end\
-end","sheets.functionParameters",nil,_ENV)if not __f then error(__err,0)end __f()
 
+local i={[1]=256,[2]=16384,[4]=1024,[8]=512,[16]=2,[32]=8192,[64]=4,[128]=32768,[256]=128,[512]=2048,[1024]=128,[2048]=128,[4096]=32768,[8192]=128,[16384]=4096,[32768]=32768}
+local n={[1]=1,[2]=16,[4]=64,[8]=1,[16]=1,[32]=1,[64]=1,[128]=256,[256]=1,[512]=8,[1024]=4,[2048]=512,[4096]=16384,[8192]=32,[16384]=2,[32768]=128}
+local s={[1]=1,[2]=256,[4]=256,[8]=256,[16]=1,[32]=256,[64]=1,[128]=128,[256]=256,[512]=128,[1024]=128,[2048]=128,[4096]=32768,[8192]=128,[16384]=128,[32768]=32768}
+local h={[1]=32768,[2]=2048,[4]=8192,[8]=4096,[16]=2048,[32]=1024,[64]=8192,[128]=256,[256]=128,[512]=16384,[1024]=8192,[2048]=16,[4096]=8,[8192]=1024,[16384]=512,[32768]=1}shader={}function shader.darken(e,...)return i[e]or e,...end function shader.lighten(e,...)return n[e]or
+e,...end
+function shader.greyscale(e,...)return s[e]or e,...end function shader.inverse(e,...)return h[e]or e,...end
+local r,d=load("\
+local e,t=load(\"local function e(l,u,m,f)local d=l>m and l or m\\\
+local c=(l+u<m+f and l+u or m+f)-d return d,c end local t,a,o,i local function n(d)return\\\
+setmetatable(d,{__add=t,__sub=a,__mod=o,__tostring=i})end\\\
+function t(d,l)\\\
+local u,m,f=1,1,0 local w={}\\\
+while d[u]or l[m]do\\\
+if\\\
+d[u]and(not l[m]or d[u]<=l[m])then if w[f]~=d[u]then f=f+1 w[f]=d[u]end u=u+1 elseif l[m]and\\\
+(not d[u]or d[u]>l[m])then if w[f]~=l[m]then f=f+1 w[f]=l[m]end m=m+1 end end return n(w)end\\\
+function a(d,l)local u,m,f=1,1,1 local w={}\\\
+while d[u]do while l[m]and l[m]<d[u]do m=m+1 end if\\\
+d[u]~=l[m]then w[f]=d[u]f=f+1 end u=u+1 end return n(w)end\\\
+function o(d,l)local u,m,f=1,1,1 local w={}\\\
+while d[u]do while l[m]and l[m]<d[u]do m=m+1 end if\\\
+d[u]==l[m]then w[f]=d[u]f=f+1 end u=u+1 end return n(w)end\\\
+function i(d)return\\\"Area of \\\"..#d..\\\" coordinates\\\"end local s,h=term.getSize()local r={}function r.setDimensions(d,l)s,h=d,l end function r.new(d)\\\
+return n(d)end function r.blank()return n{}end function r.fill()local d={}for l=1,s*h do d[l]=l end return\\\
+n(d)end\\\
+function r.point(d,l)if\\\
+d>=0 and d<s and l>=0 and l<h then return n{l*s+d+1}end return n{}end\\\
+function r.box(d,l,u,c)d,u=e(0,s,d,u)l,c=e(0,h,l,c)local m=l*s+d local f,w={},1 for y=1,c do\\\
+for d=1,u do f[w]=m+d w=w+1 end m=m+s end return n(f)end\\\
+function r.circle(d,l,u)local c=u*u local m={}local f=1\\\
+for w=math.floor(l-u),math.ceil(l+u)do\\\
+if w>0 and w<h then local y=l-w local p=(\\\
+c-y*y)^.5 local v=w*s+1 local g=math.floor(d-p+.5)local k,q=e(0,s,g,math.ceil(\\\
+d+p-.5)-g+1)for b=k,k+\\\
+q-1 do m[f]=v+b f=f+1 end end end return n(m)end\\\
+function r.correctedCircle(d,l,u)local c=u*u local m={}local f=1\\\
+for w=math.floor(l-u+1),math.ceil(l+u-1)do\\\
+if\\\
+w>=0 and w<h then local y=l-w local p=(c-y*y)^.5*1.5 local v=w*s+1\\\
+local g=math.floor(d-p+.5)\\\
+local k,q=e(0,s,g,math.ceil(d+p-.5)-g+1)for b=k,k+q-1 do m[f]=v+b f=f+1 end end end return n(m)end\\\
+function r.hLine(d,l,u)if l>=0 and l<h then d,u=e(0,s,d,u)local c=l*s+d local m={}for f=1,u do m[f]=c+f end\\\
+return n(m)end return n{}end\\\
+function r.vLine(d,l,u)if d>=0 and d<s then l,u=e(0,h,l,u)local c=l*s+d+1 local m={}\\\
+for f=1,u do m[f]=c c=c+s end return n(m)end return n{}end\\\
+function r.line(d,l,u,c)if d>u then d,u=u,d l,c=c,l end local f,w=u-d,c-l\\\
+if f==0 then if w==0 then\\\
+return newPointArea(d,l,s,h)end return newVLineArea(d,l,w,s,h)elseif w==0 then return\\\
+newHLineArea(d,l,f,s,h)end local y={}\\\
+if d>=0 and d<s and l>=0 and l<h then\\\
+y[1]=\\\
+math.floor(l+.5)*s+math.floor(d+.5)+1\\\
+if u>=0 and u<s and c>=0 and c<h then y[2]=math.floor(c+.5)*s+math.floor(\\\
+u+.5)+1 end elseif u>=0 and u<s and c>=0 and c<h then y[1]=math.floor(c+.5)*s+math.floor(\\\
+u+.5)+1 end local p=w/f local v=l-p*d local b=math.min(1/math.abs(p),1)local g=\\\
+#y+1 for m=math.max(d,0),math.min(u,s-1),b do\\\
+local k=math.floor(p*m+v+.5)\\\
+if k>0 and k<h then y[g]=k*s+math.floor(m+.5)+1 g=g+1 end end return n(y)end return r\",\"area\",\
+nil,_ENV)if not e then error(t,0)end local a=e()\
+local function o(l,u,m,f)local d=l>m and l or m local c=(\
+l+u<m+f and l+u or m+f)-d return d,c end local i,n=table.insert,table.remove local s,h=math.min,math.max\
+local r=math.floor\
+class\"Canvas\"{width=0,height=0,colour=1,pixels={}}\
+function Canvas:Canvas(d,l)d=d or 0 l=l or 0\
+if type(d)~=\"number\"then return\
+error(\"element attribute #1 'width' not a number (\"..\
+class.type(d)..\")\",2)end\
+if type(l)~=\"number\"then return\
+error(\"element attribute #2 'height' not a number (\"..class.type(l)..\")\",2)end self.width=d self.height=l self.pixels={}local u={1,1,\" \"}for c=1,d*l do\
+self.pixels[c]=u end end\
+function Canvas:setWidth(d)if type(d)~=\"number\"then return\
+error(\"expected number width, got \"..class.type(d))end\
+d=math.floor(d)local l,u=self.height,self.pixels local c=self.width\
+local m={self.colour,1,\" \"}while c<d do for f=1,l do i(u,(c+1)*f,m)end c=c+1 end while\
+c>d do for f=l,1,-1 do n(u,c*f)end c=c-1 end self.width=c end\
+function Canvas:setHeight(d)if type(d)~=\"number\"then return\
+error(\"expected number height, got \"..class.type(d))end\
+d=math.floor(d)local l,u=self.width,self.pixels local c=self.height\
+local m={self.colour,1,\" \"}while c<d do for f=1,l do u[#u+1]=m end c=c+1 end while c>d do\
+for f=1,l do u[#u]=nil end c=c-1 end self.height=c end\
+function Canvas:getPixel(d,l)local u=self.width\
+if\
+d>=0 and d<u and l>=0 and l<self.height then local c=self.pixels[l*u+d+1]return c[1],c[2],c[3]end end\
+function Canvas:mapColour(d,l)if type(d)~=\"table\"then return\
+error(\"expected table coords, got \"..class.type(d))end if\
+type(l)~=\"number\"then return\
+error(\"expected number colour, got \"..class.type(l))end\
+local u={l,1,\" \"}local c=self.pixels for m=1,#d do c[d[m]]=u end end\
+function Canvas:mapColours(d,l)if type(d)~=\"table\"then return\
+error(\"expected table coords, got \"..class.type(d))end if\
+type(l)~=\"table\"then return\
+error(\"expected table colours, got \"..class.type(l))end\
+local u=self.pixels local c=#l\
+for m=1,#d do u[d[m]]={l[(m-1)%c+1],1,\" \"}end end\
+function Canvas:mapPixel(d,l)if type(d)~=\"table\"then return\
+error(\"expected table coords, got \"..class.type(d))end if\
+type(l)~=\"table\"then return\
+error(\"expected table pixel, got \"..class.type(l))end\
+local u=self.pixels for c=1,#d do u[d[c]]=l end end\
+function Canvas:mapPixels(d,l)if type(d)~=\"table\"then return\
+error(\"expected table coords, got \"..class.type(d))end if\
+type(l)~=\"table\"then return\
+error(\"expected table pixels, got \"..class.type(l))end\
+local u=self.pixels for c=1,#d do u[d[c]]=l[c]end end\
+function Canvas:mapShader(d,l)if type(d)~=\"table\"then return\
+error(\"expected table coords, got \"..class.type(d))end\
+if\
+type(l)~=\"function\"then return\
+error(\"expected function shader, got \"..class.type(l))end local u=self.pixels local c=self.width local m={}\
+for f=1,#d do local w=d[f]local y=u[w]\
+local p=(w-1)%c local v,b,g=l(y[1],y[2],y[3],p,(w-1-p)/c)\
+m[f]=\
+(v or b or g)and{v or y[1],b or y[2],g or y[3]}end for f=1,#d do local w=m[f]if w then u[d[f]]=w end end end\
+function Canvas:shift(a,d,l,u)local c=self.width if type(a)==\"number\"then d,l,u=a,d,l a={}for w=1,c*self.height do\
+a[w]=w end end local m=l*c+d\
+local f=self.pixels for w=1,#a do f[w]=f[w+m]or u end end\
+function Canvas:drawColour(d,l)if type(d)~=\"table\"then return\
+error(\"expected table coords, got \"..class.type(d))end if\
+type(l)~=\"number\"then return\
+error(\"expected number colour, got \"..class.type(l))end if\
+l==0 then return end local u={l,1,\" \"}local c=self.pixels for m=1,#d do c[d[m]]=u end end\
+function Canvas:drawColours(d,l)if type(d)~=\"table\"then return\
+error(\"expected table coords, got \"..class.type(d))end if\
+type(l)~=\"table\"then return\
+error(\"expected table colours, got \"..class.type(l))end\
+local u=#l local c=self.pixels for m=1,#d do if l[m]~=0 then\
+c[d[m]]={l[(m-1)%u+1],1,\" \"}end end end\
+function Canvas:drawPixel(d,l)if type(d)~=\"table\"then return\
+error(\"expected table coords, got \"..class.type(d))end if\
+type(l)~=\"table\"then return\
+error(\"expected table pixel, got \"..class.type(l))end\
+local u=self.pixels\
+if l[1]==0 and(l[2]==0 or l[3]==\"\")then return elseif\
+l[1]==0 or l[2]==0 or l[3]==\"\"then local c,m,f=l[1],l[2],l[3]\
+for w=1,#d do local y=d[w]local p,v,b,g if c==0 then p=u[y]\
+v=p[1]end\
+if m==0 or f==\"\"then p=p or u[y]b=p[2]g=p[3]end u[y]={v or c,b or m,g or f}end else for c=1,#d do u[d[c]]=l end end end\
+function Canvas:drawPixels(d,l)if type(d)~=\"table\"then return\
+error(\"expected table coords, got \"..class.type(d))end if\
+type(l)~=\"table\"then return\
+error(\"expected table pixels, got \"..class.type(l))end\
+local u=#l local c=self.pixels local m=u<#d\
+for f=1,#d do\
+local w=m and l[(f-1)%u+1]or l[f]local y,p,v=w[1],w[2],w[3]local b if y==0 then b=c[d[f]]y=b[1]end if\
+p==0 or v==\"\"then b=b or c[d[f]]p=b[2]v=b[3]end\
+c[d[f]]={y,p,v}end end\
+function Canvas:clear(d)\
+if d and type(d)~=\"number\"then return\
+error(\"expected number colour, got \"..class.type(d))end local l={d or self.colour,d and 1 or 0,\" \"}for u=1,self.width*\
+self.height do self.pixels[u]=l end end\
+function Canvas:clone(d)if d and not class.isClass(d)then\
+return error(\"expected Class class, got \"..\
+class.type(d))end\
+local l=(d or self.class)(self.width,self.height)l.pixels=self.pixels return l end\
+function Canvas:copy(d)if d and not class.isClass(d)then\
+return error(\"expected Class class, got \"..\
+class.type(d))end\
+local l=(d or self.class)(self.width,self.height)local u,c=l.pixels,self.pixels for m=1,#c do u[m]=c[m]end return l end\
+function Canvas:drawTo(d,l,u)l,u=l or 0,u or 0 if not class.typeOf(d,Canvas)then\
+return error(\
+\"expected Canvas canvas, got \"..class.type(d))end if type(l)~=\"number\"then\
+return error(\
+\"expected number offsetX, got \"..class.type(l))end if type(u)~=\"number\"then\
+return error(\
+\"expected number offsetY, got \"..class.type(u))end local c,m=self.width,self.height\
+local f,w=d.width,d.height local y={}local p={}local v=1 local g=self.pixels local k,q=o(0,f,l,c)k=k-l+1 q=k+q-1 for b=0,m-1 do\
+local j=b+u\
+if j>=0 and j<w then local x=b*c local z=j*f+l for _=k,q do\
+if g[x+_]then p[v]=g[x+_]y[v]=z+_ v=v+1 end end end end\
+d:drawPixels(y,p)end\
+function Canvas:getArea(l,u,m,f,w)a.setDimensions(self.width,self.height)\
+if l==5 then return\
+a.fill()elseif l==0 then if type(u)~=\"number\"then return\
+error(\"expected number x, got \"..class.type(u))end if type(m)~=\
+\"number\"then return\
+error(\"expected number y, got \"..class.type(m))end if type(f)~=\
+\"number\"then return\
+error(\"expected number width, got \"..class.type(f))end if\
+type(w)~=\"number\"then return\
+error(\"expected number height, got \"..class.type(w))end return\
+a.box(u,m,f,w)elseif l==6 then if type(u)~=\"number\"then return\
+error(\"expected number x, got \"..class.type(u))end if type(m)~=\
+\"number\"then return\
+error(\"expected number y, got \"..class.type(m))end return\
+a.point(u,m)elseif l==4 then if type(u)~=\"number\"then return\
+error(\"expected number x, got \"..class.type(u))end if type(m)~=\
+\"number\"then return\
+error(\"expected number y, got \"..class.type(m))end if type(f)~=\
+\"number\"then return\
+error(\"expected number width, got \"..class.type(f))end return\
+a.hLine(u,m,f)elseif l==3 then if type(u)~=\"number\"then return\
+error(\"expected number x, got \"..class.type(u))end if type(m)~=\
+\"number\"then return\
+error(\"expected number y, got \"..class.type(m))end if type(f)~=\
+\"number\"then return\
+error(\"expected number height, got \"..class.type(f))end return\
+a.vLine(u,m,f)elseif l==2 then if type(u)~=\"number\"then return\
+error(\"expected number x1, got \"..class.type(u))end if type(m)~=\
+\"number\"then return\
+error(\"expected number y1, got \"..class.type(m))end if\
+type(f)~=\"number\"then return\
+error(\"expected number x2, got \"..class.type(f))end if type(w)~=\
+\"number\"then return\
+error(\"expected number y2, got \"..class.type(w))end return\
+a.line(u,m,f,w)elseif l==1 then if type(u)~=\"number\"then return\
+error(\"expected number x, got \"..class.type(u))end if type(m)~=\
+\"number\"then return\
+error(\"expected number y, got \"..class.type(m))end if type(f)~=\
+\"number\"then return\
+error(\"expected number radius, got \"..class.type(f))end return\
+a.circle(u,m,f)elseif l==7 then if type(u)~=\"number\"then return\
+error(\"expected number x, got \"..class.type(u))end if type(m)~=\
+\"number\"then return\
+error(\"expected number y, got \"..class.type(m))end if type(f)~=\
+\"number\"then return\
+error(\"expected number radius, got \"..class.type(f))end return\
+a.correctedCircle(u,m,f)else\
+return error(\"unexpected mode: \"..tostring(l))end end","sheets.graphics.Canvas",
+nil,_ENV)if not r then error(d,0)end r()
+local r,d=load("class\"DrawingCanvas\"extends\"Canvas\"{}\
+function DrawingCanvas:drawPoint(e,t,a)if\
+type(e)~=\"number\"then return\
+error(\"expected number x, got \"..class.type(e))end if type(t)~=\
+\"number\"then return\
+error(\"expected number y, got \"..class.type(t))end if type(a)~=\
+\"table\"then return\
+error(\"expected table options, got \"..class.type(a))end local o=\
+a.colour or 0 local i=a.textColour or 1 local n=a.character or\" \"if\
+type(o)~=\"number\"then return\
+error(\"expected number colour, got \"..class.type(o))end\
+if\
+type(i)~=\"number\"then return\
+error(\"expected number textColour, got \"..class.type(i))end\
+if type(n)~=\"string\"then return\
+error(\"expected string character, got \"..class.type(n))end if\
+e>=0 and t>=0 and e<self.width and t<self.height then\
+self:drawPixel({t*self.width+e+1},{o,i,n})end end\
+function DrawingCanvas:drawBox(e,t,a,o,i)if type(e)~=\"number\"then return\
+error(\"expected number x, got \"..class.type(e))end if type(t)~=\
+\"number\"then return\
+error(\"expected number y, got \"..class.type(t))end if type(a)~=\
+\"number\"then return\
+error(\"expected number width, got \"..class.type(a))end if\
+type(o)~=\"number\"then return\
+error(\"expected number height, got \"..class.type(o))end if\
+type(i)~=\"table\"then return\
+error(\"expected table options, got \"..class.type(i))end local n=\
+i.colour or 0 local s=i.textColour or 1 local h=i.character or\" \"if\
+type(n)~=\"number\"then return\
+error(\"expected number colour, got \"..class.type(n))end\
+if\
+type(s)~=\"number\"then return\
+error(\"expected number textColour, got \"..class.type(s))end\
+if type(h)~=\"string\"then return\
+error(\"expected string character, got \"..class.type(h))end if h==\" \"then\
+self:drawColour(self:getArea(0,e,t,a,o),n)else\
+self:drawPixel(self:getArea(0,e,t,a,o),{n,s,h})end end\
+function DrawingCanvas:drawCircle(e,t,a,o)if type(e)~=\"number\"then return\
+error(\"expected number x, got \"..class.type(e))end if type(t)~=\
+\"number\"then return\
+error(\"expected number y, got \"..class.type(t))end if type(a)~=\
+\"number\"then return\
+error(\"expected number radius, got \"..class.type(a))end if\
+type(o)~=\"table\"then return\
+error(\"expected table options, got \"..class.type(o))end local i=\
+o.colour or 0 local n=o.textColour or 1 local s=o.character or\" \"local h=\
+o.corrected or false if type(i)~=\"number\"then\
+return error(\"expected number colour, got \"..\
+class.type(i))end if type(n)~=\"number\"then\
+return error(\
+\"expected number textColour, got \"..class.type(n))end if type(s)~=\"string\"then\
+return error(\
+\"expected string character, got \"..class.type(s))end if s==\" \"then\
+self:drawColour(self:getArea(h and 7 or 1,e,t,a),i)else\
+self:drawPixel(self:getArea(h and 7 or 1,e,t,a),{i,n,s})end end\
+function DrawingCanvas:drawLine(e,t,a,o,i)if type(e)~=\"number\"then return\
+error(\"expected number x1, got \"..class.type(e))end if type(t)~=\
+\"number\"then return\
+error(\"expected number y1, got \"..class.type(t))end if\
+type(a)~=\"number\"then return\
+error(\"expected number x2, got \"..class.type(a))end if type(o)~=\
+\"number\"then return\
+error(\"expected number y2, got \"..class.type(o))end if\
+type(i)~=\"table\"then return\
+error(\"expected table options, got \"..class.type(i))end local n=\
+i.colour or 0 local s=i.textColour or 1 local h=i.character or\" \"if\
+type(n)~=\"number\"then return\
+error(\"expected number colour, got \"..class.type(n))end\
+if\
+type(s)~=\"number\"then return\
+error(\"expected number textColour, got \"..class.type(s))end\
+if type(h)~=\"string\"then return\
+error(\"expected string character, got \"..class.type(h))end if h==\" \"then\
+self:drawColour(self:getArea(2,e,t,a,o),n)else\
+self:drawPixel(self:getArea(2,e,t,a,o),{n,s,h})end end\
+function DrawingCanvas:drawHorizontalLine(e,t,a,o)if type(e)~=\"number\"then return\
+error(\"expected number x, got \"..class.type(e))end if type(t)~=\
+\"number\"then return\
+error(\"expected number y, got \"..class.type(t))end if type(a)~=\
+\"number\"then return\
+error(\"expected number width, got \"..class.type(a))end if\
+type(o)~=\"table\"then return\
+error(\"expected table options, got \"..class.type(o))end local i=\
+o.colour or 0 local n=o.textColour or 1 local s=o.character or\" \"if\
+type(i)~=\"number\"then return\
+error(\"expected number colour, got \"..class.type(i))end\
+if\
+type(n)~=\"number\"then return\
+error(\"expected number textColour, got \"..class.type(n))end\
+if type(s)~=\"string\"then return\
+error(\"expected string character, got \"..class.type(s))end if s==\" \"then\
+self:drawColour(self:getArea(4,e,t,a),i)else\
+self:drawPixel(self:getArea(4,e,t,a),{i,n,s})end end\
+function DrawingCanvas:drawVerticalLine(e,t,a,o)if type(e)~=\"number\"then return\
+error(\"expected number x, got \"..class.type(e))end if type(t)~=\
+\"number\"then return\
+error(\"expected number y, got \"..class.type(t))end if type(a)~=\
+\"number\"then return\
+error(\"expected number height, got \"..class.type(a))end if\
+type(o)~=\"table\"then return\
+error(\"expected table options, got \"..class.type(o))end local i=\
+o.colour or 0 local n=o.textColour or 1 local s=o.character or\" \"if\
+type(i)~=\"number\"then return\
+error(\"expected number colour, got \"..class.type(i))end\
+if\
+type(n)~=\"number\"then return\
+error(\"expected number textColour, got \"..class.type(n))end\
+if type(s)~=\"string\"then return\
+error(\"expected string character, got \"..class.type(s))end if s==\" \"then\
+self:drawColour(self:getArea(3,e,t,a),i)else\
+self:drawPixel(self:getArea(3,e,t,a),{i,n,s})end end\
+function DrawingCanvas:drawText(e,t,a,o)if type(e)~=\"number\"then return\
+error(\"expected number x, got \"..class.type(e))end if type(t)~=\
+\"number\"then return\
+error(\"expected number y, got \"..class.type(t))end if type(a)~=\
+\"string\"then return\
+error(\"expected string text, got \"..class.type(a))end if\
+type(o)~=\"table\"then return\
+error(\"expected table options, got \"..class.type(o))end local i=\
+o.colour or 0 local n=o.textColour or 1 if type(i)~=\"number\"then\
+return error(\
+\"expected number colour, got \"..class.type(i))end if type(n)~=\"number\"then\
+return error(\
+\"expected number textColour, got \"..class.type(n))end if t<0 or t>=self.height then\
+return end local s=self.width\
+local h=t*s+ (e>0 and e or 0)local r=e>=0 and 0 or-e local d,l={},{}\
+local u,c=s- (e>0 and e or 0),#a-r\
+for m=1,u<c and u or c do d[m]={i,n,a:sub(m+r,m+r)}l[m]=h+m end self:drawPixels(l,d)end","sheets.graphics.DrawingCanvas",
+nil,_ENV)if not r then error(d,0)end r()
+local r,d=load("local e=term.redirect local t={}\
+for a=0,15 do t[2^a]=(\"%x\"):format(a)end class\"ScreenCanvas\"extends\"Canvas\"{last={}}\
+function ScreenCanvas:ScreenCanvas(a,o)a=\
+a or 0 o=o or 0\
+if type(a)~=\"number\"then return\
+error(\"element attribute #1 'width' not a number (\"..class.type(a)..\
+\")\",2)end\
+if type(o)~=\"number\"then return\
+error(\"element attribute #2 'height' not a number (\"..class.type(o)..\")\",2)end local i={}self.last={}for n=1,a*o do self.last[n]=i end return\
+self:Canvas(a,o)end\
+function ScreenCanvas:reset()local a={}for o=1,width*height do self.last[o]=a end end\
+function ScreenCanvas:drawToTerminals(a,o,i)o=o or 0 i=i or 0 if type(a)~=\"table\"then\
+return error(\"expected table terminals, got \"..\
+class.type(a))end if type(o)~=\"number\"then\
+return error(\
+\"expected number x, got \"..class.type(o))end\
+if type(i)~=\"number\"then return error(\"expected number y, got \"..\
+class.type(i))end local n=1 local s,h=self.pixels,self.last local r=self.width\
+for d=1,self.height do local l=false\
+for u=1,r do\
+local c=s[n]local m=h[n]if c[1]~=m[1]or c[2]~=m[2]or c[3]~=m[3]then\
+l=true h[n]=c end n=n+1 end\
+if l then local u,c,m={},{},{}n=n-r\
+for f=1,r do local w=s[n]u[f]=t[w[1]]or\"0\"\
+c[f]=t[w[2]]or\"0\"m[f]=w[3]==\"\"and\" \"or w[3]n=n+1 end for n=1,#a do a[n].setCursorPos(o+1,i+d)\
+a[n].blit(table.concat(m),table.concat(c),table.concat(u))end end end end\
+function ScreenCanvas:drawToTerminal(a,o,i)return self:drawToTerminals({a},o,i)end\
+function ScreenCanvas:drawToScreen(a,o)return self:drawToTerminal(term,a,o)end","sheets.graphics.ScreenCanvas",
+nil,_ENV)if not r then error(d,0)end r()
+local r,d=load("local e={}\
+for t=0,15 do e[2^t]=(\"%x\"):format(t)e[(\"%x\"):format(t)]=\
+2^t e[(\"%X\"):format(t)]=2^t end image={}\
+function image.decodePaintutils(t,a)local o={}\
+for i in t:gmatch\"[^\\n]+\"do local n={}for s=1,#i do\
+n[s]={e[i:sub(s,s)]or 0,1,\" \"}end o[#o+1]=n end return o end function image.encodePaintutils(t)end\
+function image.apply(t,a)local o,i={},{}local s=1\
+for n=0,\
+math.min(#t,a.height)-1 do local h=n*a.width for r=1,math.min(#t[n+1],a.width)do\
+o[s]=t[n+1][r]i[s]=h+r s=s+1 end end a:mapPixels(i,o)end","sheets.graphics.image",
+nil,_ENV)if not r then error(d,0)end r()
+
+local __f,__err=load("local e={}local t\
+local function a(o)for n=1,#o do\
+if o[n].catch==t.name or o[n].default or\
+o[n].catch==t.class then return o[n].handler(t)end end return\
+Exception.throw(t)end\
+class\"Exception\"{name=\"undefined\",data=\"undefined\",trace={},ID=0}\
+function Exception:Exception(o,i,n)self.name=o self.data=i self.trace={}n=(n or 1)+2\
+for s=1,5 do\
+local h=select(2,pcall(error,\"\",\
+n+s)):gsub(\": $\",\"\")if h==\"pcall\"then break else self.trace[s]=h end end end function Exception:getTraceback(o,i)o=o or\"\"i=i or\"\\n\"return\
+o..table.concat(self.trace,i)end\
+function Exception:getDataAndTraceback(o)\
+return\
+textutils.serialize(self.data)..\
+\"\\n\"..self:getTraceback((\" \"):rep(o or 1)..\"in \",\"\\n\"..\
+(\" \"):rep(o or 1)..\"in \")end\
+function Exception:tostring()return tostring(self.name)..\
+\" exception:\\n \"..self:getDataAndTraceback(2)end function Exception.getExceptionById(o)return e[o]end\
+function Exception.throw(o,i,n)\
+if\
+class.isClass(o)then o=o(i,(n or 1)+1)elseif type(o)==\"string\"then\
+o=Exception(o,i,(n or 1)+1)elseif not class.typeOf(o,Exception)then return\
+Exception.throw(\"IncorrectParameterException\",\
+\"expected class, string, or Exception e, got \"..class.type(o))end t=o\
+error(\"SHEETS_EXCEPTION\\nPut code in a try block to catch the exception.\",0)end\
+function Exception.try(o)local i,n=pcall(o)\
+if not i and\
+n==\"SHEETS_EXCEPTION\\nPut code in a try block to catch the exception.\"then return a end return error(n,0)end function Exception.catch(o)\
+return function(a)return{catch=o,handler=a}end end function Exception.default(a)\
+return{default=true,handler=a}end","sheets.exceptions.Exception",nil,_ENV)if not __f then error(__err,0)end __f()
+local __f,__err=load("class\"IncorrectParameterException\"extends\"Exception\"\
+function IncorrectParameterException:IncorrectParameterException(e,t)return\
+self:Exception(\"IncorrectParameterException\",e,t)end","sheets.exceptions.IncorrectParameterException",nil,_ENV)if not __f then error(__err,0)end __f()
+local __f,__err=load("class\"IncorrectConstructorException\"extends\"Exception\"\
+function IncorrectConstructorException:IncorrectConstructorException(e,t)return\
+self:Exception(\"IncorrectConstructorException\",e,t)end","sheets.exceptions.IncorrectConstructorException",nil,_ENV)if not __f then error(__err,0)end __f()
+local __f,__err=load("functionParameters={}\
+function functionParameters.checkConstructor(e,t,...)local a={...}\
+for o=1,t*3,3 do local i=a[o]\
+local n=a[o+1]local s=a[o+2]\
+if type(n)==\"string\"then if type(s)~=n then\
+Exception.throw(IncorrectConstructorException,\
+e:type()..\" expects \"..n..\
+\" \"..i..\" when created, got \"..class.type(s),4)end else\
+if not\
+class.typeOf(s,n)then\
+Exception.throw(IncorrectConstructorException,e:type()..\" expects \"..\
+n:type()..\" \"..i..\" when created, got \"..\
+class.type(s),4)end end end end\
+function functionParameters.check(e,...)local t={...}\
+for a=1,e*3,3 do local o=t[a]local i=t[a+1]local n=t[a+2]\
+if\
+type(i)==\"string\"then if type(n)~=i then\
+Exception.throw(IncorrectParameterException,\"expected \"..i..\" \"..o..\", got \"..\
+class.type(n),3)end else if not\
+class.typeOf(n,i)then\
+Exception.throw(IncorrectParameterException,\"expected \"..i:type()..\" \"..o..\
+\", got \"..class.type(n),3)end end end end","sheets.functionParameters",nil,_ENV)if not __f then error(__err,0)end __f()
+
+local __f,__err=load("interface\"IAnimation\"{}\
+function IAnimation:IAnimation()self.animations={}end\
+function IAnimation:addAnimation(e,t,a)\
+functionParameters.check(3,\"label\",\"string\",e,\"setter\",\"function\",t,\"animation\",Animation,a)self.animations[e]={setter=t,animation=a}if a.value then\
+t(self,a.value)end return a end\
+function IAnimation:stopAnimation(e)\
+functionParameters.check(1,\"label\",\"string\",e)local t=self.animations[e]self.animations[e]=nil return t end\
+function IAnimation:updateAnimations(e)\
+functionParameters.check(1,\"dt\",\"number\",e)local t={}local a=self.animations local o,i=next(a)\
+while a[o]do local n=i.animation\
+n:update(e)if n.value then i.setter(self,n.value)end if n:finished()then\
+t[#t+1]=o end o,i=next(a,o)end for n=1,#t do self.animations[t[n]]=nil end end","sheets.interfaces.IAnimation",nil,_ENV)if not __f then error(__err,0)end __f()
 local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
-interface \"IAnimation\" {}\
-\
-function IAnimation:IAnimation()\
-self.animations = {}\
-end\
-\
-function IAnimation:addAnimation( label, setter, animation )\
-functionParameters.check( 3,\
-\"label\", \"string\", label,\
-\"setter\", \"function\", setter,\
-\"animation\", Animation, animation\
-)\
-\
-self.animations[label] = {\
-setter = setter;\
-animation = animation;\
-}\
-if animation.value then\
-setter( self, animation.value )\
-end\
-\
-return animation\
-end\
-\
-function IAnimation:stopAnimation( label )\
-functionParameters.check( 1, \"label\", \"string\", label )\
-\
-local a = self.animations[label]\
-self.animations[label] = nil\
-return a\
-end\
-\
-function IAnimation:updateAnimations( dt )\
-functionParameters.check( 1, \"dt\", \"number\", dt )\
-\
-local finished = {}\
-local animations = self.animations\
-local k, v = next( animations )\
-\
-while animations[k] do\
-\
-local animation = v.animation\
-animation:update( dt )\
-if animation.value then\
-v.setter( self, animation.value )\
-end\
-\
-if animation:finished() then\
-finished[#finished + 1] = k\
-end\
-\
-k, v = next( animations, k )\
-end\
-\
-for i = 1, #finished do\
-self.animations[finished[i]] = nil\
-end\
-end","sheets.interfaces.IAnimation",nil,_ENV)if not __f then error(__err,0)end __f()
-local __f,__err=load("\
-interface \"IChildContainer\" {\
-children = {}\
-}\
-\
+local function e(a,o,i,n,s,h,r)r=r or\"transition\"\
+functionParameters.check(3,\"to\",\"number\",s,\"time\",\"number\",h or 0,\"easing\",type(r)==\
+\"string\"and\"string\"or\"function\",r)\
+local d=Animation():setRounded():addKeyFrame(n,s,h or.3,r)a:addAnimation(o,i,d)return d end\
+local function t(a,o,i,n,s,h)if not a.parent then return end\
+local r=Animation():setRounded():addKeyFrame(n,s,h,\
+o==\"in\"and\"entrance\"or\"exit\")if i then a:addAnimation(\"y\",a.setY,r)else\
+a:addAnimation(\"x\",a.setX,r)end if o==\"exit\"then\
+function r.onFinish()a:remove()end end return r end interface\"IAttributeAnimator\"{}\
+function IAttributeAnimator:animateValue(a,o,i,n,s,h)s=\
+s or\"transition\"\
+functionParameters.check(5,\"value\",\"string\",a,\"from\",\"number\",o,\"to\",\"number\",i,\"time\",\"number\",n or\
+0,\"easing\",type(s)==\"string\"and\"string\"or\"function\",s)\
+local r=(h and Animation():setRounded()or Animation()):addKeyFrame(o,i,n,s)\
+local d=self[\"set\"..a:sub(1,1):upper()..a:sub(2)]return self:addAnimation(a,d,r)end function IAttributeAnimator:animateX(a,o,i)\
+return e(self,\"x\",self.setX,self.x,a,o,i)end function IAttributeAnimator:animateY(a,o,i)return\
+e(self,\"y\",self.setY,self.y,a,o,i)end function IAttributeAnimator:animateZ(a,o,i)return\
+e(self,\"z\",self.setZ,self.z,a,o,i)end\
+function IAttributeAnimator:animateWidth(a,o,i)return\
+e(self,\"width\",self.setWidth,self.width,a,o,i)end function IAttributeAnimator:animateHeight(a,o,i)\
+return e(self,\"height\",self.setHeight,self.height,a,o,i)end\
+function IAttributeAnimator:animateIn(a,o,i)a=\
+a or\"top\"i=i or.3\
+functionParameters.check(3,\"side\",\"string\",a,\"to\",\"number\",o or 0,\"time\",\"number\",i)\
+if a==\"top\"then return t(self,\"in\",true,self.y,o or 0,i)elseif a==\"left\"then return t(self,\"in\",false,self.x,\
+o or 0,i)elseif a==\"right\"then\
+return t(self,\"in\",false,self.x,o or\
+self.parent.width-self.width,i)elseif a==\"bottom\"then return\
+t(self,\"in\",true,self.y,o or self.parent.height-self.height,i)else\
+throw(IncorrectParameterException(\"invalid side '\"..a..\"'\",2))end end\
+function IAttributeAnimator:animateOut(a,o,i)a=a or\"top\"i=i or.3\
+functionParameters.check(3,\"side\",\"string\",a,\"to\",\"number\",\
+o or 0,\"time\",\"number\",i)\
+if a==\"top\"then\
+return t(self,\"out\",true,self.y,o or-self.height,i)elseif a==\"left\"then\
+return t(self,\"out\",false,self.x,o or-self.width,i)elseif a==\"right\"then\
+return t(self,\"out\",false,self.x,o or self.parent.width,i)elseif a==\"bottom\"then return\
+t(self,\"out\",true,self.y,o or self.parent.height,i)else\
+throw(IncorrectParameterException(\"invalid side '\"..a..\"'\",2))end end","sheets.interfaces.IAttributeAnimator",nil,_ENV)if not __f then error(__err,0)end __f()
+local __f,__err=load("interface\"IChildContainer\"{children={}}\
 function IChildContainer:IChildContainer()\
-self.children = {}\
-\
-self.meta.__add = self.addChild\
-\
-function self.meta:__concat( child )\
-self:addChild( child )\
-return self\
-end\
-end\
-\
-function IChildContainer:addChild( child )\
-functionParameters.check( 1, \"child\", Sheet, child )\
-\
-local children = self.children\
-\
-if child.parent then\
-child.parent:removeChild( child )\
-end\
-\
-child.parent = self\
-self:setChanged()\
-\
-for i = 1, #children do\
-if children[i].z > child.z then\
-table.insert( children, i, child )\
-return child\
-end\
-end\
-\
-children[#children + 1] = child\
-return child\
-end\
-\
-function IChildContainer:removeChild( child )\
-for i = 1, #self.children do\
-if self.children[i] == child then\
-child.parent = nil\
-self:setChanged()\
-return table.remove( self.children, i )\
-end\
-end\
-end\
-\
-function IChildContainer:getChildById( id )\
-functionParameters.check( 1, \"id\", \"string\", id )\
-\
-for i = #self.children, 1, -1 do\
-local c = self.children[i]:getChildById( id )\
-if c then\
-return c\
-elseif self.children[i].id == id then\
-return self.children[i]\
-end\
-end\
-end\
-\
-function IChildContainer:getChildrenById( id )\
-functionParameters.check( 1, \"id\", \"string\", id )\
-\
-local t = {}\
-for i = #self.children, 1, -1 do\
-local subt = self.children[i]:getChildrenById( id )\
-for i = 1, #subt do\
-t[#t + 1] = subt[i]\
-end\
-if self.children[i].id == id then\
-t[#t + 1] = self.children[i]\
-end\
-end\
-return t\
-end\
-\
-function IChildContainer:getChildrenAt( x, y )\
-functionParameters.check( 2, \"x\", \"number\", x, \"y\", \"number\", y )\
-\
-local c = {}\
-local children = self.children\
-for i = 1, #children do\
-c[i] = children[i]\
-end\
-\
-local elements = {}\
-\
-for i = #c, 1, -1 do\
-c[i]:handle( MouseEvent( EVENT_MOUSE_PING, x - c[i].x, y - c[i].y, elements, true ) )\
-end\
-\
-return elements\
-end\
-\
-function IChildContainer:isChildVisible( child )\
-functionParameters.check( 1, \"child\", Sheet, child )\
-\
-return child.x + child.width > 0 and child.y + child.height > 0 and child.x < self.width and child.y < self.height\
-end\
-\
-function IChildContainer:repositionChildZIndex( child )\
-local children = self.children\
-\
-for i = 1, #children do\
-if children[i] == child then\
-while children[i-1] and children[i-1].z > child.z do\
-children[i-1], children[i] = child, children[i-1]\
-i = i - 1\
-end\
-while children[i+1] and children[i+1].z < child.z do\
-children[i+1], children[i] = child, children[i+1]\
-i = i + 1\
-end\
-\
-self:setChanged()\
-break\
-end\
-end\
-end","sheets.interfaces.IChildContainer",nil,_ENV)if not __f then error(__err,0)end __f()
-local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
-interface \"ISize\" {\
-width = 0;\
-height = 0;\
-}\
-\
-function ISize:setWidth( width )\
-functionParameters.check( 1, \"width\", \"number\", width )\
-\
-if self.width ~= width then\
-self.width = width\
-self.canvas:setWidth( width )\
-self:setChanged()\
-for i = 1, #self.children do\
-self.children[i]:onParentResized()\
-end\
-end\
-return self\
-end\
-\
-function ISize:setHeight( height )\
-functionParameters.check( 1, \"height\", \"number\", height )\
-\
-if self.height ~= height then\
-self.height = height\
-self.canvas:setHeight( height )\
-for i = 1, #self.children do\
-self.children[i]:onParentResized()\
-end\
-end\
-return self\
-end","sheets.interfaces.ISize",nil,_ENV)if not __f then error(__err,0)end __f()
-local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
-local function animateAttribute( self, label, setter, from, to, time, easing )\
-easing = easing or \"transition\"\
-\
-functionParameters.check( 3, \"to\", \"number\", to, \"time\", \"number\", time or 0, \"easing\", type( easing ) == \"string\" and \"string\" or \"function\", easing )\
-\
-local a = Animation():setRounded()\
-:addKeyFrame( from, to, time or .3, easing )\
-self:addAnimation( label, setter, a )\
-return a\
-end\
-\
-local function animateElementInOrOut( self, mode, vertical, current, to, time )\
-if not self.parent then\
+self.children={}self.meta.__add=self.addChild function self.meta:__concat(e)\
+self:addChild(e)return self end end\
+function IChildContainer:addChild(e)\
+functionParameters.check(1,\"child\",Sheet,e)local t=self.children\
+if e.parent then e.parent:removeChild(e)end e.parent=self self:setChanged()for a=1,#t do if t[a].z>e.z then\
+table.insert(t,a,e)return e end end\
+t[#t+1]=e return e end\
+function IChildContainer:removeChild(e)\
+for t=1,#self.children do if self.children[t]==e then\
+e.parent=nil self:setChanged()\
+return table.remove(self.children,t)end end end\
+function IChildContainer:getChildById(e)\
+functionParameters.check(1,\"id\",\"string\",e)\
+for t=#self.children,1,-1 do\
+local a=self.children[t]:getChildById(e)\
+if a then return a elseif self.children[t].id==e then return self.children[t]end end end\
+function IChildContainer:getChildrenById(e)\
+functionParameters.check(1,\"id\",\"string\",e)local a={}\
+for t=#self.children,1,-1 do\
+local o=self.children[t]:getChildrenById(e)for t=1,#o do a[#a+1]=o[t]end if self.children[t].id==e then\
+a[#a+1]=self.children[t]end end return a end\
+function IChildContainer:getChildrenAt(e,t)\
+functionParameters.check(2,\"x\",\"number\",e,\"y\",\"number\",t)local a={}local o=self.children for n=1,#o do a[n]=o[n]end local i={}for n=#a,1,-1 do\
+a[n]:handle(MouseEvent(EVENT_MOUSE_PING,\
+e-a[n].x,t-a[n].y,i,true))end return i end\
+function IChildContainer:isChildVisible(e)\
+functionParameters.check(1,\"child\",Sheet,e)\
 return\
-end\
-\
-local a = Animation():setRounded():addKeyFrame( current, to, time, mode == \"in\" and \"entrance\" or \"exit\" )\
-\
-if vertical then\
-self:addAnimation( \"y\", self.setY, a )\
-else\
-self:addAnimation( \"x\", self.setX, a )\
-end\
-if mode == \"exit\" then\
-function a.onFinish() self:remove() end\
-end\
-\
-return a\
-end\
-\
-interface \"IPositionAnimator\" {}\
-\
-function IPositionAnimator:animateX( to, time, easing )\
-return animateAttribute( self, \"x\", self.setX, self.x, to, time, easing )\
-end\
-\
-function IPositionAnimator:animateY( to, time, easing )\
-return animateAttribute( self, \"y\", self.setY, self.y, to, time, easing )\
-end\
-\
-function IPositionAnimator:animateZ( to, time, easing )\
-return animateAttribute( self, \"z\", self.setZ, self.z, to, time, easing )\
-end\
-\
-function IPositionAnimator:animateWidth( to, time, easing )\
-return animateAttribute( self, \"width\", self.setWidth, self.width, to, time, easing )\
-end\
-\
-function IPositionAnimator:animateHeight( to, time, easing )\
-return animateAttribute( self, \"height\", self.setHeight, self.height, to, time, easing )\
-end\
-\
-function IPositionAnimator:animateIn( side, to, time )\
-side = side or \"top\"\
-time = time or .3\
-\
-functionParameters.check( 3, \"side\", \"string\", side, \"to\", \"number\", to or 0, \"time\", \"number\", time )\
-\
-if side == \"top\" then\
-return animateElementInOrOut( self, \"in\", true, self.y, to or 0, time )\
-elseif side == \"left\" then\
-return animateElementInOrOut( self, \"in\", false, self.x, to or 0, time )\
-elseif side == \"right\" then\
-return animateElementInOrOut( self, \"in\", false, self.x, to or self.parent.width - self.width, time )\
-elseif side == \"bottom\" then\
-return animateElementInOrOut( self, \"in\", true, self.y, to or self.parent.height - self.height, time )\
-else\
-throw( IncorrectParameterException( \"invalid side '\" .. side .. \"'\", 2 ) )\
-end\
-end\
-\
-function IPositionAnimator:animateOut( side, to, time )\
-side = side or \"top\"\
-time = time or .3\
-\
-functionParameters.check( 3, \"side\", \"string\", side, \"to\", \"number\", to or 0, \"time\", \"number\", time )\
-\
-if side == \"top\" then\
-return animateElementInOrOut( self, \"out\", true, self.y, to or -self.height, time )\
-elseif side == \"left\" then\
-return animateElementInOrOut( self, \"out\", false, self.x, to or -self.width, time )\
-elseif side == \"right\" then\
-return animateElementInOrOut( self, \"out\", false, self.x, to or self.parent.width, time )\
-elseif side == \"bottom\" then\
-return animateElementInOrOut( self, \"out\", true, self.y, to or self.parent.height, time )\
-else\
-throw( IncorrectParameterException( \"invalid side '\" .. side .. \"'\", 2 ) )\
-end\
-end","sheets.interfaces.IPositionAnimator",nil,_ENV)if not __f then error(__err,0)end __f()
-local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
-local wrapline, wrap\
-\
-interface \"IHasText\" {\
-text = \"\";\
-text_lines = nil;\
-}\
-\
+e.x+e.width>0 and e.y+e.height>0 and e.x<self.width and e.y<self.height end\
+function IChildContainer:repositionChildZIndex(e)local t=self.children\
+for a=1,#t do\
+if t[a]==e then while t[a-1]and\
+t[a-1].z>e.z do t[a-1],t[a]=e,t[a-1]a=a-1 end\
+while\
+t[a+1]and t[a+1].z<e.z do t[a+1],t[a]=e,t[a+1]a=a+1 end self:setChanged()break end end end","sheets.interfaces.IChildContainer",nil,_ENV)if not __f then error(__err,0)end __f()
+local __f,__err=load("interface\"ISize\"{width=0,height=0}\
+function ISize:setWidth(e)\
+functionParameters.check(1,\"width\",\"number\",e)\
+if self.width~=e then self.width=e self.canvas:setWidth(e)\
+self:setChanged()for t=1,#self.children do\
+self.children[t]:onParentResized()end end return self end\
+function ISize:setHeight(e)\
+functionParameters.check(1,\"height\",\"number\",e)if self.height~=e then self.height=e self.canvas:setHeight(e)\
+for t=1,#\
+self.children do self.children[t]:onParentResized()end end return self end","sheets.interfaces.ISize",nil,_ENV)if not __f then error(__err,0)end __f()
+local __f,__err=load("local e,t\
+interface\"IHasText\"{text=\"\",text_lines=nil}\
 function IHasText:autoHeight()\
-if not self.text_lines then\
-self:wrapText( true )\
-end\
-return self:setHeight( #self.text_lines )\
-end\
-\
-function IHasText:setText( text )\
-functionParameters.check( 1, \"text\", \"string\", text )\
-\
-self.text = text\
-self:wrapText()\
-self:setChanged()\
-return self\
-end\
-\
-function IHasText:wrapText( ignoreHeight )\
-self.text_lines = wrap( self.text, self.width, not ignoreHeight and self.height )\
-end\
-\
-function IHasText:drawText( mode )\
-local offset, lines = 0, self.text_lines\
-mode = mode or \"default\"\
-\
-local horizontal_alignment = self.style:getField( \"horizontal-alignment.\" .. mode )\
-local vertical_alignment = self.style:getField( \"vertical-alignment.\" .. mode )\
-\
-if not lines then\
-self:wrapText()\
-lines = self.text_lines\
-end\
-\
-if vertical_alignment == 1 then\
-offset = math.floor( self.height / 2 - #lines / 2 + .5 )\
-elseif vertical_alignment == 4 then\
-offset = self.height - #lines\
-end\
-\
-for i = 1, #lines do\
-\
-local xOffset = 0\
-if horizontal_alignment == 1 then\
-xOffset = math.floor( self.width / 2 - #lines[i] / 2 + .5 )\
-elseif horizontal_alignment == 2 then\
-xOffset = self.width - #lines[i]\
-end\
-\
-self.canvas:drawText( xOffset, offset + i - 1, lines[i], {\
-colour = 0;\
-textColour = self.style:getField( \"textColour.\" .. mode );\
-} )\
-\
-end\
-end\
-\
-function IHasText:onPreDraw()\
-self:drawText \"default\"\
-end\
-\
-function wrapline( text, width )\
-if text:sub( 1, width ):find \"\\n\" then\
-return text:match \"^(.-)\\n[^%S\\n]*(.*)$\"\
-end\
-if #text < width then\
-return text\
-end\
-for i = width + 1, 1, -1 do\
-if text:sub( i, i ):find \"%s\" then\
-return text:sub( 1, i - 1 ):gsub( \"[^%S\\n]+$\", \"\" ), text:sub( i + 1 ):gsub( \"^[^%S\\n]+\", \"\" )\
-end\
-end\
-return text:sub( 1, width ), text:sub( width + 1 )\
-end\
-\
-function wrap( text, width, height )\
-local lines, line = {}\
-while text and ( not height or #lines < height ) do\
-line, text = wrapline( text, width )\
-lines[#lines + 1] = line\
-end\
-return lines\
-end","sheets.interfaces.IHasText",nil,_ENV)if not __f then error(__err,0)end __f()
+if not self.text_lines then self:wrapText(true)end return self:setHeight(#self.text_lines)end\
+function IHasText:setText(a)\
+functionParameters.check(1,\"text\",\"string\",a)self.text=a self:wrapText()self:setChanged()return self end function IHasText:wrapText(a)\
+self.text_lines=t(self.text,self.width,not a and self.height)end\
+function IHasText:drawText(a)\
+local o,i=0,self.text_lines a=a or\"default\"\
+local n=self.style:getField(\"horizontal-alignment.\"..a)\
+local s=self.style:getField(\"vertical-alignment.\"..a)if not i then self:wrapText()i=self.text_lines end if s==1 then o=math.floor(\
+self.height/2-#i/2+.5)elseif s==4 then o=\
+self.height-#i end\
+for h=1,#i do local r=0\
+if n==1 then\
+r=math.floor(\
+self.width/2-#i[h]/2+.5)elseif n==2 then r=self.width-#i[h]end\
+self.canvas:drawText(r,o+h-1,i[h],{colour=0,textColour=self.style:getField(\"textColour.\"..a)})end end function IHasText:onPreDraw()self:drawText\"default\"end\
+function e(a,o)if\
+a:sub(1,o):find\"\\n\"then return a:match\"^(.-)\\n[^%S\\n]*(.*)$\"end if#a<o then\
+return a end\
+for n=o+1,1,-1 do if a:sub(n,n):find\"%s\"then\
+return\
+a:sub(1,n-1):gsub(\"[^%S\\n]+$\",\"\"),a:sub(n+1):gsub(\"^[^%S\\n]+\",\"\")end end return a:sub(1,o),a:sub(o+1)end function t(a,o,i)local n,s={}\
+while a and(not i or#n<i)do s,a=e(a,o)n[#n+1]=s end return n end","sheets.interfaces.IHasText",nil,_ENV)if not __f then error(__err,0)end __f()
 
-local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
-class \"KeyboardEvent\" {\
-event = \"KeyboardEvent\";\
-key = 0;\
-held = {};\
-}\
-\
-function KeyboardEvent:KeyboardEvent( event, key, held )\
-self.event = event\
-self.key = key\
-self.held = held\
-end\
-\
-function KeyboardEvent:matches( hotkey )\
-local t\
-\
-for segment in hotkey:gmatch \"(.*)%-\" do\
-if not self.held[segment] or ( t and self.held[segment] < t ) then\
-return false\
-end\
-t = self.held[segment]\
-end\
-\
-return self.key == keys[hotkey:gsub( \".+%-\", \"\" )]\
-end\
-\
-function KeyboardEvent:isHeld( key )\
-return self.key == keys[key] or self.held[key]\
-end\
-\
-function KeyboardEvent:tostring()\
-return \"KeyboardEvent\"\
-end\
-\
-function KeyboardEvent:is( event )\
-return self.event == event\
-end\
-\
-function KeyboardEvent:handle( handler )\
-self.handled = true\
-self.handler = handler\
-end","sheets.events.KeyboardEvent",nil,_ENV)if not __f then error(__err,0)end __f()
-local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
-class \"MiscEvent\" {\
-event = \"MiscEvent\";\
-parameters = {};\
-}\
-\
-function MiscEvent:MiscEvent( event, ... )\
-self.event = event\
-self.parameters = { ... }\
-end\
-\
-function MiscEvent:is( event )\
-return self.event == event\
-end\
-\
-function MiscEvent:handle( handler )\
-self.handled = true\
-self.handler = handler\
-end","sheets.events.MiscEvent",nil,_ENV)if not __f then error(__err,0)end __f()
-local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
-\
-class \"MouseEvent\" {\
-event = \"MouseEvent\";\
-x = 0;\
-y = 0;\
-button = 0;\
-within = true;\
-}\
-\
-function MouseEvent:MouseEvent( event, x, y, button, within )\
-self.event = event\
-self.x = x\
-self.y = y\
-self.button = button\
-self.within = within\
-end\
-\
-function MouseEvent:isWithinArea( x, y, width, height )\
-functionParameters.check( 4,\
-\"x\", \"number\", x,\
-\"y\", \"number\", y,\
-\"width\", \"number\", width,\
-\"height\", \"number\", height\
-)\
-\
-return self.x >= x and self.y >= y and self.x < x + width and self.y < y + height\
-end\
-\
-function MouseEvent:clone( x, y, within )\
-functionParameters.check( 2,\
-\"x\", \"number\", x,\
-\"y\", \"number\", y\
-)\
-\
-local sub = MouseEvent( self.event, self.x - x, self.y - y, self.button, self.within and within or false )\
-sub.handled = self.handled\
-\
-function sub.handle()\
-sub.handled = true\
-self:handle()\
-end\
-\
-return sub\
-end\
-\
-function MouseEvent:is( event )\
-return self.event == event\
-end\
-\
-function MouseEvent:handle( handler )\
-self.handled = true\
-self.handler = handler\
-end","sheets.events.MouseEvent",nil,_ENV)if not __f then error(__err,0)end __f()
-local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
-class \"TextEvent\" {\
-event = \"TextEvent\";\
-text = \"\";\
-}\
-\
-function TextEvent:TextEvent( event, text )\
-self.event = event\
-self.text = text\
-end\
-\
-function TextEvent:is( event )\
-return self.event == event\
-end\
-\
-function TextEvent:handle( handler )\
-self.handled = true\
-self.handler = handler\
-end","sheets.events.TextEvent",nil,_ENV)if not __f then error(__err,0)end __f()
+local __f,__err=load("class\"Event\"{event=\"Event\"}\
+function Event:tostring()return self.name end function Event:is(e)return self.event==e end function Event:handle(e)\
+self.handled=true self.handler=e end","sheets.events.Event",nil,_ENV)if not __f then error(__err,0)end __f()
+local __f,__err=load("class\"KeyboardEvent\"\
+extends\"Event\"{event=\"KeyboardEvent\",key=0,held={}}\
+function KeyboardEvent:KeyboardEvent(e,t,a)self.event=e self.key=t self.held=a end\
+function KeyboardEvent:matches(e)local a for t in e:gmatch\"(.*)%-\"do if not self.held[t]or\
+(a and self.held[t]<a)then return false end\
+a=self.held[t]end return self.key==\
+keys[e:gsub(\".+%-\",\"\")]end function KeyboardEvent:isHeld(e)\
+return self.key==keys[e]or self.held[e]end","sheets.events.KeyboardEvent",nil,_ENV)if not __f then error(__err,0)end __f()
+local __f,__err=load("class\"MiscEvent\"\
+extends\"Event\"{event=\"MiscEvent\",parameters={}}\
+function MiscEvent:MiscEvent(e,...)self.event=e self.parameters={...}end","sheets.events.MiscEvent",nil,_ENV)if not __f then error(__err,0)end __f()
+local __f,__err=load("class\"MouseEvent\"\
+extends\"Event\"{event=\"MouseEvent\",x=0,y=0,button=0,within=true}function MouseEvent:MouseEvent(e,t,a,o,i)self.event=e self.x=t self.y=a self.button=o\
+self.within=i end\
+function MouseEvent:isWithinArea(e,t,a,o)\
+functionParameters.check(4,\"x\",\"number\",e,\"y\",\"number\",t,\"width\",\"number\",a,\"height\",\"number\",o)return self.x>=e and self.y>=t and self.x<e+a and\
+self.y<t+o end\
+function MouseEvent:clone(e,t,a)\
+functionParameters.check(2,\"x\",\"number\",e,\"y\",\"number\",t)\
+local o=MouseEvent(self.event,self.x-e,self.y-t,self.button,self.within and a or false)o.handled=self.handled\
+function o.handle()o.handled=true self:handle()end return o end","sheets.events.MouseEvent",nil,_ENV)if not __f then error(__err,0)end __f()
+local __f,__err=load("class\"TextEvent\"\
+extends\"Event\"{event=\"TextEvent\",text=\"\"}function TextEvent:TextEvent(e,t)self.event=e self.text=t end","sheets.events.TextEvent",nil,_ENV)if not __f then error(__err,0)end __f()
 
-local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
-local sin, cos = math.sin, math.cos\
-local halfpi = math.pi / 2\
-\
-local function easing_transition( u, d, t )\
-return u + d * ( 3 * t * t - 2 * t * t * t )\
-end\
-\
-local function easing_exit( u, d, t )\
-return -d * cos(t * halfpi) + d + u\
-end\
-\
-local function easing_entrance( u, d, t )\
-return u + d * sin(t * halfpi)\
-end\
-\
-class \"Animation\" {\
-frame = 1;\
-frames = {};\
-value = nil;\
-rounded = false;\
-}\
-\
-function Animation:Animation()\
-self.frames = {}\
-end\
-\
-function Animation:setRounded( value )\
-self.rounded = value ~= false\
-return self\
-end\
-\
-function Animation:addKeyFrame( initial, final, duration, easing )\
-duration = duration or .5\
-easing = easing or easing_transition\
-\
-if not easing or easing == \"transition\" then\
-easing = easing_transition\
-elseif easing == \"entrance\" then\
-easing = easing_entrance\
-elseif easing == \"exit\" then\
-easing = easing_exit\
-end\
-\
-functionParameters.check( 4,\
-\"initial\", \"number\", initial,\
-\"final\", \"number\", final,\
-\"duration\", \"number\", duration,\
-\"easing\", \"function\", easing\
-)\
-\
-local frame = {\
-ease = true;\
-clock = 0;\
-duration = duration;\
-initial = initial;\
-difference = final - initial;\
-easing = easing;\
-}\
-\
-self.frames[#self.frames + 1] = frame\
-\
-if #self.frames == 1 then\
-self.value = initial\
-end\
-\
-return self\
-end\
-\
-function Animation:addPause( pause )\
-pause = pause or 1\
-functionParameters.check( 1, \"pause\", \"number\", pause )\
-\
-local frame = {\
-clock = 0;\
-duration = pause;\
-}\
-\
-self.frames[#self.frames + 1] = frame\
-\
-return self\
-end\
-\
-function Animation:frameFinished()\
-if type( self.onFrameFinished ) == \"function\" then\
-self:onFrameFinished( self.frame )\
-end\
-\
-self.frame = self.frame + 1\
-\
-if not self.frames[self.frame] and type( self.onFinish ) == \"function\" then\
-self:onFinish()\
-end\
-end\
-\
-function Animation:update( dt )\
-functionParameters.check( 1, \"dt\", \"number\", dt )\
-\
-local frame = self.frames[self.frame]\
-\
-if frame then\
-frame.clock = math.min( frame.clock + dt, frame.duration )\
-\
-if frame.ease then\
-\
-local value = frame.easing( frame.initial, frame.difference, frame.clock / frame.duration )\
-if self.rounded then\
-value = math.floor( value + .5 )\
-end\
-\
-self.value = value\
-\
-if frame.clock >= frame.duration then\
-self:frameFinished()\
-end\
-\
-end\
-\
-if frame.clock >= frame.duration then\
-self:frameFinished()\
-end\
-end\
-end\
-\
-function Animation:finished()\
-return not self.frames[self.frame]\
-end","sheets.Animation",nil,_ENV)if not __f then error(__err,0)end __f()
-local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
-local function exceptionHandler( e )\
-return error( tostring( e ), 0 )\
-end\
-\
-class \"Application\" implements \"IAnimation\"\
-{\
-name = \"UnNamed Application\";\
-path = \"\";\
-\
-terminateable = true;\
-running = true;\
-\
-screens = {};\
-screen = nil;\
-\
-mouse = nil;\
-keys = {};\
-changed = true;\
-}\
-\
+local __f,__err=load("local e,t=math.sin,math.cos local a=math.pi/2 local function o(s,h,r)return s+\
+h* (3*r*r-2*r*r*r)end local function i(s,h,r)return\
+-h*t(r*a)+h+s end\
+local function n(s,h,r)return s+h*e(r*a)end\
+class\"Animation\"{frame=1,frames={},value=nil,rounded=false}function Animation:Animation()self.frames={}end function Animation:setRounded(s)self.rounded=\
+s~=false return self end\
+function Animation:addKeyFrame(s,h,r,d)r=\
+r or.5 d=d or o\
+if not d or d==\"transition\"then d=o elseif d==\"entrance\"then d=n elseif d==\"exit\"then d=i end\
+functionParameters.check(4,\"initial\",\"number\",s,\"final\",\"number\",h,\"duration\",\"number\",r,\"easing\",\"function\",d)local l={ease=true,clock=0,duration=r,initial=s,difference=h-s,easing=d}self.frames[\
+#self.frames+1]=l if#self.frames==1 then\
+self.value=s end return self end\
+function Animation:addPause(s)s=s or 1\
+functionParameters.check(1,\"pause\",\"number\",s)local h={clock=0,duration=s}\
+self.frames[#self.frames+1]=h return self end\
+function Animation:frameFinished()if type(self.onFrameFinished)==\"function\"then\
+self:onFrameFinished(self.frame)end self.frame=self.frame+1 if\
+not\
+self.frames[self.frame]and type(self.onFinish)==\"function\"then self:onFinish()end end\
+function Animation:update(s)\
+functionParameters.check(1,\"dt\",\"number\",s)local h=self.frames[self.frame]\
+if h then\
+h.clock=math.min(h.clock+s,h.duration)\
+if h.ease then\
+local r=h.easing(h.initial,h.difference,h.clock/h.duration)if self.rounded then r=math.floor(r+.5)end self.value=r if h.clock>=\
+h.duration then self:frameFinished()end end\
+if h.clock>=h.duration then self:frameFinished()end end end\
+function Animation:finished()return not self.frames[self.frame]end","sheets.Animation",nil,_ENV)if not __f then error(__err,0)end __f()
+local __f,__err=load("local function e(a)return error(tostring(a),0)end local t\
+class\"Application\"{name=\"UnNamed Application\",path=\"\",terminateable=true,running=true,screens={},screen=\
+nil,mouse=nil,keys={},changed=false}\
 function Application:Application()\
-self:IAnimation()\
-\
-self.screens = { Screen( self, term.getSize() ):addTerminal( term ) }\
-self.screen = self.screens[1]\
-end\
-\
-function Application:stop()\
-self.running = false\
-return self\
-end\
-\
-function Application:addScreen( screen )\
-functionParameters.check( 1, \"screen\", Screen, screen )\
-self.screens[#self.screens + 1] = screen\
-\
-return screen\
-end\
-\
-function Application:removeScreen( screen )\
-functionParameters.check( 1, \"screen\", Screen, screen )\
-for i = #self.screens, 1, -1 do\
-if self.screens[i] == screen then\
-return table.remove( self.screens, i )\
-end\
-end\
-end\
-\
-function Application:event( event, ... )\
-local params = { ... }\
-local screens = {}\
-\
-local function handle( e )\
-for i = #screens, 1, -1 do\
-screens[i]:handle( e )\
-end\
-end\
-\
-if event == \"timer\" and timer.update( ... ) then\
-return\
-end\
-\
-for i = 1, #self.screens do\
-screens[i] = self.screens[i]\
-end\
-\
-if event == \"mouse_click\" then\
-self.mouse = {\
-x = params[2] - 1, y = params[3] - 1;\
-down = true, button = params[1];\
-timer = os.startTimer( 1 ), time = os.clock(), moved = false;\
-}\
-\
-handle( MouseEvent( 0, params[2] - 1, params[3] - 1, params[1], true ) )\
-\
-elseif event == \"mouse_up\" then\
-handle( MouseEvent( 1, params[2] - 1, params[3] - 1, params[1], true ) )\
-\
-self.mouse.down = false\
-os.cancelTimer( self.mouse.timer )\
-\
-if not self.mouse.moved and os.clock() - self.mouse.time < 1 and params[1] == self.mouse.button then\
-handle( MouseEvent( 2, params[2] - 1, params[3] - 1, params[1], true ) )\
-end\
-\
-elseif event == \"mouse_drag\" then\
-handle( MouseEvent( 4, params[2] - 1, params[3] - 1, params[1], true ) )\
-\
-self.mouse.moved = true\
-os.cancelTimer( self.mouse.timer )\
-\
-elseif event == \"mouse_scroll\" then\
-handle( MouseEvent( 5, params[2] - 1, params[3] - 1, params[1], true ) )\
-\
-elseif event == \"monitor_touch\" then -- broken\
---[[handle( MouseEvent( 0, params[2] - 1, params[3] - 1, 1 ) )\
-handle( MouseEvent( 1, params[2] - 1, params[3] - 1, 1 ) )\
-handle( MouseEvent( 2, params[2] - 1, params[3] - 1, 1 ) )]]\
-\
-elseif event == \"chatbox_something\" then\
--- handle( TextEvent( 10, params[1] ) )\
-\
-elseif event == \"char\" then\
-handle( TextEvent( 9, params[1] ) )\
-\
-elseif event == \"paste\" then\
-if self.keys.leftShift or self.keys.rightShift then\
-handle( KeyboardEvent( 7, keys.v, { leftCtrl = true, rightCtrl = true } ) )\
-else\
-handle( TextEvent( 11, params[1] ) )\
-end\
-\
-elseif event == \"key\" then\
-self.keys[keys.getName( params[1] ) or params[1]] = os.clock()\
-handle( KeyboardEvent( 7, params[1], self.keys ) )\
-\
-elseif event == \"key_up\" then\
-self.keys[keys.getName( params[1] ) or params[1]] = nil\
-handle( KeyboardEvent( 8, params[1], self.keys ) )\
-\
-elseif event == \"term_resize\" then\
-self.width, self.height = term.getSize()\
-for i = 1, #self.screens do\
-self.screens[i]:onParentResized()\
-end\
-\
-elseif event == \"timer\" and params[1] == self.mouse.timer then\
-handle( MouseEvent( 3, self.mouse.x, self.mouse.y, self.mouse.button, true ) )\
-\
-else\
-handle( MiscEvent( event, ... ) )\
-end\
-end\
-\
+self.screens={Screen(self,term.getSize()):addTerminal(term)}self.screen=self.screens[1]self.keys={}end\
+function Application:isKeyPressed(a)\
+functionParameters.check(1,\"key\",\"string\",a)return self.keys[a]~=nil end function Application:stop()self.running=false return self end\
+function Application:addScreen()\
+local a=Screen(self,term.getSize())self.screens[#self.screens+1]=a return a end\
+function Application:removeScreen(a)\
+functionParameters.check(1,\"screen\",Screen,a)\
+for o=#self.screens,1,-1 do if self.screens[o]==a then\
+return table.remove(self.screens,o)end end end\
+function Application:event(a,...)local o={...}local i={}\
+local function n(s)for h=#i,1,-1 do i[h]:handle(s)end end if a==\"timer\"and timer.update(...)then return end for s=1,#\
+self.screens do i[s]=self.screens[s]end\
+return t(self,n,a,o,...)end function Application:draw()\
+if self.changed then for a=1,#self.screens do\
+self.screens[a]:draw()end self.changed=false end end\
 function Application:update()\
-\
-local dt = timer.getDelta()\
-timer.step()\
-\
-for i = 1, #self.screens do\
-self.screens[i]:update( dt )\
-end\
-\
-end\
-\
-function Application:draw()\
-\
---if self.changed then\
-for i = 1, #self.screens do\
-self.screens[i]:draw()\
-end\
-self.changed = false\
---end\
-\
-end\
-\
+local a=timer.getDelta()timer.step()for o=1,#self.screens do\
+self.screens[o]:update(a)end\
+if self.onUpdate then self:onUpdate(a)end end function Application:load()self.changed=true\
+if self.onLoad then return self:onLoad()end end\
 function Application:run()\
-\
-Exception.try (function()\
-\
-if self.onLoad then\
-self:onLoad()\
-end\
-local t = timer.new( 0 ) -- updating timer\
-while self.running do\
-local event = { coroutine.yield() }\
-if event[1] == \"timer\" and event[2] == t then\
-t = timer.new( .05 )\
-elseif event[1] == \"terminate\" and self.terminateable then\
-self:stop()\
-else\
-self:event( unpack( event ) )\
-end\
-self:update()\
-self:draw()\
-end\
-\
-end) {\
-Exception.default (exceptionHandler);\
-}\
-\
-end","sheets.Application",nil,_ENV)if not __f then error(__err,0)end __f()
-local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
-class \"Screen\"\
-implements \"IAnimation\"\
-implements \"IChildContainer\"\
-implements \"ISize\"\
-{\
-terminals = {};\
-monitors = {};\
-\
-canvas = nil;\
-parent = nil;\
-changed = true;\
-}\
-\
-function Screen:Screen( application, width, height )\
-self.parent = application\
-self.terminals = {}\
-self.monitors = {}\
-self.canvas = ScreenCanvas( width, height )\
-self.width = width\
-self.height = height\
-end\
-\
-function Screen:setChanged( state )\
-self.changed = state ~= false\
-if state ~= false then -- must have a parent Application\
-self.parent.changed = true\
-end\
-return self\
-end\
-\
-function Screen:addMonitor( side )\
-functionParameters.check( 1, \"side\", \"string\", side )\
-\
-if peripheral.getType( side ) ~= \"monitor\" then\
-throw( IncorrectParameterException, \"expected monitor on side '\" .. side .. \"', got \" .. peripheral.getType( side ), 2 )\
-end\
-\
-local mon = peripheral.wrap( side )\
-self.monitors[side] = mon\
-\
-return self:addTerminal( mon )\
-end\
-\
-function Screen:removeMonitor( side )\
-functionParameters.check( 1, \"side\", \"string\", side )\
-\
-local mon = self.monitors[side]\
-if mon then\
-self.monitors[side] = nil\
-self:removeTerminal( mon )\
-end\
-end\
-\
-function Screen:usesMonitor( side )\
-return self.monitors[side] ~= nil\
-end\
-\
-function Screen:addTerminal( t )\
-functionParameters.check( 1, \"terminal\", \"table\", t )\
-self.terminals[#self.terminals + 1] = t\
-return self:setChanged()\
-end\
-\
-function Screen:removeTerminal( t )\
-functionParameters.check( 1, \"terminal\", \"table\", t )\
-\
-for i = #self.terminals, 1, -1 do\
-if self.terminals[i] == t then\
-self:setChanged()\
-return table.remove( self.terminals, i )\
-end\
-end\
-end\
-\
+Exception.try(function()\
+self:load()local a=timer.new(0)\
+while self.running do local o={coroutine.yield()}\
+if\
+o[1]==\"timer\"and o[2]==a then a=timer.new(.05)elseif o[1]==\"terminate\"and\
+self.terminateable then self:stop()else self:event(unpack(o))end self:update()self:draw()end end){Exception.default(e)}end\
+function t(a,o,i,n,...)\
+if i==\"mouse_click\"then\
+a.mouse={x=n[2]-1,y=n[3]-1,down=true,button=n[1],timer=os.startTimer(1),time=os.clock(),moved=false}\
+o(MouseEvent(0,n[2]-1,n[3]-1,n[1],true))elseif i==\"mouse_up\"then\
+o(MouseEvent(1,n[2]-1,n[3]-1,n[1],true))a.mouse.down=false os.cancelTimer(a.mouse.timer)\
+if\
+not\
+a.mouse.moved and os.clock()-a.mouse.time<1 and n[1]==a.mouse.button then o(MouseEvent(2,n[2]-1,\
+n[3]-1,n[1],true))end elseif i==\"mouse_drag\"then\
+o(MouseEvent(4,n[2]-1,n[3]-1,n[1],true))a.mouse.moved=true os.cancelTimer(a.mouse.timer)elseif i==\
+\"mouse_scroll\"then\
+o(MouseEvent(5,n[2]-1,n[3]-1,n[1],true))elseif i==\"monitor_touch\"then elseif i==\"chatbox_something\"then elseif i==\"char\"then\
+o(TextEvent(9,n[1]))elseif i==\"paste\"then\
+if a.keys.leftShift or a.keys.rightShift then\
+o(KeyboardEvent(7,keys.v,{leftCtrl=true,rightCtrl=true}))else o(TextEvent(11,n[1]))end elseif i==\"key\"then\
+a.keys[keys.getName(n[1])or n[1]]=os.clock()o(KeyboardEvent(7,n[1],a.keys))elseif i==\"key_up\"then a.keys[\
+keys.getName(n[1])or n[1]]=nil\
+o(KeyboardEvent(8,n[1],a.keys))elseif i==\"term_resize\"then a.width,a.height=term.getSize()for s=1,#a.screens do\
+a.screens[s]:onParentResized()end elseif\
+i==\"timer\"and n[1]==a.mouse.timer then\
+o(MouseEvent(3,a.mouse.x,a.mouse.y,a.mouse.button,true))else o(MiscEvent(i,...))end end","sheets.Application",nil,_ENV)if not __f then error(__err,0)end __f()
+local __f,__err=load("class\"Screen\"implements\"IAnimation\"implements\"IChildContainer\"\
+implements\"ISize\"{terminals={},monitors={},canvas=\
+nil,parent=nil,changed=true}\
+function Screen:Screen(e,t,a)self.parent=e self.terminals={}self.monitors={}\
+self.canvas=ScreenCanvas(t,a)self.width=t self.height=a end function Screen:setChanged(e)self.changed=e~=false\
+if e~=false then self.parent.changed=true end return self end\
+function Screen:addMonitor(e)\
+functionParameters.check(1,\"side\",\"string\",e)if peripheral.getType(e)~=\"monitor\"then\
+throw(IncorrectParameterException,\
+\"expected monitor on side '\"..e..\"', got \"..peripheral.getType(e),2)end\
+local t=peripheral.wrap(e)self.monitors[e]=t return self:addTerminal(t)end\
+function Screen:removeMonitor(e)\
+functionParameters.check(1,\"side\",\"string\",e)local t=self.monitors[e]if t then self.monitors[e]=nil\
+self:removeTerminal(t)end return self end\
+function Screen:usesMonitor(e)return self.monitors[e]~=nil end\
+function Screen:addTerminal(e)\
+functionParameters.check(1,\"terminal\",\"table\",e)self.terminals[#self.terminals+1]=e return\
+self:setChanged()end\
+function Screen:removeTerminal(e)\
+functionParameters.check(1,\"terminal\",\"table\",e)\
+for t=#self.terminals,1,-1 do if self.terminals[t]==e then self:setChanged()return\
+table.remove(self.terminals,t)end end return self end\
 function Screen:draw()\
-if self.changed then\
-\
-local canvas = self.canvas\
-local children = {}\
-local cx, cy, cc\
-\
-canvas:clear()\
-\
-for i = 1, #self.children do\
-children[i] = self.children[i]\
-end\
-\
-for i = 1, #children do\
-local child = children[i]\
-\
-if child:isVisible() then\
-child:draw()\
-child.canvas:drawTo( canvas, child.x, child.y )\
-\
-if child.cursor_active then\
-cx, cy, cc = child.x + child.cursor_x, child.y + child.cursor_y, child.cursor_colour\
-end\
-end\
-end\
-\
-canvas:drawToTerminals( self.terminals )\
-\
-self.changed = false\
-for i = 1, #self.terminals do\
-if cx then\
-self.terminals[i].setCursorPos( cx + 1, cy + 1 )\
-self.terminals[i].setTextColour( cc )\
-self.terminals[i].setCursorBlink( true )\
-else\
-self.terminals[i].setCursorBlink( false )\
-end\
-end\
-end\
-end\
-\
-function Screen:handle( event )\
-local c = {}\
-local children = self.children\
-for i = 1, #children do\
-c[i] = children[i]\
-end\
-\
-if event:typeOf( MouseEvent ) then\
-local within = event:isWithinArea( 0, 0, self.width, self.height )\
-for i = #c, 1, -1 do\
-c[i]:handle( event:clone( c[i].x, c[i].y, within ) )\
-end\
-else\
-for i = #c, 1, -1 do\
-c[i]:handle( event )\
-end\
-end\
-end\
-\
-function Screen:update( dt )\
-local children = {}\
-for i = 1, #self.children do\
-children[i] = self.children[i]\
-end\
-for i = 1, #children do\
-children[i]:update( dt )\
-end\
-end","sheets.Screen",nil,_ENV)if not __f then error(__err,0)end __f()
-local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
--- undefined callbacks\
-\
--- function Sheet:onPreDraw() end\
--- function Sheet:onPostDraw() end\
--- function Sheet:onUpdate( dt ) end\
--- function Sheet:onKeyboardEvent( event ) end\
--- function Sheet:onTextEvent( event ) end\
-\
-class \"Sheet\"\
-implements \"IAnimation\"\
-implements \"IChildContainer\"\
-implements \"ISize\"\
-implements \"IPositionAnimator\"\
-{\
-x = 0;\
-y = 0;\
-z = 0;\
-\
-id = \"ID\";\
-style = nil;\
-\
-parent = nil;\
-\
-canvas = nil;\
-changed = true;\
-cursor_x = 0;\
-cursor_y = 0;\
-cursor_colour = 0;\
-cursor_active = false;\
-\
-handlesKeyboard = false;\
-handlesText = false;\
-}\
-\
-function Sheet:Sheet( x, y, width, height )\
-functionParameters.checkConstructor( self.class, 4,\
-\"x\", \"number\", x,\
-\"y\", \"number\", y,\
-\"width\", \"number\", width,\
-\"height\", \"number\", height\
-)\
-\
-self.x = x\
-self.y = y\
-self.width = width\
-self.height = height\
-\
-self:IAnimation()\
-self:IChildContainer()\
-self.style = Style( self )\
-\
-self.canvas = DrawingCanvas( width, height )\
-end\
-\
-function Sheet:setX( x )\
-functionParameters.check( 1, \"x\", \"number\", x )\
-\
-if self.x ~= x then\
-self.x = x\
-if self.parent then self.parent:setChanged( true ) end\
-end\
-return self\
-end\
-\
-function Sheet:setY( y )\
-functionParameters.check( 1, \"y\", \"number\", y )\
-\
-if self.y ~= y then\
-self.y = y\
-if self.parent then self.parent:setChanged( true ) end\
-end\
-return self\
-end\
-\
-function Sheet:setZ( z )\
-functionParameters.check( 1, \"z\", \"number\", z )\
-\
-if self.z ~= z then\
-self.z = z\
-if self.parent then self.parent:repositionChildZIndex( self ) end\
-end\
-return self\
-end\
-\
-function Sheet:setID( id )\
-self.id = tostring( id )\
-return self\
-end\
-\
-function Sheet:setStyle( style, children )\
-functionParameters.check( 1, \"style\", Style, style )\
-\
-self.style = style:clone( self )\
-\
-if children and self.children then\
-for i = 1, #self.children do\
-self.children[i]:setStyle( style, true )\
-end\
-end\
-\
-self:setChanged( true )\
-return self\
-end\
-\
-function Sheet:setParent( parent )\
--- fix this\
-if parent and ( not class.isInstance( parent ) or not parent:implements( IChildContainer ) ) then return error( \"expected IChildContainer parent, got \" .. class.type( parent ) ) end\
-\
-if parent then\
-parent:addChild( self )\
-else\
-self:remove()\
-end\
-return self\
-end\
-\
-function Sheet:remove()\
-if self.parent then\
-return self.parent:removeChild( self )\
-end\
-end\
-\
-function Sheet:isVisible()\
-return self.parent and self.parent:isChildVisible( self )\
-end\
-\
-function Sheet:bringToFront()\
-if self.parent then\
-return self:setParent( self.parent )\
-end\
-return self\
-end\
-\
-function Sheet:setChanged( state )\
-self.changed = state ~= false\
-if state ~= false and self.parent and not self.parent.changed then\
-self.parent:setChanged()\
-end\
-return self\
-end\
-\
-function Sheet:setCursorBlink( x, y, colour )\
-colour = colour or 128\
-\
-functionParameters.check( 3, \"x\", \"number\", x, \"y\", \"number\", y, \"colour\", \"number\", colour )\
-\
-self.cursor_active = true\
-self.cursor_x = x\
-self.cursor_y = y\
-self.cursor_colour = colour\
-return self\
-end\
-\
-function Sheet:resetCursorBlink()\
-self.cursor_active = false\
-return self\
-end\
-\
-function Sheet:tostring()\
-return \"[Instance] \" .. self.class:type() .. \" \" .. tostring( self.id )\
-end\
-\
-function Sheet:onParentResized() end\
-\
-function Sheet:update( dt )\
-local c = {}\
-local children = self.children\
-\
-self:updateAnimations( dt )\
-\
-if self.onUpdate then\
-self:onUpdate( dt )\
-end\
-\
-for i = 1, #children do\
-c[i] = children[i]\
-end\
-\
-for i = #c, 1, -1 do\
-c[i]:update( dt )\
-end\
-end\
-\
+if self.changed then local e=self.canvas local t={}local a,o,i e:clear()for n=1,#self.children do\
+t[n]=self.children[n]end\
+for n=1,#t do local s=t[n]if s:isVisible()then s:draw()\
+s.canvas:drawTo(e,s.x,s.y)\
+if s.cursor_active then a,o,i=s.x+s.cursor_x,s.y+s.cursor_y,s.cursor_colour end end end e:drawToTerminals(self.terminals)self.changed=false\
+for n=1,#\
+self.terminals do\
+if a then\
+self.terminals[n].setCursorPos(a+1,o+1)self.terminals[n].setTextColour(i)\
+self.terminals[n].setCursorBlink(true)else\
+self.terminals[n].setCursorBlink(false)end end end end\
+function Screen:handle(e)local t={}local a=self.children for o=1,#a do t[o]=a[o]end\
+if\
+e:typeOf(MouseEvent)then local o=e:isWithinArea(0,0,self.width,self.height)for n=#t,1,-1 do\
+t[n]:handle(e:clone(t[n].x,t[n].y,o))end else for o=#t,1,-1 do t[o]:handle(e)end end end\
+function Screen:update(e)local t={}\
+for a=1,#self.children do t[a]=self.children[a]end for a=1,#t do t[a]:update(e)end end","sheets.Screen",nil,_ENV)if not __f then error(__err,0)end __f()
+local __f,__err=load("class\"Sheet\"implements\"IAnimation\"\
+implements\"IAttributeAnimator\"implements\"IChildContainer\"\
+implements\"ISize\"{x=0,y=0,z=0,id=\"ID\",style=nil,parent=nil,canvas=nil,changed=true,cursor_x=0,cursor_y=0,cursor_colour=0,cursor_active=false,handlesKeyboard=false,handlesText=false}\
+function Sheet:Sheet(e,t,a,o)\
+functionParameters.checkConstructor(self.class,4,\"x\",\"number\",e,\"y\",\"number\",t,\"width\",\"number\",a,\"height\",\"number\",o)self.x=e self.y=t self.width=a self.height=o self:IAnimation()\
+self:IChildContainer()self.style=Style(self)self.canvas=DrawingCanvas(a,o)end\
+function Sheet:setX(e)\
+functionParameters.check(1,\"x\",\"number\",e)if self.x~=e then self.x=e if self.parent then\
+self.parent:setChanged(true)end end return self end\
+function Sheet:setY(e)\
+functionParameters.check(1,\"y\",\"number\",e)if self.y~=e then self.y=e if self.parent then\
+self.parent:setChanged(true)end end return self end\
+function Sheet:setZ(e)\
+functionParameters.check(1,\"z\",\"number\",e)\
+if self.z~=e then self.z=e if self.parent then\
+self.parent:repositionChildZIndex(self)end end return self end function Sheet:setID(e)self.id=tostring(e)return self end\
+function Sheet:setStyle(e,t)\
+functionParameters.check(1,\"style\",Style,e)self.style=e:clone(self)\
+if t and self.children then for a=1,#self.children do\
+self.children[a]:setStyle(e,true)end end self:setChanged(true)return self end\
+function Sheet:setParent(e)\
+if\
+e and(not class.isInstance(e)or\
+not e:implements(IChildContainer))then return\
+error(\"expected IChildContainer parent, got \"..class.type(e))end if e then e:addChild(self)else self:remove()end\
+return self end function Sheet:remove()\
+if self.parent then return self.parent:removeChild(self)end end\
+function Sheet:isVisible()return self.parent and\
+self.parent:isChildVisible(self)end function Sheet:bringToFront()\
+if self.parent then return self:setParent(self.parent)end return self end\
+function Sheet:setChanged(e)self.changed=\
+e~=false\
+if\
+e~=false and self.parent and not self.parent.changed then self.parent:setChanged()end return self end\
+function Sheet:setCursorBlink(e,t,a)a=a or 128\
+functionParameters.check(3,\"x\",\"number\",e,\"y\",\"number\",t,\"colour\",\"number\",a)self.cursor_active=true self.cursor_x=e self.cursor_y=t\
+self.cursor_colour=a return self end\
+function Sheet:resetCursorBlink()self.cursor_active=false return self end\
+function Sheet:tostring()return\"[Instance] \"..\
+self.class:type()..\" \"..tostring(self.id)end function Sheet:onParentResized()end\
+function Sheet:update(e)local t={}local a=self.children\
+self:updateAnimations(e)if self.onUpdate then self:onUpdate(e)end\
+for o=1,#a do t[o]=a[o]end for o=#t,1,-1 do t[o]:update(e)end end\
 function Sheet:draw()\
-if self.changed then\
-\
-local children = self.children\
-local cx, cy, cc\
-\
-self:resetCursorBlink()\
-\
-if self.onPreDraw then\
-self:onPreDraw()\
-end\
-\
-for i = 1, #children do\
-local child = children[i]\
-child:draw()\
-child.canvas:drawTo( self.canvas, child.x, child.y )\
-\
-if child.cursor_active then\
-cx, cy, cc = child.x + child.cursor_x, child.y + child.cursor_y, child.cursor_colour\
-end\
-end\
-\
-if cx then\
-self:setCursorBlink( cx, cy, cc )\
-end\
-\
-if self.onPostDraw then\
-self:onPostDraw()\
-end\
-\
-self.changed = false\
-end\
-end\
-\
-function Sheet:handle( event )\
-local c = {}\
-local children = self.children\
-for i = 1, #children do\
-c[i] = children[i]\
-end\
-\
-if event:typeOf( MouseEvent ) then\
-local within = event:isWithinArea( 0, 0, self.width, self.height )\
-for i = #c, 1, -1 do\
-c[i]:handle( event:clone( c[i].x, c[i].y, within ) )\
-end\
-else\
-for i = #c, 1, -1 do\
-c[i]:handle( event )\
-end\
-end\
-\
-if event:typeOf( MouseEvent ) then\
-if event:is( EVENT_MOUSE_PING ) and event:isWithinArea( 0, 0, self.width, self.height ) and event.within then\
-event.button[#event.button + 1] = self\
-end\
-self:onMouseEvent( event )\
-elseif event:typeOf( KeyboardEvent ) and self.handlesKeyboard and self.onKeyboardEvent then\
-self:onKeyboardEvent( event )\
-elseif event:typeOf( TextEvent ) and self.handlesText and self.onTextEvent then\
-self:onTextEvent( event )\
-end\
-end\
-\
-function Sheet:onMouseEvent( event )\
-if not event.handled and event:isWithinArea( 0, 0, self.width, self.height ) and event.within then\
-if not event:is( EVENT_MOUSE_DRAG ) and not event:is( EVENT_MOUSE_SCROLL ) then\
-event:handle( self )\
-end\
-end\
-end","sheets.Sheet",nil,_ENV)if not __f then error(__err,0)end __f()
+if self.changed then local e=self.children local t,a,o\
+self:resetCursorBlink()if self.onPreDraw then self:onPreDraw()end\
+for n=1,#e do local i=e[n]\
+i:draw()i.canvas:drawTo(self.canvas,i.x,i.y)\
+if i.cursor_active then t,a,o=i.x+\
+i.cursor_x,i.y+i.cursor_y,i.cursor_colour end end if t then self:setCursorBlink(t,a,o)end if self.onPostDraw then\
+self:onPostDraw()end self.changed=false end end\
+function Sheet:handle(e)local t={}local a=self.children for o=1,#a do t[o]=a[o]end\
+if\
+e:typeOf(MouseEvent)then local o=e:isWithinArea(0,0,self.width,self.height)for n=#t,1,-1 do\
+t[n]:handle(e:clone(t[n].x,t[n].y,o))end else for o=#t,1,-1 do t[o]:handle(e)end end\
+if e:typeOf(MouseEvent)then\
+if\
+e:is(EVENT_MOUSE_PING)and\
+e:isWithinArea(0,0,self.width,self.height)and e.within then e.button[#e.button+1]=self end self:onMouseEvent(e)elseif\
+e:typeOf(KeyboardEvent)and self.handlesKeyboard and self.onKeyboardEvent then\
+self:onKeyboardEvent(e)elseif\
+e:typeOf(TextEvent)and self.handlesText and self.onTextEvent then self:onTextEvent(e)end end\
+function Sheet:onMouseEvent(e)\
+if\
+not e.handled and e:isWithinArea(0,0,self.width,self.height)and e.within then if\
+not e:is(EVENT_MOUSE_DRAG)and not e:is(EVENT_MOUSE_SCROLL)then\
+e:handle(self)end end end","sheets.Sheet",nil,_ENV)if not __f then error(__err,0)end __f()
 local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
-local function formatFieldName( name )\
-if not name:find \"%.\" then\
-return name .. \".default\"\
-end\
-return name\
-end\
-\
-local function getDefaultFieldName( name )\
-return name:gsub( \"%..-$\", \"\", 1 ) .. \".default\"\
-end\
-\
-local template = {}\
-\
-class \"Style\" {\
-fields = {};\
-object = nil;\
-}\
-\
-function Style.addToTemplate( cls, fields )\
-if not class.isClass( cls ) then throw( IncorrectParameterException( \"expected Class class, got \" .. class.type( cls ), 2 ) ) end\
-if type( fields ) ~= \"table\" then throw( IncorrectParameterException( \"expected table fields, got \" .. class.type( fields ), 2 ) ) end\
-\
-template[cls] = template[cls] or {}\
-for k, v in pairs( fields ) do\
-template[cls][formatFieldName( k )] = v\
-end\
-end\
-\
-function Style:Style( object )\
-if not class.isInstance( object ) then throw( IncorrectConstructorException( \"Style expects Instance object when created, got \" .. class.type( object ), 3 ) ) end\
-\
-template[object.class] = template[object.class] or {}\
-self.fields = {}\
-self.object = object\
-end\
-\
-function Style:clone( object )\
-if not class.isInstance( object ) then throw( IncorrectInitialiserException( \"expected Instance object, got \" .. class.type( object ), 2 ) ) end\
-\
-local s = Style( object or self.object )\
-for k, v in pairs( self.fields ) do\
-s.fields[k] = v\
-end\
-return s\
-end\
-\
-function Style:setField( field, value )\
-functionParameters.check( 1, \"field\", \"string\", field )\
-\
-self.fields[formatFieldName( field )] = value\
-self.object:setChanged()\
-return self\
-end\
-\
-function Style:getField( field )\
-functionParameters.check( 1, \"field\", \"string\", field )\
-\
-field = formatFieldName( field )\
-local default = getDefaultFieldName( field )\
-if self.fields[field] ~= nil then\
-return self.fields[field]\
-elseif self.fields[default] ~= nil then\
-return self.fields[default]\
-elseif template[self.object.class][field] ~= nil then\
-return template[self.object.class][field]\
-end\
-return template[self.object.class][default]\
-end","sheets.Style",nil,_ENV)if not __f then error(__err,0)end __f()
+local function e(o)if not o:find\"%.\"then return o..\".default\"end return o end\
+local function t(o)return o:gsub(\"%..-$\",\"\",1)..\".default\"end local a={}class\"Style\"{fields={},object=nil}\
+function Style.addToTemplate(o,i)if not\
+class.isClass(o)then\
+throw(IncorrectParameterException(\"expected Class class, got \"..class.type(o),2))end if type(i)~=\"table\"then\
+throw(IncorrectParameterException(\
+\"expected table fields, got \"..class.type(i),2))end a[o]=a[o]or{}for n,s in\
+pairs(i)do a[o][e(n)]=s end end\
+function Style:Style(o)if not class.isInstance(o)then\
+throw(IncorrectConstructorException(\
+\"Style expects Instance object when created, got \"..class.type(o),3))end a[o.class]=\
+a[o.class]or{}self.fields={}self.object=o end\
+function Style:clone(o)if not class.isInstance(o)then\
+throw(IncorrectInitialiserException(\"expected Instance object, got \"..\
+class.type(o),2))end\
+local i=Style(o or self.object)for n,s in pairs(self.fields)do i.fields[n]=s end return i end function Style:setField(o,i)\
+functionParameters.check(1,\"field\",\"string\",o)self.fields[e(o)]=i self.object:setChanged()\
+return self end\
+function Style:getField(o)\
+functionParameters.check(1,\"field\",\"string\",o)o=e(o)local i=t(o)\
+if self.fields[o]~=nil then return self.fields[o]elseif\
+self.fields[i]~=nil then return self.fields[i]elseif\
+a[self.object.class][o]~=nil then return a[self.object.class][o]end return a[self.object.class][i]end","sheets.Style",nil,_ENV)if not __f then error(__err,0)end __f()
 
 
-local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
-class \"Button\" extends \"Sheet\" implements \"IHasText\" {\
-down = false;\
-}\
-\
-function Button:Button( x, y, width, height, text )\
-self.text = text\
-return self:Sheet( x, y, width, height )\
-end\
-\
+local __f,__err=load("class\"Button\"extends\"Sheet\"\
+implements\"IHasText\"{down=false}\
+function Button:Button(e,t,a,o,i)self.text=i return self:Sheet(e,t,a,o)end\
 function Button:onPreDraw()\
-self.canvas:clear( self.down and self.style:getField \"colour.pressed\" or self.style:getField \"colour\" )\
-self:drawText( self.down and \"pressed\" or \"default\" )\
-end\
-\
-function Button:onMouseEvent( event )\
-if event:is( 1 ) and self.down then\
-self.down = false\
-self:setChanged()\
-end\
-\
-if event.handled or not event:isWithinArea( 0, 0, self.width, self.height ) or not event.within then\
-return\
-end\
-\
-if event:is( 0 ) and not self.down then\
-self.down = true\
-self:setChanged()\
-event:handle()\
-elseif event:is( 2 ) then\
-if self.onClick then\
-self:onClick( event.button, event.x, event.y )\
-end\
-event:handle()\
-elseif event:is( 3 ) then\
-if self.onHold then\
-self:onHold( event.button, event.x, event.y )\
-end\
-event:handle()\
-end\
-end\
-\
-Style.addToTemplate( Button, {\
-[\"colour\"] = 512;\
-[\"colour.pressed\"] = 8;\
-[\"textColour\"] = 1;\
-[\"textColour.pressed\"] = 1;\
-[\"horizontal-alignment\"] = 1;\
-[\"horizontal-alignment.pressed\"] = 1;\
-[\"vertical-alignment\"] = 1;\
-[\"vertical-alignment.pressed\"] = 1;\
-} )","sheets.elements.Button",nil,_ENV)if not __f then error(__err,0)end __f()
+self.canvas:clear(\
+self.down and self.style:getField\"colour.pressed\"or self.style:getField\"colour\")\
+self:drawText(self.down and\"pressed\"or\"default\")end\
+function Button:onMouseEvent(e)if e:is(1)and self.down then self.down=false\
+self:setChanged()end if\
+e.handled or not\
+e:isWithinArea(0,0,self.width,self.height)or not e.within then return end\
+if\
+e:is(0)and not self.down then self.down=true self:setChanged()e:handle()elseif e:is(2)then if self.onClick then\
+self:onClick(e.button,e.x,e.y)end e:handle()elseif e:is(3)then if self.onHold then\
+self:onHold(e.button,e.x,e.y)end e:handle()end end\
+Style.addToTemplate(Button,{[\"colour\"]=512,[\"colour.pressed\"]=8,[\"textColour\"]=1,[\"textColour.pressed\"]=1,[\"horizontal-alignment\"]=1,[\"horizontal-alignment.pressed\"]=1,[\"vertical-alignment\"]=1,[\"vertical-alignment.pressed\"]=1})","sheets.elements.Button",nil,_ENV)if not __f then error(__err,0)end __f()
 
 
-local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
-class \"Checkbox\" extends \"Sheet\" {\
-down = false;\
-checked = false;\
-}\
-\
-function Checkbox:Checkbox( x, y, checked )\
-self.checked = checked\
-self:Sheet( x, y, 1, 1 )\
-end\
-\
-function Checkbox:setWidth() end\
-function Checkbox:setHeight() end\
-\
-function Checkbox:toggle()\
-self.checked = not self.checked\
-if self.onToggle then\
-self:onToggle()\
-end\
-if self.checked and self.onCheck then\
-self:onCheck()\
-elseif not self.checked and self.onUnCheck then\
-self:onUnCheck()\
-end\
-self:setChanged()\
-end\
-\
+local __f,__err=load("class\"Checkbox\"\
+extends\"Sheet\"{down=false,checked=false}\
+function Checkbox:Checkbox(e,t,a)self.checked=a self:Sheet(e,t,1,1)end function Checkbox:setWidth()end function Checkbox:setHeight()end\
+function Checkbox:toggle()self.checked=\
+not self.checked\
+if self.onToggle then self:onToggle()end\
+if self.checked and self.onCheck then self:onCheck()elseif not self.checked and\
+self.onUnCheck then self:onUnCheck()end self:setChanged()end\
 function Checkbox:onPreDraw()\
-self.canvas:drawPoint( 0, 0, {\
-colour = self.style:getField( \"colour.\" .. ( ( self.down and \"pressed\" ) or ( self.checked and \"checked\" ) or \"default\" ) );\
-textColour = self.style:getField( \"checkColour.\" .. ( self.down and \"pressed\" or \"default\" ) );\
-character = self.checked and \"x\" or \" \";\
-} )\
-end\
-\
-function Checkbox:onMouseEvent( event )\
-if event:is( 1 ) and self.down then\
-self.down = false\
-self:setChanged()\
-end\
-\
-if event.handled or not event:isWithinArea( 0, 0, self.width, self.height ) or not event.within then\
-return\
-end\
-\
-if event:is( 0 ) and not self.down then\
-self.down = true\
-self:setChanged()\
-event:handle()\
-elseif event:is( 2 ) then\
-self:toggle()\
-event:handle()\
-elseif event:is( 3 ) then\
-event:handle()\
-end\
-end\
-\
-Style.addToTemplate( Checkbox, {\
-[\"colour\"] = 256;\
-[\"colour.checked\"] = 256;\
-[\"colour.pressed\"] = 128;\
-[\"checkColour\"] = 32768;\
-[\"checkColour.pressed\"] = 256;\
-} )","sheets.elements.Checkbox",nil,_ENV)if not __f then error(__err,0)end __f()
+self.canvas:drawPoint(0,0,{colour=self.style:getField(\"colour.\"..\
+(\
+(self.down and\"pressed\")or(self.checked and\"checked\")or\"default\")),textColour=self.style:getField(\
+\"checkColour.\".. (self.down and\"pressed\"or\"default\")),character=\
+self.checked and\"x\"or\" \"})end\
+function Checkbox:onMouseEvent(e)if e:is(1)and self.down then self.down=false\
+self:setChanged()end if\
+e.handled or not\
+e:isWithinArea(0,0,self.width,self.height)or not e.within then return end\
+if\
+e:is(0)and not self.down then self.down=true self:setChanged()e:handle()elseif e:is(2)then\
+self:toggle()e:handle()elseif e:is(3)then e:handle()end end\
+Style.addToTemplate(Checkbox,{[\"colour\"]=256,[\"colour.checked\"]=256,[\"colour.pressed\"]=128,[\"checkColour\"]=32768,[\"checkColour.pressed\"]=256})","sheets.elements.Checkbox",nil,_ENV)if not __f then error(__err,0)end __f()
 
 
-local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
--- needs to update to new exception system\
-\
-class \"Container\" extends \"Sheet\" {}\
-\
+local __f,__err=load("class\"Container\"extends\"Sheet\"{}\
 function Container:draw()\
 if self.changed then\
-\
-local children = self.children\
-local cx, cy, cc\
-\
-self:resetCursorBlink()\
-\
-if self.onPreDraw then\
-self:onPreDraw()\
-end\
-\
-for i = 1, #children do\
-local child = children[i]\
-if child:isVisible() then\
-child:draw()\
-child.canvas:drawTo( self.canvas, child.x, child.y )\
-\
-if child.cursor_active then\
-cx, cy, cc = child.x + child.cursor_x, child.y + child.cursor_y, child.cursor_colour\
-end\
-end\
-end\
-\
-if cx then\
-self:setCursorBlink( cx, cy, cc )\
-end\
-\
-if self.onPostDraw then\
-self:onPostDraw()\
-end\
-\
-self.changed = false\
-end\
-end\
-\
-function Container:onPreDraw()\
-self.canvas:clear( self.style:getField \"colour\" )\
-end\
-\
-Style.addToTemplate( Container, {\
-[\"colour\"] = 1;\
-} )","sheets.elements.Container",nil,_ENV)if not __f then error(__err,0)end __f()
+local e=self.children local t,a,o self:resetCursorBlink()\
+if self.onPreDraw then self:onPreDraw()end\
+for n=1,#e do local i=e[n]if i:isVisible()then i:draw()\
+i.canvas:drawTo(self.canvas,i.x,i.y)\
+if i.cursor_active then t,a,o=i.x+i.cursor_x,i.y+i.cursor_y,i.cursor_colour end end end if t then self:setCursorBlink(t,a,o)end if self.onPostDraw then\
+self:onPostDraw()end self.changed=false end end function Container:onPreDraw()\
+self.canvas:clear(self.style:getField\"colour\")end\
+Style.addToTemplate(Container,{[\"colour\"]=1})","sheets.elements.Container",nil,_ENV)if not __f then error(__err,0)end __f()
 
 
-local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
-class \"Draggable\" extends \"Sheet\" implements \"IHasText\" {\
-down = false;\
-}\
-\
-function Draggable:Draggable( x, y, width, height, text )\
-self.text = text\
-return self:Sheet( x, y, width, height )\
-end\
-\
+local __f,__err=load("class\"Draggable\"extends\"Sheet\"\
+implements\"IHasText\"{down=false}\
+function Draggable:Draggable(e,t,a,o,i)self.text=i return self:Sheet(e,t,a,o)end\
 function Draggable:onPreDraw()\
-self.canvas:clear( self.down and self.style:getField \"colour.pressed\" or self.style:getField \"colour\" )\
-self:drawText( self.down and \"pressed\" or \"default\" )\
-end\
+self.canvas:clear(\
+self.down and self.style:getField\"colour.pressed\"or self.style:getField\"colour\")\
+self:drawText(self.down and\"pressed\"or\"default\")end\
+function Draggable:onMouseEvent(e)\
+if e:is(1)and self.down then if self.onDrop then\
+self:onDrop(self.down.x,self.down.y)end self.down=false self:setChanged()elseif\
 \
-function Draggable:onMouseEvent( event )\
-if event:is( 1 ) and self.down then\
-if self.onDrop then\
-self:onDrop( self.down.x, self.down.y )\
-end\
-self.down = false\
-self:setChanged()\
-elseif self.down and event:is( 4 ) and not event.handled and event.within then\
-self:setX( self.x + event.x - self.down.x )\
-self:setY( self.y + event.y - self.down.y )\
-if self.onDrag then\
-self:onDrag()\
-end\
-event:handle()\
-return\
-end\
-\
-if event.handled or not event:isWithinArea( 0, 0, self.width, self.height ) or not event.within then\
-return\
-end\
-\
-if event:is( 0 ) and not self.down then\
-if self.onPickUp then\
-self:onPickUp()\
-end\
-self.down = { x = event.x, y = event.y }\
-self:setChanged()\
-self:bringToFront()\
-event:handle()\
-elseif event:is( 2 ) then\
-if self.onClick then\
-self:onClick( event.button, event.x, event.y )\
-end\
-event:handle()\
-elseif event:is( 3 ) then\
-if self.onHold then\
-self:onHold( event.button, event.x, event.y )\
-end\
-event:handle()\
-end\
-end\
-\
-Style.addToTemplate( Draggable, {\
-[\"colour\"] = 512;\
-[\"colour.pressed\"] = 8;\
-[\"textColour\"] = 1;\
-[\"textColour.pressed\"] = 1;\
-[\"horizontal-alignment\"] = 1;\
-[\"horizontal-alignment.pressed\"] = 1;\
-[\"vertical-alignment\"] = 1;\
-[\"vertical-alignment.pressed\"] = 1;\
-} )","sheets.elements.Draggable",nil,_ENV)if not __f then error(__err,0)end __f()
+self.down and e:is(4)and not e.handled and e.within then self:setX(self.x+e.x-self.down.x)self:setY(\
+self.y+e.y-self.down.y)if self.onDrag then\
+self:onDrag()end e:handle()return end\
+if\
+e.handled or not e:isWithinArea(0,0,self.width,self.height)or not e.within then return end\
+if e:is(0)and not self.down then\
+if self.onPickUp then self:onPickUp()end self.down={x=e.x,y=e.y}self:setChanged()\
+self:bringToFront()e:handle()elseif e:is(2)then if self.onClick then\
+self:onClick(e.button,e.x,e.y)end e:handle()elseif e:is(3)then if self.onHold then\
+self:onHold(e.button,e.x,e.y)end e:handle()end end\
+Style.addToTemplate(Draggable,{[\"colour\"]=512,[\"colour.pressed\"]=8,[\"textColour\"]=1,[\"textColour.pressed\"]=1,[\"horizontal-alignment\"]=1,[\"horizontal-alignment.pressed\"]=1,[\"vertical-alignment\"]=1,[\"vertical-alignment.pressed\"]=1})","sheets.elements.Draggable",nil,_ENV)if not __f then error(__err,0)end __f()
 
 
-local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
-class \"Image\" extends \"Sheet\" {\
-down = false;\
-image = nil;\
-fill = nil;\
-}\
-\
-function Image:Image( x, y, img )\
-if type( img ) == \"string\" then\
-if fs.exists( img ) then\
-local h = fs.open( img, \"r\" )\
-if h then\
-img = h.readAll()\
-h.close()\
-end\
-end\
-img = image.decodePaintutils( img )\
-elseif type( img ) ~= \"table\" then\
-functionParameters.checkConstructor( self.class, 1, \"image\", \"string\", img ) -- definitely error\
-end\
-\
-local width, height = #( img[1] or \"\" ), #img\
-\
-self.image = img\
-return self:Sheet( x, y, width, height )\
-end\
-\
-function Image:setWidth() end\
-function Image:setHeight() end\
-\
+local __f,__err=load("class\"Image\"\
+extends\"Sheet\"{down=false,image=nil,fill=nil}\
+function Image:Image(e,t,a)\
+if type(a)==\"string\"then if fs.exists(a)then local n=fs.open(a,\"r\")if n then\
+a=n.readAll()n.close()end end\
+a=image.decodePaintutils(a)elseif type(a)~=\"table\"then\
+functionParameters.checkConstructor(self.class,1,\"image\",\"string\",a)end local o,i=# (a[1]or\"\"),#a self.image=a\
+return self:Sheet(e,t,o,i)end function Image:setWidth()end function Image:setHeight()end\
 function Image:onPreDraw()\
-local shader = self.style:getField( \"shader.\" .. ( self.down and \"pressed\" or \"default\" ) )\
-\
-if not self.fill then\
-self.fill = self.canvas:getArea( 5 )\
-end\
-\
-image.apply( self.image, self.canvas )\
-\
-if shader then\
-self.canvas:mapShader( self.fill, shader )\
-end\
-end\
-\
-function Image:onMouseEvent( event )\
-if event:is( 1 ) and self.down then\
-self.down = false\
-self:setChanged()\
-end\
-\
-if event.handled or not event:isWithinArea( 0, 0, self.width, self.height ) or not event.within then\
+local e=self.style:getField(\
+\"shader.\".. (self.down and\"pressed\"or\"default\"))\
+if not self.fill then self.fill=self.canvas:getArea(5)end image.apply(self.image,self.canvas)if e then\
+self.canvas:mapShader(self.fill,e)end end\
+function Image:onMouseEvent(e)if e:is(1)and self.down then self.down=false\
+self:setChanged()end if\
+e.handled or not\
+e:isWithinArea(0,0,self.width,self.height)or not e.within then return end\
+if\
+e:is(0)and not self.down then self.down=true self:setChanged()e:handle()elseif e:is(2)then if self.onClick then\
+self:onClick(e.button,e.x,e.y)end e:handle()elseif e:is(3)then if self.onHold then\
+self:onHold(e.button,e.x,e.y)end e:handle()end end\
+Style.addToTemplate(Image,{[\"shader\"]=false,[\"shader.pressed\"]=false})","sheets.elements.Image",nil,_ENV)if not __f then error(__err,0)end __f()
+
+
+local __f,__err=load("class\"KeyHandler\"\
+extends\"Sheet\"{shortcuts={},handlesKeyboard=true}\
+function KeyHandler:KeyHandler()self.shortcuts={}return self:Sheet(0,0,0,0)end\
+function KeyHandler:addShortcut(e,t)\
+functionParameters.check(2,\"shortcut\",\"string\",e,\"handler\",\"function\",t)self.shortcuts[e]=t end\
+function KeyHandler:removeShortcut(e)\
+functionParameters.check(1,\"shortcut\",\"string\",e)self.shortcuts[e]=nil end\
+function KeyHandler:onKeyboardEvent(e)\
+if not e.handled and e:is(7)then local t=self.shortcuts\
+local a,o=next(t)while a do if e:matches(a)then e:handle()o(self)return end\
+a,o=next(t,a)end end end function KeyHandler:draw()end","sheets.elements.KeyHandler",nil,_ENV)if not __f then error(__err,0)end __f()
+
+
+local __f,__err=load("class\"Panel\"extends\"Sheet\"{}function Panel:onPreDraw()\
+self.canvas:clear(self.style:getField\"colour\")end\
+Style.addToTemplate(Panel,{[\"colour\"]=256})","sheets.elements.Panel",nil,_ENV)if not __f then error(__err,0)end __f()
+
+
+local __f,__err=load("class\"ScrollContainer\"\
+extends\"Sheet\"{scrollX=0,scrollY=0,horizontalPadding=0,verticalPadding=0,heldScrollbar=false,down=false}\
+function ScrollContainer:ScrollContainer(e,t,a,o,i)if class.typeOf(e,Sheet)then i=e\
+e,t,a,o=e.x,e.y,e.width,e.height i.x,i.y=0,0 end\
+functionParameters.checkConstructor(self.class,4,\"x\",\"number\",e,\"y\",\"number\",t,\"width\",\"number\",a,\"height\",\"number\",o,\"element\",\
+i and Sheet,i)self:Sheet(e,t,a,o)if i then self:addChild(i)end end\
+function ScrollContainer:setScrollX(e)\
+functionParameters.check(1,\"scroll\",\"number\",e)self.scrollX=e return self:setChanged()end\
+function ScrollContainer:setScrollY(e)\
+functionParameters.check(1,\"scroll\",\"number\",e)self.scrollY=e return self:setChanged()end\
+function ScrollContainer:getContentWidth()local e=self.horizontalPadding local t=self.children for a=1,#\
+self.children do\
+local o=t[a].x+t[a].width+self.horizontalPadding if o>e then e=o end end return e end\
+function ScrollContainer:getContentHeight()local e=self.verticalPadding local t=self.children for a=1,#\
+self.children do\
+local o=t[a].y+t[a].height+self.verticalPadding if o>e then e=o end end return e end function ScrollContainer:getDisplayWidth(e,t)\
+return t and self.width-1 or self.width end\
+function ScrollContainer:getDisplayHeight(e,t)return e and\
+self.height-1 or self.height end\
+function ScrollContainer:getActiveScrollbars(e,t)if e>self.width or t>self.height then return\
+e>=self.width,t>=self.height end return false,\
+false end\
+function ScrollContainer:getScrollbarSizes(e,t,a,o)\
 return\
-end\
-\
-if event:is( 0 ) and not self.down then\
-self.down = true\
-self:setChanged()\
-event:handle()\
-elseif event:is( 2 ) then\
-if self.onClick then\
-self:onClick( event.button, event.x, event.y )\
-end\
-event:handle()\
-elseif event:is( 3 ) then\
-if self.onHold then\
-self:onHold( event.button, event.x, event.y )\
-end\
-event:handle()\
-end\
-end\
-\
-Style.addToTemplate( Image, {\
-[\"shader\"] = false;\
-[\"shader.pressed\"] = false;\
-} )","sheets.elements.Image",nil,_ENV)if not __f then error(__err,0)end __f()
-
-
-local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
-class \"KeyHandler\" extends \"Sheet\"\
-{\
-shortcuts = {};\
-handlesKeyboard = true;\
-}\
-\
-function KeyHandler:KeyHandler()\
-self.shortcuts = {}\
-return self:Sheet( 0, 0, 0, 0 )\
-end\
-\
-function KeyHandler:addShortcut( shortcut, handler )\
-functionParameters.check( 2,\
-\"shortcut\", \"string\", shortcut,\
-\"handler\", \"function\", handler\
-)\
-self.shortcuts[shortcut] = handler\
-end\
-\
-function KeyHandler:removeShortcut( shortcut )\
-functionParameters.check( 1,\
-\"shortcut\", \"string\", shortcut\
-)\
-self.shortcuts[shortcut] = nil\
-end\
-\
-function KeyHandler:onKeyboardEvent( event )\
-if not event.handled and event:is( 7 ) then\
-local shortcuts = self.shortcuts\
-local k, v = next( shortcuts )\
-\
-while k do\
-\
-if event:matches( k ) then\
-event:handle()\
-v( self )\
-return\
-end\
-\
-k, v = next( shortcuts, k )\
-end\
-end\
-end\
-\
-function KeyHandler:draw() end","sheets.elements.KeyHandler",nil,_ENV)if not __f then error(__err,0)end __f()
-
-
-local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
-class \"Panel\" extends \"Sheet\" {}\
-\
-function Panel:onPreDraw()\
-self.canvas:clear( self.style:getField \"colour\" )\
-end\
-\
-Style.addToTemplate( Panel, {\
-[\"colour\"] = 256;\
-} )","sheets.elements.Panel",nil,_ENV)if not __f then error(__err,0)end __f()
-
-
-local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
--- needs to update to new exception system\
-\
-class \"ScrollContainer\" extends \"Sheet\" {\
-scrollX = 0;\
-scrollY = 0;\
-\
-horizontalPadding = 0;\
-verticalPadding = 0;\
-\
-heldScrollbar = false;\
-down = false;\
-}\
-\
-function ScrollContainer:ScrollContainer( x, y, width, height, element )\
-if class.typeOf( x, Sheet ) then\
-element = x\
-x, y, width, height = x.x, x.y, x.width, x.height\
-element.x, element.y = 0, 0\
-end\
-\
-functionParameters.checkConstructor( self.class, 4,\
-\"x\", \"number\", x,\
-\"y\", \"number\", y,\
-\"width\", \"number\", width,\
-\"height\", \"number\", height,\
-\"element\", element and Sheet, element\
-)\
-\
-self:Sheet( x, y, width, height )\
-\
-if element then\
-self:addChild( element )\
-end\
-end\
-\
-function ScrollContainer:setScrollX( scroll )\
-if type( scroll ) ~= \"number\" then return error( \"expected number scroll, got \" .. class.type( scroll ) ) end\
-\
-self.scrollX = scroll\
-return self:setChanged()\
-end\
-\
-function ScrollContainer:setScrollY( scroll )\
-if type( scroll ) ~= \"number\" then return error( \"expected number scroll, got \" .. class.type( scroll ) ) end\
-\
-self.scrollY = scroll\
-return self:setChanged()\
-end\
-\
-function ScrollContainer:getContentWidth()\
-local width = self.horizontalPadding\
-local children = self.children\
-\
-for i = 1, #self.children do\
-local childWidth = children[i].x + children[i].width + self.horizontalPadding\
-if childWidth > width then\
-width = childWidth\
-end\
-end\
-\
-return width\
-end\
-\
-function ScrollContainer:getContentHeight()\
-local height = self.verticalPadding\
-local children = self.children\
-\
-for i = 1, #self.children do\
-local childWidth = children[i].y + children[i].height + self.verticalPadding\
-if childWidth > height then\
-height = childWidth\
-end\
-end\
-\
-return height\
-end\
-\
-function ScrollContainer:getDisplayWidth( h, v )\
-return v and self.width - 1 or self.width\
-end\
-\
-function ScrollContainer:getDisplayHeight( h, v )\
-return h and self.height - 1 or self.height\
-end\
-\
-function ScrollContainer:getActiveScrollbars( cWidth, cHeight )\
-if cWidth > self.width or cHeight > self.height then\
-return cWidth >= self.width, cHeight >= self.height\
-end\
-return false, false\
-end\
-\
-function ScrollContainer:getScrollbarSizes( cWidth, cHeight, horizontal, vertical )\
-return math.floor( self:getDisplayWidth( horizontal, vertical ) / cWidth * self:getDisplayWidth( horizontal, vertical ) + .5 ), math.floor( self:getDisplayHeight( horizontal, vertical ) / cHeight * self.height + .5 )\
-end\
-\
-function ScrollContainer:getScrollbarPositions( cWidth, cHeight, horizontal, vertical )\
-return math.floor( self.scrollX / cWidth * self:getDisplayWidth( horizontal, vertical ) + .5 ), math.floor( self.scrollY / cHeight * self.height + .5 )\
-end\
-\
+math.floor(self:getDisplayWidth(a,o)/e*\
+self:getDisplayWidth(a,o)+.5),math.floor(\
+self:getDisplayHeight(a,o)/t*self.height+.5)end\
+function ScrollContainer:getScrollbarPositions(e,t,a,o)\
+return math.floor(\
+self.scrollX/e*self:getDisplayWidth(a,o)+.5),math.floor(self.scrollY/t*\
+self.height+.5)end\
 function ScrollContainer:draw()\
-if self.changed then\
-\
-local children = self.children\
-local cx, cy, cc\
-local ox, oy = self.scrollX, self.scrollY\
-\
-self:resetCursorBlink()\
-\
-if self.onPreDraw then\
-self:onPreDraw()\
-end\
-\
-for i = 1, #children do\
-local child = children[i]\
-if child:isVisible() then\
-child:draw()\
-child.canvas:drawTo( self.canvas, child.x - ox, child.y - oy )\
-\
-if child.cursor_active then\
-cx, cy, cc = child.x + child.cursor_x - ox, child.y + child.cursor_y - oy, child.cursor_colour\
-end\
-end\
-end\
-\
-if cx then\
-self:setCursorBlink( cx, cy, cc )\
-end\
-\
-if self.onPostDraw then\
-self:onPostDraw()\
-end\
-\
-self.changed = false\
-end\
-end\
-\
-function ScrollContainer:handle( event )\
-local c = {}\
-local ox, oy = self.scrollX, self.scrollY\
-local children = self.children\
-for i = 1, #children do\
-c[i] = children[i]\
-end\
-\
-if self.down and event:is( 1 ) then\
-self.down = false\
-self.heldScrollbar = false\
-self:setChanged()\
-event:handle()\
-elseif self.down and event:is( 4 ) then\
-local cWidth, cHeight = self:getContentWidth(), self:getContentHeight()\
-local h, v = self:getActiveScrollbars( cWidth, cHeight )\
-\
-if self.heldScrollbar == \"h\" then\
-self.scrollX = math.max( math.min( math.floor( ( event.x - self.down ) / self:getDisplayWidth( h, v ) * cWidth ), cWidth - self:getDisplayWidth( h, v ) ), 0 )\
-self:setChanged()\
-event:handle()\
-elseif self.heldScrollbar == \"v\" then\
-self.scrollY = math.max( math.min( math.floor( ( event.y - self.down ) / self.height * cHeight ), cHeight - self:getDisplayHeight( h, v ) ), 0 )\
-self:setChanged()\
-event:handle()\
-end\
-end\
-\
-if event:typeOf( MouseEvent ) and not event.handled and event:isWithinArea( 0, 0, self.width, self.height ) and event.within then\
-local cWidth, cHeight = self:getContentWidth(), self:getContentHeight()\
-local h, v = self:getActiveScrollbars( cWidth, cHeight )\
-\
-if event:is( 0 ) then\
-if event.x == self.width - 1 and v then\
-local px, py = self:getScrollbarPositions( cWidth, cHeight, h, v )\
-local sx, sy = self:getScrollbarSizes( cWidth, cHeight, h, v )\
-local down = event.y\
-\
-if down < px then\
-self.scrollY = math.floor( down / self.height * cHeight )\
-down = 0\
-elseif down >= px + sx then\
-self.scrollY = math.floor( ( down - sy + 1 ) / self.height * cHeight )\
-down = sy - 1\
-else\
-down = down - py\
-end\
-\
-self.heldScrollbar = \"v\"\
-self.down = down\
-self:setChanged()\
-event:handle()\
-elseif event.y == self.height - 1 and h then\
-local px, py = self:getScrollbarPositions( cWidth, cHeight, h, v )\
-local sx, sy = self:getScrollbarSizes( cWidth, cHeight, h, v )\
-local down = event.x\
-\
-if down < px then\
-self.scrollX = math.floor( down / self:getDisplayWidth( h, v ) * cWidth )\
-down = 0\
-elseif down >= px + sx then\
-self.scrollX = math.floor( ( down - sx + 1 ) / self:getDisplayWidth( h, v ) * cWidth )\
-down = sx - 1\
-else\
-down = down - px\
-end\
-\
-self.heldScrollbar = \"h\"\
-self.down = down\
-self:setChanged()\
-event:handle()\
-end\
-elseif event:is( 5 ) then\
-if v then\
-self:setScrollY( math.max( math.min( oy + event.button, cHeight - self:getDisplayHeight( h, v ) ), 0 ) )\
-elseif h then\
-self:setScrollX( math.max( math.min( ox + event.button, cWidth - self:getDisplayWidth( h, v ) ), 0 ) )\
-end\
-elseif event:is( 2 ) or event:is( 3 ) then\
-event:handle()\
-end\
-end\
-\
-if event:typeOf( MouseEvent ) then\
-local within = event:isWithinArea( 0, 0, self.width, self.height )\
-for i = #c, 1, -1 do\
-c[i]:handle( event:clone( c[i].x - ox, c[i].y - oy, within ) )\
-end\
-else\
-for i = #c, 1, -1 do\
-c[i]:handle( event )\
-end\
-end\
-\
-if event:typeOf( MouseEvent ) then\
-if event:is( EVENT_MOUSE_PING ) and event:isWithinArea( 0, 0, self.width, self.height ) and event.within then\
-event.button[#event.button + 1] = self\
-end\
-self:onMouseEvent( event )\
-elseif event:typeOf( KeyboardEvent ) and self.handlesKeyboard and self.onKeyboardEvent then\
-self:onKeyboardEvent( event )\
-elseif event:typeOf( TextEvent ) and self.handlesText and self.onTextEvent then\
-self:onTextEvent( event )\
-end\
-end\
-\
-function ScrollContainer:onPreDraw()\
-self.canvas:clear( self.style:getField \"colour\" )\
-end\
-\
+if self.changed then local e=self.children local t,a,o\
+local i,n=self.scrollX,self.scrollY self:resetCursorBlink()\
+if self.onPreDraw then self:onPreDraw()end\
+for s=1,#e do local h=e[s]\
+if h:isVisible()then h:draw()\
+h.canvas:drawTo(self.canvas,h.x-i,h.y-n)if h.cursor_active then\
+t,a,o=h.x+h.cursor_x-i,h.y+h.cursor_y-n,h.cursor_colour end end end if t then self:setCursorBlink(t,a,o)end if self.onPostDraw then\
+self:onPostDraw()end self.changed=false end end\
+function ScrollContainer:handle(e)local t={}local a,o=self.scrollX,self.scrollY\
+local i=self.children for n=1,#i do t[n]=i[n]end\
+if self.down and e:is(1)then self.down=false\
+self.heldScrollbar=false self:setChanged()e:handle()elseif self.down and e:is(4)then\
+local n,s=self:getContentWidth(),self:getContentHeight()local r,d=self:getActiveScrollbars(n,s)\
+if self.heldScrollbar==\"h\"then\
+self.scrollX=math.max(math.min(math.floor((\
+e.x-self.down)/self:getDisplayWidth(r,d)*n),\
+n-self:getDisplayWidth(r,d)),0)self:setChanged()e:handle()elseif self.heldScrollbar==\"v\"then\
+self.scrollY=math.max(math.min(math.floor((\
+e.y-self.down)/self.height*s),\
+s-self:getDisplayHeight(r,d)),0)self:setChanged()e:handle()end end\
+if\
+e:typeOf(MouseEvent)and not e.handled and\
+e:isWithinArea(0,0,self.width,self.height)and e.within then local n,s=self:getContentWidth(),self:getContentHeight()\
+local r,d=self:getActiveScrollbars(n,s)\
+if e:is(0)then\
+if e.x==self.width-1 and d then\
+local h,l=self:getScrollbarPositions(n,s,r,d)local u,c=self:getScrollbarSizes(n,s,r,d)local m=e.y\
+if m<h then self.scrollY=math.floor(\
+m/self.height*s)m=0 elseif m>=h+u then\
+self.scrollY=math.floor((\
+m-c+1)/self.height*s)m=c-1 else m=m-l end self.heldScrollbar=\"v\"self.down=m self:setChanged()\
+e:handle()elseif e.y==self.height-1 and r then\
+local h,l=self:getScrollbarPositions(n,s,r,d)local u,c=self:getScrollbarSizes(n,s,r,d)local m=e.x\
+if m<h then\
+self.scrollX=math.floor(\
+m/self:getDisplayWidth(r,d)*n)m=0 elseif m>=h+u then\
+self.scrollX=math.floor((m-u+1)/self:getDisplayWidth(r,d)*n)m=u-1 else m=m-h end self.heldScrollbar=\"h\"self.down=m self:setChanged()\
+e:handle()end elseif e:is(5)then\
+if d then\
+self:setScrollY(math.max(math.min(o+e.button,s-self:getDisplayHeight(r,d)),0))elseif r then\
+self:setScrollX(math.max(math.min(a+e.button,n-self:getDisplayWidth(r,d)),0))end elseif e:is(2)or e:is(3)then e:handle()end end\
+if e:typeOf(MouseEvent)then\
+local n=e:isWithinArea(0,0,self.width,self.height)for s=#t,1,-1 do\
+t[s]:handle(e:clone(t[s].x-a,t[s].y-o,n))end else for n=#t,1,-1 do t[n]:handle(e)end end\
+if e:typeOf(MouseEvent)then\
+if\
+e:is(EVENT_MOUSE_PING)and\
+e:isWithinArea(0,0,self.width,self.height)and e.within then e.button[#e.button+1]=self end self:onMouseEvent(e)elseif\
+e:typeOf(KeyboardEvent)and self.handlesKeyboard and self.onKeyboardEvent then\
+self:onKeyboardEvent(e)elseif\
+e:typeOf(TextEvent)and self.handlesText and self.onTextEvent then self:onTextEvent(e)end end function ScrollContainer:onPreDraw()\
+self.canvas:clear(self.style:getField\"colour\")end\
 function ScrollContainer:onPostDraw()\
-local cWidth, cHeight = self:getContentWidth(), self:getContentHeight()\
-local h, v = self:getActiveScrollbars( cWidth, cHeight )\
-if h or v then\
-local px, py = self:getScrollbarPositions( cWidth, cHeight, h, v )\
-local sx, sy = self:getScrollbarSizes( cWidth, cHeight, h, v )\
-\
-if h then\
-local c1 = self.style:getField \"horizontal-bar\"\
-local c2 = self.heldScrollbar == \"h\" and\
-self.style:getField \"horizontal-bar.active\"\
-or self.style:getField \"horizontal-bar.bar\"\
-\
-self.canvas:mapColour( self.canvas:getArea( 4, 0, self.height - 1, self:getDisplayWidth( h, v ) ), c1 )\
-self.canvas:mapColour( self.canvas:getArea( 4, px, self.height - 1, sx ), c2 )\
-end\
-if v then\
-local c1 = self.style:getField \"vertical-bar\"\
-local c2 = self.heldScrollbar == \"v\" and\
-self.style:getField \"vertical-bar.active\"\
-or self.style:getField \"vertical-bar.bar\"\
-\
-self.canvas:mapColour( self.canvas:getArea( 3, self.width - 1, 0, self.height ), c1 )\
-self.canvas:mapColour( self.canvas:getArea( 3, self.width - 1, py, sy ), c2 )\
-end\
-end\
-end\
-\
-function ScrollContainer:getChildrenAt( x, y )\
-functionParameters.check( 2, \"x\", \"number\", x, \"y\", \"number\", y )\
-\
-local c = {}\
-local ox, oy = self.scrollX, self.scrollY\
-\
-local children = self.children\
-for i = 1, #children do\
-c[i] = children[i]\
-end\
-\
-local elements = {}\
-\
-for i = #c, 1, -1 do\
-c[i]:handle( MouseEvent( EVENT_MOUSE_PING, x - c[i].x - ox, y - c[i].y - oy, elements, true ) )\
-end\
-\
-return elements\
-end\
-\
-function ScrollContainer:isChildVisible( child )\
-functionParameters.check( 1, \"child\", Sheet, child )\
-\
-local ox, oy = self.scrollX, self.scrollY\
-\
-return child.x + child.width - ox > 0 and child.y + child.height - oy > 0 and child.x - ox < self.width and child.y - oy < self.height\
-end\
-\
-Style.addToTemplate( ScrollContainer, {\
-[\"colour\"] = 1;\
-[\"horizontal-bar\"] = 128;\
-[\"horizontal-bar.bar\"] = 256;\
-[\"horizontal-bar.active\"] = 8;\
-[\"vertical-bar\"] = 128;\
-[\"vertical-bar.bar\"] = 256;\
-[\"vertical-bar.active\"] = 8;\
-} )","sheets.elements.ScrollContainer",nil,_ENV)if not __f then error(__err,0)end __f()
-
-
-local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
-class \"Text\" extends \"Sheet\" implements \"IHasText\" {}\
-\
-function Text:Text( x, y, width, height, text )\
-self.text = text\
-return self:Sheet( x, y, width, height )\
-end\
-\
-function Text:onPreDraw()\
-self.canvas:clear( self.style:getField \"colour\" )\
-self:drawText \"default\"\
-end\
-\
-Style.addToTemplate( Text, {\
-[\"colour\"] = 1;\
-[\"textColour\"] = 128;\
-[\"horizontal-alignment\"] = 0;\
-[\"vertical-alignment\"] = 3;\
-} )","sheets.elements.Text",nil,_ENV)if not __f then error(__err,0)end __f()
-
-
-local __f,__err=load("\
-\
-\
-\
-\
-\
-\
-\
-\
--- needs to update to new exception system\
-\
-local function getSimilarPattern( char )\
-local pat = \"^[^_%w%s]+\"\
-if char:find \"%s\" then\
-pat = \"^%s+\"\
-elseif char:find \"[%w_]\" then\
-pat = \"^[%w_]+\"\
-end\
-return pat\
-end\
-\
-local function extendSelection( text, forward, pos )\
-local pat = getSimilarPattern( text:sub( pos, pos ) )\
-if forward then\
-return #( text:match( pat, pos ) or \"\" )\
-else\
-local reverse = text:reverse()\
-local newpos = #text - pos + 1\
-return #( reverse:match( pat, newpos ) or \"\" )\
-end\
-end\
-\
-local function mask( text, mask )\
-if mask then\
-return mask:rep( #text )\
-end\
-return text\
-end\
-\
-class \"TextInput\" extends \"Sheet\" {\
-text = \"\";\
-cursor = 0;\
-scroll = 0;\
-selection = false;\
-focussed = false;\
-handlesKeyboard = true;\
-handlesText = true;\
-doubleClickData = false;\
-}\
-\
-function TextInput:TextInput( x, y, width )\
-return self:Sheet( x, y, width, 1 )\
-end\
-\
-function TextInput:setText( text )\
-self.text = tostring( text )\
-return self:setChanged()\
-end\
-\
-function TextInput:setScroll( scroll )\
-if type( scroll ) ~= \"number\" then return error( \"expected number scroll, got \" .. class.type( scroll ) ) end\
-\
-self.scroll = scroll\
-return self:setChanged()\
-end\
-\
-function TextInput:setCursor( cursor )\
-if type( cursor ) ~= \"number\" then return error( \"expected number cursor, got \" .. class.type( cursor ) ) end\
-\
-self.cursor = math.min( math.max( cursor, 0 ), #self.text )\
-if self.cursor == self.selection then\
-self.selection = nil\
-end\
-if self.cursor - self.scroll < 1 then\
-self.scroll = math.max( self.cursor - 1, 0 )\
-elseif self.cursor - self.scroll > self.width - 1 then\
-self.scroll = self.cursor - self.width + 1\
-end\
-return self:setChanged()\
-end\
-\
-function TextInput:setSelection( position )\
-if type( position ) ~= \"number\" then return error( \"expected number position, got \" .. class.type( position ) ) end\
-\
-self.selection = position\
-return self:setChanged()\
-end\
-\
-function TextInput:getSelectedText()\
-return self.selection and self.text:sub( math.min( self.cursor, self.selection ) + 1, math.max( self.cursor, self.selection ) )\
-end\
-\
-function TextInput:write( text )\
-text = tostring( text )\
-\
-if self.selection then\
-self.text = self.text:sub( 1, math.min( self.cursor, self.selection ) ) .. text .. self.text:sub( math.max( self.cursor, self.selection ) + 1 )\
-self:setCursor( math.min( self.cursor, self.selection ) + #text )\
-self.selection = false\
-else\
-self.text = self.text:sub( 1, self.cursor ) .. text .. self.text:sub( self.cursor + 1 )\
-self:setCursor( self.cursor + #text )\
-end\
-return self:setChanged()\
-end\
-\
-function TextInput:focus()\
-if not self.focussed then\
-self.focussed = true\
-if self.onFocus then\
-self:onFocus()\
-end\
-return self:setChanged()\
-end\
-return self\
-end\
-\
-function TextInput:unfocus()\
-if self.focussed then\
-self.focussed = false\
-if self.onUnFocus then\
-self:onUnFocus()\
-end\
-return self:setChanged()\
-end\
-return self\
-end\
-\
-function TextInput:onPreDraw()\
-self.canvas:clear( self.style:getField( \"colour.\" .. ( self.focussed and \"focussed\" or \"default\" ) ) )\
-\
-local masking = self.style:getField( \"mask.\" .. ( self.focussed and \"focussed\" or \"default\" ) )\
-\
-if self.selection then\
-local min = math.min( self.cursor, self.selection )\
-local max = math.max( self.cursor, self.selection )\
-\
-self.canvas:drawText( -self.scroll, 0, mask( self.text:sub( 1, min ), masking ), {\
-textColour = self.style:getField( \"textColour.\" .. ( self.focussed and \"focussed\" or \"default\" ) );\
-} )\
-self.canvas:drawText( min - self.scroll, 0, mask( self.text:sub( min + 1, max ), masking ), {\
-colour = self.style:getField \"colour.highlighted\";\
-textColour = self.style:getField \"textColour.highlighted\";\
-} )\
-self.canvas:drawText( max - self.scroll, 0, mask( self.text:sub( max + 1 ), masking ), {\
-textColour = self.style:getField( \"textColour.\" .. ( self.focussed and \"focussed\" or \"default\" ) );\
-} )\
-else\
-self.canvas:drawText( -self.scroll, 0, mask( self.text, masking ), {\
-textColour = self.style:getField( \"textColour.\" .. ( self.focussed and \"focussed\" or \"default\" ) );\
-} )\
-end\
-\
-if not self.selection and self.focussed and self.cursor - self.scroll >= 0 and self.cursor - self.scroll < self.width then\
-self:setCursorBlink( self.cursor - self.scroll, 0, self.style:getField( \"textColour.\" .. ( self.focussed and \"focussed\" or \"default\" ) ) )\
-end\
-end\
-\
-function TextInput:onMouseEvent( event )\
-if self.down and event:is( 4 ) then\
-self.selection = self.selection or self.cursor\
-self:setCursor( event.x + self.scroll + 1 )\
-elseif self.down and event:is( 1 ) then\
-self.down = false\
-end\
-\
-if event.handled or not event:isWithinArea( 0, 0, self.width, self.height ) or not event.within then\
-if event:is( 0 ) then\
-self:unfocus()\
-end\
+local e,t=self:getContentWidth(),self:getContentHeight()local a,o=self:getActiveScrollbars(e,t)\
+if a or o then\
+local i,n=self:getScrollbarPositions(e,t,a,o)local s,h=self:getScrollbarSizes(e,t,a,o)\
+if a then\
+local r=self.style:getField\"horizontal-bar\"\
+local d=\
+self.heldScrollbar==\"h\"and self.style:getField\"horizontal-bar.active\"or self.style:getField\"horizontal-bar.bar\"\
+self.canvas:mapColour(self.canvas:getArea(4,0,self.height-1,self:getDisplayWidth(a,o)),r)\
+self.canvas:mapColour(self.canvas:getArea(4,i,self.height-1,s),d)end\
+if o then local r=self.style:getField\"vertical-bar\"\
+local d=\
+self.heldScrollbar==\"v\"and self.style:getField\"vertical-bar.active\"or\
+self.style:getField\"vertical-bar.bar\"\
+self.canvas:mapColour(self.canvas:getArea(3,self.width-1,0,self.height),r)\
+self.canvas:mapColour(self.canvas:getArea(3,self.width-1,n,h),d)end end end\
+function ScrollContainer:getChildrenAt(e,t)\
+functionParameters.check(2,\"x\",\"number\",e,\"y\",\"number\",t)local a={}local o,i=self.scrollX,self.scrollY local n=self.children\
+for h=1,#n do a[h]=n[h]end local s={}for h=#a,1,-1 do\
+a[h]:handle(MouseEvent(EVENT_MOUSE_PING,e-a[h].x-o,t-a[h].y-i,s,true))end return s end\
+function ScrollContainer:isChildVisible(e)\
+functionParameters.check(1,\"child\",Sheet,e)local t,a=self.scrollX,self.scrollY\
 return\
-end\
-\
-if event:is( 0 ) then\
-self:focus()\
-self.selection = nil\
-self:setCursor( event.x + self.scroll )\
-self.down = true\
-event:handle()\
-elseif event:is( 2 ) then\
-if self.doubleClickData and self.doubleClickData.x == event.x + self.scroll then\
-local pos1, pos2 = event.x + self.scroll + 1, event.x + self.scroll + 1\
-local pat = getSimilarPattern( self.text:sub( pos1, pos1 ) )\
-while self.text:sub( pos1 - 1, pos1 - 1 ):find( pat ) do\
-pos1 = pos1 - 1\
-end\
-while self.text:sub( pos2 + 1, pos2 + 1 ):find( pat ) do\
-pos2 = pos2 + 1\
-end\
-self:setCursor( pos2 )\
-self.selection = pos1 - 1\
-timer.cancel( self.doubleClickData.timer )\
-self.doubleClickData = false\
-else\
-if self.doubleClickData then\
-timer.cancel( self.doubleClickData.timer )\
-end\
-local t = timer.queue( 0.3, function()\
-self.doubleClickData = false\
-end )\
-self.doubleClickData = { x = event.x + self.scroll, timer = t }\
-end\
-elseif event:is( 3 ) then\
-event:handle()\
-end\
-end\
-\
-function TextInput:onKeyboardEvent( event )\
-if not self.focussed or event.handled then return end\
-\
-if event:is( 7 ) then\
+e.x+e.width-t>0 and\
+e.y+e.height-a>0 and e.x-t<self.width and e.y-a<self.height end\
+Style.addToTemplate(ScrollContainer,{[\"colour\"]=1,[\"horizontal-bar\"]=128,[\"horizontal-bar.bar\"]=256,[\"horizontal-bar.active\"]=8,[\"vertical-bar\"]=128,[\"vertical-bar.bar\"]=256,[\"vertical-bar.active\"]=8})","sheets.elements.ScrollContainer",nil,_ENV)if not __f then error(__err,0)end __f()
+
+
+local __f,__err=load("class\"Text\"extends\"Sheet\"implements\"IHasText\"{}function Text:Text(e,t,a,o,i)\
+self.text=i return self:Sheet(e,t,a,o)end\
+function Text:onPreDraw()\
+self.canvas:clear(self.style:getField\"colour\")self:drawText\"default\"end\
+Style.addToTemplate(Text,{[\"colour\"]=1,[\"textColour\"]=128,[\"horizontal-alignment\"]=0,[\"vertical-alignment\"]=3})","sheets.elements.Text",nil,_ENV)if not __f then error(__err,0)end __f()
+
+
+local __f,__err=load("local function e(o)local i=\"^[^_%w%s]+\"\
+if o:find\"%s\"then i=\"^%s+\"elseif o:find\"[%w_]\"then i=\"^[%w_]+\"end return i end\
+local function t(o,i,n)\
+local s=e(o:sub(n,n))\
+if i then return# (o:match(s,n)or\"\")else local h=o:reverse()local r=\
+#o-n+1 return# (h:match(s,r)or\"\")end end local function a(o,a)if a then return a:rep(#o)end return o end\
+class\"TextInput\"\
+extends\"Sheet\"{text=\"\",cursor=0,scroll=0,selection=false,focussed=false,handlesKeyboard=true,handlesText=true,doubleClickData=false}\
+function TextInput:TextInput(o,i,n)return self:Sheet(o,i,n,1)end\
+function TextInput:setText(o)self.text=tostring(o)return self:setChanged()end\
+function TextInput:setScroll(o)\
+functionParameters.check(1,\"scroll\",\"number\",o)self.scroll=o return self:setChanged()end\
+function TextInput:setCursor(o)\
+functionParameters.check(1,\"cursor\",\"number\",o)\
+self.cursor=math.min(math.max(o,0),#self.text)\
+if self.cursor==self.selection then self.selection=nil end\
+if self.cursor-self.scroll<1 then\
+self.scroll=math.max(self.cursor-1,0)elseif self.cursor-self.scroll>self.width-1 then self.scroll=self.cursor-\
+self.width+1 end return self:setChanged()end\
+function TextInput:setSelection(o)\
+functionParameters.check(1,\"position\",\"number\",o)self.selection=o return self:setChanged()end\
+function TextInput:getSelectedText()\
+return self.selection and\
+self.text:sub(\
+math.min(self.cursor,self.selection)+1,math.max(self.cursor,self.selection))end\
+function TextInput:write(o)o=tostring(o)\
 if self.selection then\
-if event:matches \"left\" then\
-if event:isHeld \"leftShift\" or event:isHeld \"rightShift\" then\
-local diff = 1\
-if event:isHeld \"rightCtrl\" or event:isHeld \"leftCtrl\" then\
-diff = extendSelection( self.text, false, self.cursor )\
-end\
-self:setCursor( self.cursor - diff )\
-else\
-self:setCursor( math.min( self.cursor, self.selection ) )\
-self.selection = nil\
-end\
-event:handle()\
-elseif event:matches \"right\" then\
-if event:isHeld \"leftShift\" or event:isHeld \"rightShift\" then\
-local diff = 1\
-if event:isHeld \"rightCtrl\" or event:isHeld \"leftCtrl\" then\
-diff = extendSelection( self.text, true, self.cursor + 1 )\
-end\
-self:setCursor( self.cursor + diff )\
-else\
-self:setCursor( math.max( self.cursor, self.selection ) )\
-self.selection = nil\
-end\
-event:handle()\
-elseif event:matches \"backspace\" or event:matches \"delete\" then\
-self:write \"\"\
-event:handle()\
-end\
-else\
-if event:matches \"left\" then\
-if event:isHeld \"leftShift\" or event:isHeld \"rightShift\" then\
-self.selection = self.cursor\
-end\
-local diff = 1\
-if event:isHeld \"rightCtrl\" or event:isHeld \"leftCtrl\" then\
-diff = extendSelection( self.text, false, self.cursor )\
-end\
-self:setCursor( self.cursor - diff )\
-event:handle()\
-elseif event:matches \"right\" then\
-if event:isHeld \"leftShift\" or event:isHeld \"rightShift\" then\
-self.selection = self.cursor\
-end\
-local diff = 1\
-if event:isHeld \"rightCtrl\" or event:isHeld \"leftCtrl\" then\
-diff = extendSelection( self.text, true, self.cursor + 1 )\
-end\
-self:setCursor( self.cursor + diff )\
-event:handle()\
-elseif event:matches \"backspace\" and self.cursor > 0 then\
-self.text = self.text:sub( 1, self.cursor - 1 ) .. self.text:sub( self.cursor + 1 )\
-self:setCursor( self.cursor - 1 )\
-event:handle()\
-elseif event:matches \"delete\" then\
-self:setText( self.text:sub( 1, self.cursor ) .. self.text:sub( self.cursor + 2 ) )\
-event:handle()\
-end\
-end\
-\
-if event:matches \"leftCtrl-a\" or event:matches \"rightCtrl-a\" then\
-self.selection = self.selection or self.cursor\
-if self.selection > self.cursor then\
-self.selection, self.cursor = self.cursor, self.selection\
-end\
-self:addAnimation( \"selection\", self.setSelection, Animation():setRounded():addKeyFrame( self.selection, 0, .15 ) )\
-self:addAnimation( \"cursor\", self.setCursor, Animation():setRounded():addKeyFrame( self.cursor, #self.text, .15 ) )\
-event:handle()\
-elseif event:matches \"end\" then\
-self:addAnimation( \"cursor\", self.setCursor, Animation():setRounded():addKeyFrame( self.cursor, #self.text, .15 ) )\
-event:handle()\
-elseif event:matches \"home\" then\
-self:addAnimation( \"cursor\", self.setCursor, Animation():setRounded():addKeyFrame( self.cursor, 0, .15 ) )\
-event:handle()\
-elseif event:matches \"enter\" then\
-self:unfocus()\
-event:handle()\
-if self.onEnter then\
-return self:onEnter()\
-end\
-elseif event:matches \"tab\" then\
-self:unfocus()\
-event:handle()\
-if self.onTab then\
-return self:onTab()\
-end\
-elseif event:matches \"v\" and ( event:isHeld \"leftCtrl\" or event:isHeld \"rightCtrl\" ) then\
-local text = clipboard.get \"plain-text\"\
-if text then\
-self:write( text )\
-end\
-elseif event:matches \"leftCtrl-c\" or event:matches \"rightCtrl-c\" then\
+self.text=\
+self.text:sub(1,math.min(self.cursor,self.selection))..o..\
+self.text:sub(math.max(self.cursor,self.selection)+1)\
+self:setCursor(math.min(self.cursor,self.selection)+#o)self.selection=false else\
+self.text=self.text:sub(1,self.cursor)..o..self.text:sub(\
+self.cursor+1)self:setCursor(self.cursor+#o)end return self:setChanged()end\
+function TextInput:focus()\
+if not self.focussed then self.focussed=true if self.onFocus then\
+self:onFocus()end return self:setChanged()end return self end\
+function TextInput:unfocus()\
+if self.focussed then self.focussed=false if self.onUnFocus then\
+self:onUnFocus()end return self:setChanged()end return self end\
+function TextInput:onPreDraw()\
+self.canvas:clear(self.style:getField(\"colour.\".. (\
+self.focussed and\"focussed\"or\"default\")))\
+local o=self.style:getField(\"mask.\"..\
+(self.focussed and\"focussed\"or\"default\"))\
+if self.selection then local i=math.min(self.cursor,self.selection)\
+local n=math.max(self.cursor,self.selection)\
+self.canvas:drawText(-self.scroll,0,a(self.text:sub(1,i),o),{textColour=self.style:getField(\
+\"textColour.\".. (self.focussed and\"focussed\"or\"default\"))})\
+self.canvas:drawText(i-self.scroll,0,a(self.text:sub(i+1,n),o),{colour=self.style:getField\"colour.highlighted\",textColour=self.style:getField\"textColour.highlighted\"})\
+self.canvas:drawText(n-self.scroll,0,a(self.text:sub(n+1),o),{textColour=self.style:getField(\
+\"textColour.\".. (self.focussed and\"focussed\"or\"default\"))})else\
+self.canvas:drawText(-self.scroll,0,a(self.text,o),{textColour=self.style:getField(\"textColour.\".. (\
+self.focussed and\"focussed\"or\"default\"))})end\
+if not self.selection and self.focussed and\
+self.cursor-self.scroll>=0 and\
+self.cursor-self.scroll<self.width then\
+self:setCursorBlink(self.cursor-\
+self.scroll,0,self.style:getField(\"textColour.\"..\
+(self.focussed and\"focussed\"or\"default\")))end end\
+function TextInput:onMouseEvent(o)\
+if self.down and o:is(4)then\
+self.selection=self.selection or self.cursor self:setCursor(o.x+self.scroll+1)elseif self.down and\
+o:is(1)then self.down=false end\
+if\
+o.handled or not o:isWithinArea(0,0,self.width,self.height)or not o.within then if o:is(0)then\
+self:unfocus()end return end\
+if o:is(0)then self:focus()self.selection=nil\
+self:setCursor(o.x+self.scroll)self.down=true o:handle()elseif o:is(2)then\
+if self.doubleClickData and self.doubleClickData.x==o.x+\
+self.scroll then local i,n=\
+o.x+self.scroll+1,o.x+self.scroll+1\
+local s=e(self.text:sub(i,i))\
+while self.text:sub(i-1,i-1):find(s)do i=i-1 end\
+while self.text:sub(n+1,n+1):find(s)do n=n+1 end self:setCursor(n)self.selection=i-1\
+timer.cancel(self.doubleClickData.timer)self.doubleClickData=false else if self.doubleClickData then\
+timer.cancel(self.doubleClickData.timer)end\
+local i=timer.queue(0.3,function()self.doubleClickData=false end)self.doubleClickData={x=o.x+self.scroll,timer=i}end elseif o:is(3)then o:handle()end end\
+function TextInput:onKeyboardEvent(o)\
+if not self.focussed or o.handled then return end\
+if o:is(7)then\
 if self.selection then\
-clipboard.put {\
-[\"plain-text\"] = self:getSelectedText();\
-}\
-end\
-elseif event:matches \"leftCtrl-x\" or event:matches \"rightCtrl-x\" then\
-if self.selection then\
-clipboard.put {\
-[\"plain-text\"] = self:getSelectedText();\
-}\
-self:write \"\"\
-end\
-end\
-\
-event:handle()\
-\
-end\
-end\
-\
-function TextInput:onTextEvent( event )\
-if not event.handled and self.focussed then\
-self:write( event.text )\
-event:handle()\
-end\
-end\
-\
-Style.addToTemplate( TextInput, {\
-[\"colour\"] = 256;\
-[\"colour.focussed\"] = 256;\
-[\"colour.highlighted\"] = 2048;\
-[\"textColour\"] = 128;\
-[\"textColour.focussed\"] = 128;\
-[\"textColour.highlighted\"] = 1;\
-[\"mask\"] = false;\
-[\"mask.focussed\"] = false;\
-} )","sheets.elements.TextInput",nil,_ENV)if not __f then error(__err,0)end __f()
+if o:matches\"left\"then\
+if\
+o:isHeld\"leftShift\"or o:isHeld\"rightShift\"then local i=1 if o:isHeld\"rightCtrl\"or o:isHeld\"leftCtrl\"then\
+i=t(self.text,false,self.cursor)end\
+self:setCursor(self.cursor-i)else\
+self:setCursor(math.min(self.cursor,self.selection))self.selection=nil end o:handle()elseif o:matches\"right\"then\
+if\
+o:isHeld\"leftShift\"or o:isHeld\"rightShift\"then local i=1 if o:isHeld\"rightCtrl\"or o:isHeld\"leftCtrl\"then\
+i=t(self.text,true,self.cursor+1)end\
+self:setCursor(self.cursor+i)else\
+self:setCursor(math.max(self.cursor,self.selection))self.selection=nil end o:handle()elseif o:matches\"backspace\"or o:matches\"delete\"then\
+self:write\"\"o:handle()end else\
+if o:matches\"left\"then if o:isHeld\"leftShift\"or o:isHeld\"rightShift\"then\
+self.selection=self.cursor end local i=1\
+if\
+o:isHeld\"rightCtrl\"or o:isHeld\"leftCtrl\"then i=t(self.text,false,self.cursor)end self:setCursor(self.cursor-i)o:handle()elseif\
+o:matches\"right\"then if o:isHeld\"leftShift\"or o:isHeld\"rightShift\"then\
+self.selection=self.cursor end local i=1\
+if\
+o:isHeld\"rightCtrl\"or o:isHeld\"leftCtrl\"then i=t(self.text,true,self.cursor+1)end self:setCursor(self.cursor+i)o:handle()elseif\
+o:matches\"backspace\"and self.cursor>0 then\
+self.text=\
+self.text:sub(1,self.cursor-1)..self.text:sub(self.cursor+1)self:setCursor(self.cursor-1)o:handle()elseif\
+o:matches\"delete\"then\
+self:setText(self.text:sub(1,self.cursor)..\
+self.text:sub(self.cursor+2))o:handle()end end\
+if o:matches\"leftCtrl-a\"or o:matches\"rightCtrl-a\"then self.selection=self.selection or\
+self.cursor if self.selection>self.cursor then\
+self.selection,self.cursor=self.cursor,self.selection end\
+self:addAnimation(\"selection\",self.setSelection,Animation():setRounded():addKeyFrame(self.selection,0,.15))\
+self:addAnimation(\"cursor\",self.setCursor,Animation():setRounded():addKeyFrame(self.cursor,\
+#self.text,.15))o:handle()elseif o:matches\"end\"then\
+self:addAnimation(\"cursor\",self.setCursor,Animation():setRounded():addKeyFrame(self.cursor,\
+#self.text,.15))o:handle()elseif o:matches\"home\"then\
+self:addAnimation(\"cursor\",self.setCursor,Animation():setRounded():addKeyFrame(self.cursor,0,.15))o:handle()elseif o:matches\"enter\"then self:unfocus()o:handle()if self.onEnter then return\
+self:onEnter()end elseif o:matches\"tab\"then self:unfocus()\
+o:handle()if self.onTab then return self:onTab()end elseif o:matches\"v\"and(o:isHeld\"leftCtrl\"or\
+o:isHeld\"rightCtrl\")then\
+local i=clipboard.get\"plain-text\"if i then self:write(i)end elseif\
+o:matches\"leftCtrl-c\"or o:matches\"rightCtrl-c\"then if self.selection then\
+clipboard.put{[\"plain-text\"]=self:getSelectedText()}end elseif\
+o:matches\"leftCtrl-x\"or o:matches\"rightCtrl-x\"then if self.selection then\
+clipboard.put{[\"plain-text\"]=self:getSelectedText()}self:write\"\"end end o:handle()end end\
+function TextInput:onTextEvent(o)if not o.handled and self.focussed then\
+self:write(o.text)o:handle()end end\
+Style.addToTemplate(TextInput,{[\"colour\"]=256,[\"colour.focussed\"]=256,[\"colour.highlighted\"]=2048,[\"textColour\"]=128,[\"textColour.focussed\"]=128,[\"textColour.highlighted\"]=1,[\"mask\"]=false,[\"mask.focussed\"]=false})","sheets.elements.TextInput",nil,_ENV)if not __f then error(__err,0)end __f()
 
 
 

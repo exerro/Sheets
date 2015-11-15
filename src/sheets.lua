@@ -8,6 +8,11 @@
  -- @defineifndef SHEETS_EXTERNAL false
  -- @defineifndef SHEETS_DEFAULT_TRANSITION_TIME .3
  -- @defineifndef SHEETS_DEFAULT_TRANSITION_EASING "transition"
+ -- @defineifndef SHEETS_MINIFY
+
+ -- @if SHEETS_MINIFY
+	 -- @load sheets.preprocessor.minify
+ -- @endif
 
  -- @if SHEETS_CORE_ELEMENTS
 	 -- @define SHEETS_BUTTON
@@ -47,7 +52,7 @@
 
  -- @once
  -- @define __INCLUDE_sheets
- -- @print Including sheets (transition-time: $SHEETS_DEFAULT_TRANSITION_TIME, transition-easing: $SHEETS_DEFAULT_TRANSITION_EASING animation-fps: $SHEETS_ANIMATION_FRAMERATE, low resolution: $SHEETS_LOWRES, wrap: $SHEETS_WRAP, external: $SHEETS_EXTERNAL)
+ -- @print Including sheets (minify: $SHEETS_MINIFY, transition-time: $SHEETS_DEFAULT_TRANSITION_TIME, transition-easing: $SHEETS_DEFAULT_TRANSITION_EASING animation-fps: $SHEETS_ANIMATION_FRAMERATE, low resolution: $SHEETS_LOWRES, wrap: $SHEETS_WRAP, external: $SHEETS_EXTERNAL)
 
  -- @define SHEETS_EVENT_MOUSE_DOWN 0
  -- @define SHEETS_EVENT_MOUSE_UP 1
@@ -68,6 +73,33 @@
  -- @define ALIGNMENT_RIGHT 2
  -- @define ALIGNMENT_TOP 3
  -- @define ALIGNMENT_BOTTOM 4
+ 
+ -- @define GRAPHICS_AREA_BOX 0
+ -- @define GRAPHICS_AREA_CIRCLE 1
+ -- @define GRAPHICS_AREA_LINE 2
+ -- @define GRAPHICS_AREA_VLINE 3
+ -- @define GRAPHICS_AREA_HLINE 4
+ -- @define GRAPHICS_AREA_FILL 5
+ -- @define GRAPHICS_AREA_POINT 6
+ -- @define GRAPHICS_AREA_CCIRCLE 7
+
+ -- @define TRANSPARENT 0
+ -- @define WHITE 1
+ -- @define ORANGE 2
+ -- @define MAGENTA 4
+ -- @define LIGHTBLUE 8
+ -- @define YELLOW 16
+ -- @define LIME 32
+ -- @define PINK 64
+ -- @define GREY 128
+ -- @define LIGHTGREY 256
+ -- @define CYAN 512
+ -- @define PURPLE 1024
+ -- @define BLUE 2048
+ -- @define BROWN 4096
+ -- @define GREEN 8192
+ -- @define RED 16384
+ -- @define BLACK 32768
 
 event = {
 	mouse_down = SHEETS_EVENT_MOUSE_DOWN;
@@ -93,10 +125,42 @@ alignment = {
 	bottom = ALIGNMENT_BOTTOM;
 }
 
- -- @include graphics
+area = {
+	box = GRAPHICS_AREA_BOX;
+	circle = GRAPHICS_AREA_CIRCLE;
+	line = GRAPHICS_AREA_LINE;
+	vline = GRAPHICS_AREA_VLINE;
+	hline = GRAPHICS_AREA_HLINE;
+	fill = GRAPHICS_AREA_FILL;
+	point = GRAPHICS_AREA_POINT;
+	ccircle = GRAPHICS_AREA_CCIRCLE;
+}
 
+colour = {
+	transparent = TRANSPARENT;
+	white = WHITE;
+	orange = ORANGE;
+	magenta = MAGENTA;
+	lightBlue = LIGHTBLUE;
+	yellow = YELLOW;
+	lime = LIME;
+	pink = PINK;
+	grey = GREY;
+	lightGrey = LIGHTGREY;
+	cyan = CYAN;
+	purple = PURPLE;
+	blue = BLUE;
+	brown = BROWN;
+	green = GREEN;
+	red = RED;
+	black = BLACK;
+}
+
+ -- @require class
  -- @require sheets.timer
  -- @require sheets.clipboard
+
+ -- @include sheets.graphics
 
  -- @require sheets.exceptions.Exception
  -- @require sheets.exceptions.IncorrectParameterException

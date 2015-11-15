@@ -17,9 +17,9 @@
 
 class "Sheet"
 	implements "IAnimation"
+	implements "IAttributeAnimator"
 	implements "IChildContainer"
 	implements "ISize"
-	implements "IAttributeAnimator"
 {
 	x = 0;
 	y = 0;
