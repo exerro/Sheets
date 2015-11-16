@@ -6,6 +6,15 @@
  -- @defineifndef SHEETS_DEFAULT_TRANSITION_TIME .3
  -- @defineifndef SHEETS_DEFAULT_TRANSITION_EASING "transition"
  -- @defineifndef SHEETS_MINIFY
+ -- @defineifndef SHEETS_PARSING
+ -- @defineifndef SHEETS_SML
+ -- @defineifndef SHEETS_DYNAMIC
+
+ -- @if SHEETS_SML
+ 	-- @define SHEETS_PARSING
+ -- @elif SHEETS_DYNAMIC
+ 	-- @define SHEETS_PARSING
+ -- @endif
 
  -- @if SHEETS_CORE_ELEMENTS
 	 -- @define SHEETS_BUTTON
@@ -86,6 +95,31 @@
  -- @define GREEN 8192
  -- @define RED 16384
  -- @define BLACK 32768
+
+ -- @if SHEETS_PARSING
+	 -- @define TOKEN_EOF "eof"
+	 -- @define TOKEN_STRING "string"
+	 -- @define TOKEN_FLOAT "float"
+	 -- @define TOKEN_INT "int"
+	 -- @define TOKEN_IDENT "identifier"
+	 -- @define TOKEN_NEWLINE "newline"
+	 -- @define TOKEN_SYMBOL "symbol"
+	 -- @define TOKEN_OPERATOR "operator"
+ -- @endif
+
+ -- @if SHEETS_DYNAMIC
+ 	 -- @define OPERATOR_UNARY_MINUS 0
+ 	 -- @define OPERATOR_UNARY_LEN 1
+ 	 -- @define OPERATOR_UNARY_NOT 2
+ 	 -- @define OPERATOR_UNARY_CALL 3
+ 	 -- @define OPERATOR_UNARY_INDEX 4
+ 	 -- @define OPERATOR_BINARY_ADD 5
+ 	 -- @define OPERATOR_BINARY_SUB 6
+ 	 -- @define OPERATOR_BINARY_MUL 7
+ 	 -- @define OPERATOR_BINARY_DIV 8
+ 	 -- @define OPERATOR_BINARY_MOD 9
+ 	 -- @define OPERATOR_BINARY_POW 10
+ -- @endif
 
  -- @if SHEETS_LOWRES
 	 -- @define BLANK_PIXEL { WHITE, WHITE, " " }
@@ -190,7 +224,6 @@ colour = {
  -- @require sheets.interfaces.IAttributeAnimator
  -- @require sheets.interfaces.IChildContainer
  -- @require sheets.interfaces.ISize
- -- @require sheets.interfaces.IHasText
 
  -- @require sheets.events.Event
  -- @require sheets.events.KeyboardEvent
@@ -205,7 +238,27 @@ colour = {
  -- @require sheets.core.Style
  -- @require sheets.core.Thread
 
+ -- @if SHEETS_PARSING
+	 -- @require sheets.exceptions.ParserException
+	 -- @require sheets.parsing.TokenPosition
+	 -- @require sheets.parsing.Token
+	 -- @require sheets.parsing.Parser
+ -- @endif
+
+ -- @if SHEETS_DYNAMIC
+ 	 -- @require sheets.exceptions.ExpressionException
+	 -- @require sheets.dynamic.ExpressionParser
+	 -- @require sheets.dynamic.ExpressionEnvironment
+	 -- @require sheets.dynamic.Expression
+	 -- @require sheets.dynamic.BinaryExpression
+	 -- @require sheets.dynamic.ConstantExpression
+	 -- @require sheets.dynamic.IdentifierExpression
+	 -- @require sheets.dynamic.UnaryLeftExpression
+	 -- @require sheets.dynamic.UnaryRightExpression
+ -- @endif
+
  -- @if SHEETS_BUTTON
+	 -- @require sheets.interfaces.IHasText
 	 -- @require sheets.elements.Button
  -- @endif
  -- @if SHEETS_CHECKBOX
@@ -215,6 +268,7 @@ colour = {
 	 -- @require sheets.elements.Container
  -- @endif
  -- @if SHEETS_DRAGGABLE
+ 	 -- @require sheets.interfaces.IHasText
 	 -- @require sheets.elements.Draggable
  -- @endif
  -- @if SHEETS_IMAGE
@@ -230,6 +284,7 @@ colour = {
 	 -- @require sheets.elements.ScrollContainer
  -- @endif
  -- @if SHEETS_TEXT
+ 	 -- @require sheets.interfaces.IHasText
 	 -- @require sheets.elements.Text
  -- @endif
  -- @if SHEETS_TEXTINPUT

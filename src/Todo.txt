@@ -26,3 +26,4 @@ Graphics
 		drawSurfaceRotated
 	TermCanvas
 		getRedirect
+		

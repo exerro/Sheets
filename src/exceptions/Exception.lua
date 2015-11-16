@@ -50,17 +50,23 @@ function Exception:getTraceback( initial, delimiter )
 
 	parameters.check( 2, "initial", "string", initial, "delimiter", "string", delimiter )
 
+	if #self.trace == 0 then return "" end
+
 	return initial .. table.concat( self.trace, delimiter )
+end
+
+function Exception:getData()
+	if type( self.data ) == "string" or class.isClass( self.data ) or class.isInstance( self.data ) then
+		return tostring( self.data )
+	else
+		return textutils.serialize( seld.data )
+	end
 end
 
 function Exception:getDataAndTraceback( indent )
 	parameters.check( 1, "indent", "number", indent or 1 )
 
-	if type( self.data ) == "string" or class.isClass( self.data ) or class.isInstance( self.data ) then
-		return tostring( self.data ) .. "\n" .. self:getTraceback( (" "):rep( indent or 1 ) .. "in ", "\n" .. (" "):rep( indent or 1 ) .. "in " )
-	else
-		return textutils.serialize( self.data ) .. "\n" .. self:getTraceback( (" "):rep( indent or 1 ) .. "in ", "\n" .. (" "):rep( indent or 1 ) .. "in " )
-	end
+	return self:getData() .. self:getTraceback( "\n" .. (" "):rep( indent or 1 ) .. "in ", "\n" .. (" "):rep( indent or 1 ) .. "in " )
 end
 
 function Exception:tostring()
