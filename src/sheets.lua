@@ -7,12 +7,14 @@
  -- @defineifndef SHEETS_DEFAULT_TRANSITION_EASING "transition"
  -- @defineifndef SHEETS_MINIFY
  -- @defineifndef SHEETS_PARSING
- -- @defineifndef SHEETS_SML
  -- @defineifndef SHEETS_DYNAMIC
+ -- @defineifndef SHEETS_DYNAMIC_PARSING
+ -- @defineifndef SHEETS_SML
 
- -- @if SHEETS_SML
+ -- @if SHEETS_DYNAMIC_PARSING
  	-- @define SHEETS_PARSING
- -- @elif SHEETS_DYNAMIC
+ 	-- @define SHEETS_DYNAMIC
+ -- @elif SHEETS_SML
  	-- @define SHEETS_PARSING
  -- @endif
 
@@ -107,7 +109,7 @@
 	 -- @define TOKEN_OPERATOR "operator"
  -- @endif
 
- -- @if SHEETS_DYNAMIC
+ -- @if SHEETS_DYNAMIC_PARSING
  	 -- @define OPERATOR_UNARY_MINUS 0
  	 -- @define OPERATOR_UNARY_LEN 1
  	 -- @define OPERATOR_UNARY_NOT 2
@@ -246,6 +248,11 @@ colour = {
  -- @endif
 
  -- @if SHEETS_DYNAMIC
+	 -- @require sheets.exceptions.DynamicValueException
+	 -- @require sheets.dynamic.DynamicValueVendor
+ -- @endif
+
+ -- @if SHEETS_DYNAMIC_PARSING
  	 -- @require sheets.exceptions.ExpressionException
 	 -- @require sheets.dynamic.ExpressionParser
 	 -- @require sheets.dynamic.ExpressionEnvironment

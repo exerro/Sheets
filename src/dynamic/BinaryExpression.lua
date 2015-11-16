@@ -35,9 +35,9 @@ function BinaryExpression:resolve( env )
 	local lvalue, rvalue = self.lvalue:resolve( env ), self.rvalue:resolve( env )
 
 	if type( lvalue ) ~= "number" then
-		Exception.throw( ParserException( "expected number lvalue, got " .. type( lvalue ), self.position ) )
+		Exception.throw( ExpressionException( "expected number lvalue, got " .. type( lvalue ), self.position ) )
 	elseif type( rvalue ) ~= "number" then
-		Exception.throw( ParserException( "expected string rvalue, got " .. type( rvalue ), self.position ) )
+		Exception.throw( ExpressionException( "expected string rvalue, got " .. type( rvalue ), self.position ) )
 	end
 
 	if self.operator == OPERATOR_BINARY_ADD then

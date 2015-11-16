@@ -33,7 +33,7 @@ function UnaryLeftExpression:resolve( env )
 		if type( rvalue ) == "string" then
 			return #rvalue
 		else
-			Exception.throw( ParserException( "expected string rvalue, got " .. type( rvalue ), self.position ) )
+			Exception.throw( ExpressionException( "expected string rvalue, got " .. type( rvalue ), self.position ) )
 		end
 	elseif operator == OPERATOR_UNARY_NOT then
 		return not rvalue

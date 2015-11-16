@@ -51,6 +51,20 @@ function Sheet:Sheet( x, y, width, height )
 	self.style = Style( self )
 
 	self.canvas = DrawingCanvas( width, height )
+
+	-- @if SHEETS_DYNAMIC
+	local vendor = DynamicValueVendor( self )
+
+	vendor:addAttribute( "x", {}, self.setX )
+	vendor:addAttribute( "y", {}, self.setY )
+	vendor:addAttribute( "z", {}, self.setZ )
+	vendor:addAttribute( "width", {}, self.setWidth )
+	vendor:addAttribute( "height", {}, self.setHeight )
+	vendor:addAttribute( "style", {}, self.setStyle )
+	vendor:addAttribute( "parent", {}, self.setParent )
+
+	self.dynamic = vendor
+	-- @endif
 end
 
 function Sheet:setX( x )
