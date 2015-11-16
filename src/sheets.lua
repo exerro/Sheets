@@ -199,10 +199,21 @@ colour = {
 	black = BLACK;
 }
 
- -- @require sheets.lib.class
- -- @require sheets.lib.timer
- -- @require sheets.lib.clipboard
- -- @require sheets.lib.parameters
+token = {
+	eof = TOKEN_EOF;
+	string = TOKEN_STRING;
+	float = TOKEN_FLOAT;
+	int = TOKEN_INT;
+	ident = TOKEN_IDENT;
+	newline = TOKEN_NEWLINE;
+	symbol = TOKEN_SYMBOL;
+	operator = TOKEN_OPERATOR;
+}
+
+ -- @require lib.class
+ -- @require lib.timer
+ -- @require lib.clipboard
+ -- @require lib.parameters
 
  -- @ifn SHEETS_LOWRES
 	 -- @define GRAPHICS_DEFAULT_FONT _graphics_default_font
@@ -210,92 +221,92 @@ colour = {
 	GRAPHICS_DEFAULT_FONT = Font()
  -- @endif
 
- -- @include sheets.graphics.shader
- -- @require sheets.graphics.Canvas
- -- @require sheets.graphics.DrawingCanvas
- -- @require sheets.graphics.ScreenCanvas
- -- @require sheets.graphics.image
+ -- @include graphics.shader
+ -- @require graphics.Canvas
+ -- @require graphics.DrawingCanvas
+ -- @require graphics.ScreenCanvas
+ -- @require graphics.image
 
- -- @require sheets.exceptions.Exception
- -- @require sheets.exceptions.IncorrectParameterException
- -- @require sheets.exceptions.IncorrectConstructorException
- -- @require sheets.exceptions.ResourceLoadException
- -- @require sheets.exceptions.ThreadRuntimeException
+ -- @require exceptions.Exception
+ -- @require exceptions.IncorrectParameterException
+ -- @require exceptions.IncorrectConstructorException
+ -- @require exceptions.ResourceLoadException
+ -- @require exceptions.ThreadRuntimeException
 
- -- @require sheets.interfaces.IAnimation
- -- @require sheets.interfaces.IAttributeAnimator
- -- @require sheets.interfaces.IChildContainer
- -- @require sheets.interfaces.ISize
+ -- @require interfaces.IAnimation
+ -- @require interfaces.IAttributeAnimator
+ -- @require interfaces.IChildContainer
+ -- @require interfaces.ISize
 
- -- @require sheets.events.Event
- -- @require sheets.events.KeyboardEvent
- -- @require sheets.events.MiscEvent
- -- @require sheets.events.MouseEvent
- -- @require sheets.events.TextEvent
+ -- @require events.Event
+ -- @require events.KeyboardEvent
+ -- @require events.MiscEvent
+ -- @require events.MouseEvent
+ -- @require events.TextEvent
 
- -- @require sheets.core.Animation
- -- @require sheets.core.Application
- -- @require sheets.core.Screen
- -- @require sheets.core.Sheet
- -- @require sheets.core.Style
- -- @require sheets.core.Thread
+ -- @require core.Animation
+ -- @require core.Application
+ -- @require core.Screen
+ -- @require core.Sheet
+ -- @require core.Style
+ -- @require core.Thread
 
  -- @if SHEETS_PARSING
-	 -- @require sheets.exceptions.ParserException
-	 -- @require sheets.parsing.TokenPosition
-	 -- @require sheets.parsing.Token
-	 -- @require sheets.parsing.Parser
+	 -- @require exceptions.ParserException
+	 -- @require parsing.TokenPosition
+	 -- @require parsing.Token
+	 -- @require parsing.Parser
  -- @endif
 
  -- @if SHEETS_DYNAMIC
-	 -- @require sheets.exceptions.DynamicValueException
-	 -- @require sheets.dynamic.DynamicValueVendor
+	 -- @require exceptions.DynamicValueException
+	 -- @require dynamic.DynamicValueVendor
  -- @endif
 
  -- @if SHEETS_DYNAMIC_PARSING
- 	 -- @require sheets.exceptions.ExpressionException
-	 -- @require sheets.dynamic.ExpressionParser
-	 -- @require sheets.dynamic.ExpressionEnvironment
-	 -- @require sheets.dynamic.Expression
-	 -- @require sheets.dynamic.BinaryExpression
-	 -- @require sheets.dynamic.ConstantExpression
-	 -- @require sheets.dynamic.IdentifierExpression
-	 -- @require sheets.dynamic.UnaryLeftExpression
-	 -- @require sheets.dynamic.UnaryRightExpression
+ 	 -- @require exceptions.ExpressionException
+	 -- @require dynamic.ExpressionParser
+	 -- @require dynamic.ExpressionEnvironment
+	 -- @require dynamic.Expression
+	 -- @require dynamic.BinaryExpression
+	 -- @require dynamic.ConstantExpression
+	 -- @require dynamic.IdentifierExpression
+	 -- @require dynamic.UnaryLeftExpression
+	 -- @require dynamic.UnaryRightExpression
  -- @endif
 
  -- @if SHEETS_BUTTON
-	 -- @require sheets.interfaces.IHasText
-	 -- @require sheets.elements.Button
+	 -- @require interfaces.IHasText
+	 -- @require elements.Button
  -- @endif
  -- @if SHEETS_CHECKBOX
-	 -- @require sheets.elements.Checkbox
+	 -- @require elements.Checkbox
  -- @endif
  -- @if SHEETS_CONTAINER
-	 -- @require sheets.elements.Container
+	 -- @require elements.Container
  -- @endif
  -- @if SHEETS_DRAGGABLE
- 	 -- @require sheets.interfaces.IHasText
-	 -- @require sheets.elements.Draggable
+ 	 -- @require interfaces.IHasText
+	 -- @require elements.Draggable
  -- @endif
  -- @if SHEETS_IMAGE
-	 -- @require sheets.elements.Image
+	 -- @require elements.Image
  -- @endif
  -- @if SHEETS_KEYHANDLER
- 	 -- @require sheets.elements.KeyHandler
+ 	 -- @require elements.KeyHandler
  -- @endif
  -- @if SHEETS_PANEL
-	 -- @require sheets.elements.Panel
+	 -- @require elements.Panel
  -- @endif
  -- @if SHEETS_SCROLLCONTAINER
-	 -- @require sheets.elements.ScrollContainer
+	 -- @require elements.ScrollContainer
  -- @endif
  -- @if SHEETS_TEXT
- 	 -- @require sheets.interfaces.IHasText
-	 -- @require sheets.elements.Text
+ 	 -- @require interfaces.IHasText
+	 -- @require elements.Text
  -- @endif
  -- @if SHEETS_TEXTINPUT
-	 -- @require sheets.elements.TextInput
+	 -- @require elements.TextInput
  -- @endif
 
  -- @if SHEETS_WRAP
