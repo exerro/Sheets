@@ -118,7 +118,7 @@ function Sheet:setStyle( style, children )
 end
 
 function Sheet:setParent( parent )
-	if not class.typeOf( parent, Sheet ) and not class.typeOf( parent, Screen ) then
+	if parent and not class.typeOf( parent, Sheet ) and not class.typeOf( parent, Screen ) then
 		Exception.throw( IncorrectParameterException( "expected Sheet or Screen parent, got " .. class.type( parent ), 2 ) )
 	end
 
