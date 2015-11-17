@@ -1,15 +1,14 @@
 
  -- @defineifndef SHEETS_LOWRES true
- -- @defineifndef SHEETS_ANIMATION_FRAMERATE .05
- -- @defineifndef SHEETS_WRAP false
- -- @defineifndef SHEETS_EXTERNAL false
  -- @defineifndef SHEETS_DEFAULT_TRANSITION_TIME .3
  -- @defineifndef SHEETS_DEFAULT_TRANSITION_EASING "transition"
  -- @defineifndef SHEETS_MINIFY
  -- @defineifndef SHEETS_PARSING
  -- @defineifndef SHEETS_DYNAMIC
  -- @defineifndef SHEETS_DYNAMIC_PARSING
- -- @defineifndef SHEETS_SML
+ -- @defineifndef SHEETS_SML false
+ -- @defineifndef SHEETS_WRAP false
+ -- @defineifndef SHEETS_EXTERNAL false
 
  -- @if SHEETS_DYNAMIC_PARSING
  	-- @define SHEETS_PARSING
@@ -47,7 +46,7 @@
 
  -- @once
  -- @define __INCLUDE_sheets
- -- @print Including sheets (minify: $SHEETS_MINIFY, transition-time: $SHEETS_DEFAULT_TRANSITION_TIME, transition-easing: $SHEETS_DEFAULT_TRANSITION_EASING animation-fps: $SHEETS_ANIMATION_FRAMERATE, low resolution: $SHEETS_LOWRES, wrap: $SHEETS_WRAP, external: $SHEETS_EXTERNAL)
+ -- @print Including sheets (minify: $SHEETS_MINIFY, low resolution: $SHEETS_LOWRES, dynamic-values: $SHEETS_DYNAMIC (expressions: $SHEETS_DYNAMIC_PARSING), sml: $SHEETS_SML)
 
  -- @define SHEETS_EXCEPTION_ERROR "SHEETS_EXCEPTION\nPut code in a try block to catch the exception."
 
