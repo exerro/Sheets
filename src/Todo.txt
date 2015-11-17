@@ -1,5 +1,9 @@
-Dynamic values.
+Integrate the ExpressionParser into dynamic values.
+SML!
 Fix events to Screens.
+ImageData class.
+Add resource loader for ImageData.
+Image uses ImageData.
 ColourSelector class.
 Label class.
 RadioButton class.
@@ -10,20 +14,7 @@ Menu class.
 Terminal class.
 Rethink TextInput selection.
 Graphics
-	Image
-		load
-		loadString
-		save
-		saveString
 	area.lua
 		area.triangle implemented
-	DrawingCanvas
-		drawEllipse
-		drawArc
-		floodFill
-		drawSurfacePart
-		drawSurfaceScaled
-		drawSurfaceRotated
 	TermCanvas
 		getRedirect
-		

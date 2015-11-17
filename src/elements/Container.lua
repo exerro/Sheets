@@ -19,6 +19,8 @@ function Container:draw()
 
 		self:resetCursorBlink()
 
+		self.canvas:clear( self.style:getField "colour" )
+
 		if self.onPreDraw then
 			self:onPreDraw()
 		end
@@ -45,10 +47,6 @@ function Container:draw()
 
 		self.changed = false
 	end
-end
-
-function Container:onPreDraw()
-	self.canvas:clear( self.style:getField "colour" )
 end
 
 Style.addToTemplate( Container, {
