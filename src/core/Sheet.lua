@@ -118,8 +118,9 @@ function Sheet:setStyle( style, children )
 end
 
 function Sheet:setParent( parent )
-	-- fix this
-	if parent and ( not class.isInstance( parent ) or not parent:implements( IChildContainer ) ) then return error( "expected IChildContainer parent, got " .. class.type( parent ) ) end
+	if not class.typeOf( parent, Sheet ) and not class.typeOf( parent, Screen ) then
+		Exception.throw( IncorrectParameterException( "expected Sheet or Screen parent, got " .. class.type( parent ), 2 ) )
+	end
 
 	if parent then
 		parent:addChild( self )
