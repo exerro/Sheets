@@ -1,12 +1,5 @@
 
- -- @define SHEETS_CORE_ELEMENTS
- -- @define SHEETS_WRAP
- -- @include sheets
-
--- alternatively, without using Annex, use this instead:
-
- -- local sheets = dofile "builds/lib.lua"
-
+local sheets = dofile "builds/lib.lua"
 -- note you can also load it as an API if using the file `builds/api.lua` under the name `sheets`
 
 local application = sheets.Application()
