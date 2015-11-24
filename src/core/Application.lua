@@ -202,6 +202,7 @@ function Application:run()
 			local event = { coroutine.yield() }
 			if event[1] == "timer" and event[2] == t then
 				t = timer.new( .05 )
+				timer.update( event[2] )
 			elseif event[1] == "terminate" and self.terminateable then
 				self:stop()
 			else
