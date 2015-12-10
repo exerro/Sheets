@@ -21,15 +21,7 @@ end
 function timer.queue( n, response )
 	parameters.check( 2, "n", "number", n, "response", "function", response )
 
-	local finish, ID = t + n, false -- avoids duplicating timer events
-	for i = 1, #timers do
-		if timers[i].time == finish then
-			ID = timers[i].ID
-			break
-		end
-	end
-
-	local timerID = ID or os.startTimer( n )
+	local timerID = timer.new( n )
 	timers[#timers + 1] = { time = finish, response = response, ID = timerID }
 	return timerID
 end
