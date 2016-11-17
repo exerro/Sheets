@@ -279,7 +279,7 @@ function handleEvent( self, handle, event, params, ... )
 			self.screens[i]:onParentResized()
 		end
 
-	elseif event == "timer" and params[1] == self.mouse.timer then
+	elseif event == "timer" and self.mouse and params[1] == self.mouse.timer then
 		handle( MouseEvent( SHEETS_EVENT_MOUSE_HOLD, self.mouse.x, self.mouse.y, self.mouse.button, true ) )
 
 	else
