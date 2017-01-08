@@ -7,18 +7,87 @@ local json_decode = dofile( sheets_global_config:read "install_path" .. "/lib/js
 
 local parser = param()
 
-parser:set_param_count( 2, 2 )
+local argdone
+
+local function validate( name )
+	return function()
+		if argdone then
+			return false, "unexpected --" .. name .. " after --" .. argdone
+		end
+		argdone = name
+		return true
+	end, name
+end
+
+parser:set_param_count( 0, 0 )
+parser:add_section( "reinstall" ):set_param_count( 0, 0, "reinstall" ):set_param_validator( function()
+	return argdone == "install", "unexpected --reinstall" .. (argdone and " after --" .. argdone or " before --install")
+end, "reinstall" )
+parser:add_section( "local" ):set_param_count( 0, 0, "local" ):set_param_validator( function()
+	return argdone == "list", "unexpected --local" .. (argdone and " after --" .. argdone or " before --list")
+end, "local" )
 parser:add_section( "silent" ):set_param_count( 0, 0, "silent" )
-parser:add_section( "reinstall" ):set_param_count( 0, 0, "reinstall" )
+parser:add_section( "path" ):set_param_count( 0, 1, "path" ):set_param_validator( validate "path" )
+parser:add_section( "exists" ):set_param_count( 0, 1, "exists" ):set_param_validator( validate "exists" )
+parser:add_section( "status" ):set_param_count( 0, 1, "status" ):set_param_validator( validate "status" )
+parser:add_section( "install" ):set_param_count( 0, 1, "install" ):set_param_validator( validate "install" )
+parser:add_section( "remove" ):set_param_count( 0, 1, "remove" ):set_param_validator( validate "remove" )
+parser:add_section( "resolve" ):set_param_count( 0, 1, "resolve" ):set_param_validator( validate "resolve" )
+parser:add_section( "list" ):set_param_count( 0, 0, "list" ):set_param_validator( validate "list" )
 
 local parameters = parser:parse( ... )
 
-local mode = parameters[1]
-local v = parameters[2]
+if parameters.list then
+	local files = fs.list( sheets_global_config:read "install_path" .. "/src" )
 
-if mode ~= "install" and parameters.reinstall then
-	return error( "Unexpected --reinstall in '" .. mode .. "' mode", 0 )
+	if not parameters["local"] then
+		local files_lookup = {}
+		local h, content = http.get "https://api.github.com/repos/Exerro/Sheets/branches", "[]"
+
+		if h then
+			content = h.readAll()
+			h.close()
+		end
+
+		local data = json_decode( content )
+
+		if data.message and data.message:find "API rate limit exceeded" then
+			return error( "Out of github API calls", 0 )
+		end
+
+		files.remote = {}
+
+		for i = 1, #files do
+			files_lookup[files[i]] = true
+		end
+
+		for i = 1, #data do
+			if not files_lookup[data[i].name] and data[i].name:sub( 1, 1 ) == "v" then
+				files.remote[#files.remote + 1] = data[i].name
+			end
+		end
+	end
+
+	if parameters.silent then
+		return files
+	else
+		for i = 1, #files do
+			print( files[i] )
+		end
+
+		if files.remote then
+			term.setTextColour( colours.grey )
+
+			for i = 1, #files.remote do
+				print( files.remote[i] )
+			end
+		end
+
+		return
+	end
 end
+
+local v = parameters.path or parameters.exists or parameters.resolve or parameters.status or parameters.install or parameters.remove
 
 if v:find "^%w+$" then
 	local h = http.get( NAMED_VERSION_URL )
@@ -42,25 +111,25 @@ end
 
 local install_path = sheets_global_config:read "install_path" .. "/src/" .. v
 
-if mode == "path" then
+if parameters.path then
 	if parameters.silent then
 		return install_path
 	else
 		print( install_path )
 	end
-elseif mode == "exists" then
+elseif parameters.exists then
 	if parameters.silent then
 		return fs.isDir( install_path )
 	else
 		print( "Version " .. v .. " is " .. (fs.isDir( install_path ) and "" or "not ") .. "installed" )
 	end
-elseif mode == "resolve" then
+elseif parameters.resolve then
 	if parameters.silent then
 		return v
 	else
 		print( v )
 	end
-elseif mode == "status" then
+elseif parameters.status then
 	print( "Sheets version " .. v )
 
 	if fs.isDir( install_path ) then
@@ -68,7 +137,7 @@ elseif mode == "status" then
 	else
 		print "Not installed"
 	end
-elseif mode == "install" then
+elseif parameters.install then
 	if fs.isDir( install_path ) then
 		if parameters.reinstall then
 			if not parameters.silent then
@@ -129,7 +198,7 @@ elseif mode == "install" then
 			end
 		end
 	end
-elseif mode == "remove" then
+elseif parameters.remove then
 	fs.delete( install_path )
 
 	if not parameters.silent then

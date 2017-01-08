@@ -37,7 +37,7 @@ end
 
 local conf = config.open( project .. "/.project_conf.txt" )
 local debug_conf = config.open( project .. "/.sheets_debug/conf.txt" )
-local v = version( "resolve", conf:read "sheets_version", "--silent" )
+local v = version( "--resolve", conf:read "sheets_version", "--silent" )
 local flags = {}
 
 for k, v in pairs( conf:read "flags" ) do
@@ -88,8 +88,8 @@ if rebuild then
 
 	flags.SHEETS_MINIFY = true
 
-	if not version( "exists", v, "--silent" ) then
-		version( "install", v, parameters.silent and "--silent" or nil )
+	if not version( "--exists", v, "--silent" ) then
+		version( "--install", v, parameters.silent and "--silent" or nil )
 	end
 
 	local output = builder( { sheets_global_config:read "install_path" .. "/src/" .. v }, "sheets", flags )

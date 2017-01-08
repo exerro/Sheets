@@ -8,7 +8,7 @@ parser:add_section( "version" ):set_param_count( 0, 1, "version" )
 parser:add_section( "silent" ):set_param_count( 0, 0, "silent" )
 
 local function resolve_version( v )
-	return version( "resolve", v, "--silent" )
+	return version( "--resolve", v, "--silent" )
 end
 
 parser:set_param_modifier( function( v )
@@ -46,8 +46,8 @@ if not parameters.silent then
 	print( "Using Sheets " .. ver )
 end
 
-if not version( "exists", ver, "--silent" ) then
-	version( "install", ver, "--silent" )
+if not version( "--exists", ver, "--silent" ) then
+	version( "--install", ver, "--silent" )
 end
 
 fs.makeDir( path )
