@@ -4,9 +4,20 @@ local command = table.remove( args, 1 )
 
 local THIS_PATH = "sheets/bin"
 
-if (shell.getRunningProgram():find "/spm.lua$" or shell.getRunningProgram() == "spm.lua")
-and fs.isDir( (shell.getRunningProgram():match ".+/" or "/") .. "cmd" ) then
+local h = fs.open( ".sheets_conf.txt", "r" )
+if h then
+	local content, data = h.readAll()
+
+	h.close()
+	data = textutils.unserialize( content )
+	THIS_PATH = type( data ) == "table" and type( data.install_path ) == "string" and data.install_path .. "/bin" or THIS_PATH
+elseif (shell.getRunningProgram():find "/sbs.lua$" or shell.getRunningProgram() == "sbs.lua")
+	and fs.isDir( (shell.getRunningProgram():match ".+/" or "/") .. "cmd" ) then
 	THIS_PATH = shell.getRunningProgram():match "(.+)/" or ""
+end
+
+if not fs.isDir( THIS_PATH ) or not fs.exists( THIS_PATH .. "/sbs.lua" ) then
+	return error( "Failed to find Sheets installation directory", 0 )
 end
 
 local LIB_PATH = THIS_PATH:gsub( "bin$", "lib" )

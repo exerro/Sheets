@@ -4,7 +4,7 @@ local args = { ... }
 local env = setmetatable( {}, { __index = _ENV or getfenv() } )
 local preprocessor
 
-local h = fs.open( "sheets/lib/preprocessor.lua", "r" )
+local h = fs.open( sheets_global_config:read "install_path" .. "/lib/preprocessor.lua", "r" )
 
 if h then
 	local content = h.readAll()

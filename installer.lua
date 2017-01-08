@@ -106,7 +106,7 @@ for i = 1, 2 do
 		end
 
 		break
-	elseif key:lower() == "i" and i == 1 then
+	elseif key == keys.i and i == 1 then
 		print( PATCH_INFO:format( path ) )
 	else
 		break
