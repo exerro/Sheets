@@ -37,6 +37,7 @@ local files = {
 	"bin/cmd/version.lua";
 	"lib/build.lua";
 	"lib/config.lua";
+	"lib/json.lua";
 	"lib/minify.lua";
 	"lib/param.lua";
 	"lib/preprocessor.lua";

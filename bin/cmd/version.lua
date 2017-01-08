@@ -1,5 +1,5 @@
 
-local NAMED_VERSION_URL = "https://raw.githubusercontent.com/Exerro/Sheets/master/versions.txt"
+local NAMED_VERSION_URL = "https://raw.githubusercontent.com/Exerro/Sheets/build-system/versions.txt"
 
 local parser = param()
 
