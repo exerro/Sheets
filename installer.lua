@@ -51,6 +51,8 @@ local files = {
 fs.makeDir( path )
 
 for i = 1, #files do
+	print( "Downloading file " .. files[i] )
+	
 	local h, content = http.get( URL .. files[i] )
 
 	if h then

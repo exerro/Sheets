@@ -37,7 +37,7 @@ end
 
 local conf = config.open( project .. "/.project_conf.txt" )
 local debug_conf = config.open( project .. "/.sheets_debug/conf.txt" )
-local v = version( "--resolve", conf:read "sheets_version", "--silent" )
+local v = version( "resolve", conf:read "sheets_version", "--silent" )
 local flags = {}
 
 for k, v in pairs( conf:read "flags" ) do
@@ -82,8 +82,20 @@ if rebuild then
 		print( "Rebuilding Sheets " .. v )
 	end
 
+	debug_conf:write( "flags", flags )
+	debug_conf:write( "version", v )
+	debug_conf:save()
+
+	flags.SHEETS_MINIFY = true
+
+	if not version( "exists", v, "--silent" ) then
+		version( "install", v, parameters.silent and "--silent" or nil )
+	end
+
 	local output = builder( { sheets_global_config:read "install_path" .. "/src/" .. v }, "sheets", flags )
 	local h = fs.open( project .. "/.sheets_debug/sheets.lua", "w" )
+
+	flags.SHEETS_MINIFY = false
 
 	if h then
 		h.write( output )
@@ -91,11 +103,6 @@ if rebuild then
 	else
 		error( "failed to write build file", 0 )
 	end
-
-	debug_conf:write( "flags", flags )
-	debug_conf:write( "version", v )
-
-	debug_conf:save()
 end
 
 local h = fs.open( project .. "/.sheets_debug/file_includer.lua", "w" )

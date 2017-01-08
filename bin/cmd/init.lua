@@ -8,7 +8,7 @@ parser:add_section( "version" ):set_param_count( 0, 1, "version" )
 parser:add_section( "silent" ):set_param_count( 0, 0, "silent" )
 
 local function resolve_version( v )
-	return version( v, "--resolve", "--silent" )
+	return version( "resolve", v, "--silent" )
 end
 
 parser:set_param_modifier( function( v )
@@ -23,8 +23,9 @@ parser:set_param_validator( function( v )
 end, "version" )
 
 local parameters = parser:parse( ... )
-local name = parameters[1]
-local path = shell.resolve( name )
+local name_raw = parameters[1]:gsub( "%.", "/" )
+local name = name_raw:gsub ".+/", ""
+local path = shell.resolve( name_raw )
 local ver = parameters.version or resolve_version "stable"
 
 if fs.exists( path .. "/.project_conf.txt" ) then
@@ -45,8 +46,8 @@ if not parameters.silent then
 	print( "Using Sheets " .. ver )
 end
 
-if not version( ver, "--installed", "--silent" ) then
-	install( ver, "--silent" )
+if not version( "exists", ver, "--silent" ) then
+	version( "install", ver, "--silent" )
 end
 
 fs.makeDir( path )
