@@ -135,23 +135,12 @@ end
 
 function Application:event( event, ... )
 	local params = { ... }
-	local screens = {}
-
-	local function handle( e )
-		for i = #screens, 1, -1 do
-			screens[i]:handle( e )
-		end
-	end
 
 	if event == "timer" and timer.update( ... ) then
 		return
 	end
 
-	for i = 1, #self.screens do
-		screens[i] = self.screens[i]
-	end
-
-	return handle_event( self, handle, event, params, ... )
+	return handle_event( self, event, params, ... )
 end
 
 function Application:draw()
@@ -213,7 +202,13 @@ function Application:run()
 
 end
 
-function handle_event( self, handle, event, params, ... )
+function handle_event( self, event, params, ... )
+	local screens = {}
+
+	for i = 1, #self.screens do
+		screens[i] = self.screens[i]
+	end
+
 	if event == "mouse_click" then
 		self.mouse = {
 			x = params[2] - 1, y = params[3] - 1;
@@ -221,63 +216,126 @@ function handle_event( self, handle, event, params, ... )
 			timer = os.startTimer( 1 ), time = os.clock(), moved = false;
 		}
 
-		handle( MouseEvent( SHEETS_EVENT_MOUSE_DOWN, params[2] - 1, params[3] - 1, params[1], true ) )
+		local e = MouseEvent( SHEETS_EVENT_MOUSE_DOWN, params[2] - 1, params[3] - 1, params[1], true )
+
+		for i = #screens, 1, -1 do
+			if screens[i]:gets_term_events() then
+				screens[i]:handle( e )
+			end
+		end
 
 	elseif event == "mouse_up" then
-		handle( MouseEvent( SHEETS_EVENT_MOUSE_UP, params[2] - 1, params[3] - 1, params[1], true ) )
+		local e = MouseEvent( SHEETS_EVENT_MOUSE_UP, params[2] - 1, params[3] - 1, params[1], true )
+
+		for i = #screens, 1, -1 do
+			if screens[i]:gets_term_events() then
+				screens[i]:handle( e )
+			end
+		end
 
 		self.mouse.down = false
 		os.cancelTimer( self.mouse.timer )
 
 		if not self.mouse.moved and os.clock() - self.mouse.time < 1 and params[1] == self.mouse.button then
-			handle( MouseEvent( SHEETS_EVENT_MOUSE_CLICK, params[2] - 1, params[3] - 1, params[1], true ) )
+			local e = MouseEvent( SHEETS_EVENT_MOUSE_CLICK, params[2] - 1, params[3] - 1, params[1], true )
+
+			for i = #screens, 1, -1 do
+				if screens[i]:gets_term_events() then
+					screens[i]:handle( e )
+				end
+			end
 		end
 
 	elseif event == "mouse_drag" then
-		handle( MouseEvent( SHEETS_EVENT_MOUSE_DRAG, params[2] - 1, params[3] - 1, params[1], true ) )
+		local e = MouseEvent( SHEETS_EVENT_MOUSE_DRAG, params[2] - 1, params[3] - 1, params[1], true )
+
+		for i = #screens, 1, -1 do
+			if screens[i]:gets_term_events() then
+				screens[i]:handle( e )
+			end
+		end
 
 		self.mouse.moved = true
 		os.cancelTimer( self.mouse.timer )
 
 	elseif event == "mouse_scroll" then
-		handle( MouseEvent( SHEETS_EVENT_MOUSE_SCROLL, params[2] - 1, params[3] - 1, params[1], true ) )
+		local e = MouseEvent( SHEETS_EVENT_MOUSE_SCROLL, params[2] - 1, params[3] - 1, params[1], true )
+
+		for i = #screens, 1, -1 do
+			if screens[i]:gets_term_events() then
+				screens[i]:handle( e )
+			end
+		end
 
 	elseif event == "monitor_touch" then
-		--[[handle( MouseEvent( SHEETS_EVENT_MOUSE_DOWN, params[2] - 1, params[3] - 1, 1 ) )
-		handle( MouseEvent( SHEETS_EVENT_MOUSE_UP, params[2] - 1, params[3] - 1, 1 ) )
-		handle( MouseEvent( SHEETS_EVENT_MOUSE_CLICK, params[2] - 1, params[3] - 1, 1 ) )]]
-		-- TODO: fix this
+		local events = {
+			MouseEvent( SHEETS_EVENT_MOUSE_DOWN, params[2] - 1, params[3] - 1, 1 );
+			MouseEvent( SHEETS_EVENT_MOUSE_UP, params[2] - 1, params[3] - 1, 1 );
+			MouseEvent( SHEETS_EVENT_MOUSE_CLICK, params[2] - 1, params[3] - 1, 1 );
+		}
+
+		for i = 1, #screens do
+			if screens[i]:uses_monitor( params[1] ) then
+				for n = 1, #events do
+					screens[i]:handle( events[n] )
+				end
+			end
+		end
 
 	elseif event == "chatbox_something" then
+		-- TODO: implement this
 		-- handle( TextEvent( SHEETS_EVENT_VOICE, params[1] ) )
 
 	elseif event == "char" then
-		handle( TextEvent( SHEETS_EVENT_TEXT, params[1] ) )
+		local e = TextEvent( SHEETS_EVENT_TEXT, params[1] )
+
+		for i = #screens, 1, -1 do
+			screens[i]:handle( e )
+		end
 
 	elseif event == "paste" then
-		if self.keys.left_shift or self.keys.right_shift then -- TODO: why the left_ctrl/right_ctrl?
-			handle( KeyboardEvent( SHEETS_EVENT_KEY_DOWN, keys.v, { left_ctrl = true, right_ctrl = true } ) )
+		local e
+		if self.keys.leftShift or self.keys.rightShift then -- TODO: why the left_ctrl/right_ctrl?
+			e = KeyboardEvent( SHEETS_EVENT_KEY_DOWN, keys.v, { left_ctrl = true, right_ctrl = true } )
 		else
-			handle( TextEvent( SHEETS_EVENT_PASTE, params[1] ) )
+			e = TextEvent( SHEETS_EVENT_PASTE, params[1] )
+		end
+
+		for i = #screens, 1, -1 do
+			screens[i]:handle( e )
 		end
 
 	elseif event == "key" then
 		self.keys[keys.getName( params[1] ) or params[1]] = os.clock()
-		handle( KeyboardEvent( SHEETS_EVENT_KEY_DOWN, params[1], self.keys ) )
+		local e = KeyboardEvent( SHEETS_EVENT_KEY_DOWN, params[1], self.keys )
+
+		for i = #screens, 1, -1 do
+			screens[i]:handle( e )
+		end
 
 	elseif event == "key_up" then
 		self.keys[keys.getName( params[1] ) or params[1]] = nil
-		handle( KeyboardEvent( SHEETS_EVENT_KEY_UP, params[1], self.keys ) )
+		local e = KeyboardEvent( SHEETS_EVENT_KEY_UP, params[1], self.keys )
+
+		for i = #screens, 1, -1 do
+			screens[i]:handle( e )
+		end
 
 	elseif event == "term_resize" then
 		--[[self.width, self.height = term.get_size()
-		for i = 1, #self.screens do
-			self.screens[i]:on_parent_resized()
+		for i = 1, #screens do
+			screens[i]:on_parent_resized()
 		end]]
 		-- TODO: fix this
 
 	elseif event == "timer" and self.mouse and params[1] == self.mouse.timer then
-		handle( MouseEvent( SHEETS_EVENT_MOUSE_HOLD, self.mouse.x, self.mouse.y, self.mouse.button, true ) )
+		local e = MouseEvent( SHEETS_EVENT_MOUSE_HOLD, self.mouse.x, self.mouse.y, self.mouse.button, true )
+
+		for i = #screens, 1, -1 do
+			if screens[i]:gets_term_events() then
+				screens[i]:handle( e )
+			end
+		end
 
 	else
 		local ev = MiscEvent( event, ... )

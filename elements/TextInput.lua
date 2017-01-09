@@ -208,7 +208,7 @@ function TextInput:on_keyboard_event( event )
 			if event:matches "left" then
 				if event:is_held "left_shift" or event:is_held "right_shift" then
 					local diff = 1
-					if event:is_held "right_ctrl" or event:is_held "left_ctrl" then
+					if event:is_held "rightCtrl" or event:is_held "leftCtrl" then
 						diff = extend_selection( self.text, false, self.cursor )
 					end
 					self:set_cursor( self.cursor - diff )
@@ -220,7 +220,7 @@ function TextInput:on_keyboard_event( event )
 			elseif event:matches "right" then
 				if event:is_held "left_shift" or event:is_held "right_shift" then
 					local diff = 1
-					if event:is_held "right_ctrl" or event:is_held "left_ctrl" then
+					if event:is_held "rightCtrl" or event:is_held "leftCtrl" then
 						diff = extend_selection( self.text, true, self.cursor + 1 )
 					end
 					self:set_cursor( self.cursor + diff )
@@ -239,7 +239,7 @@ function TextInput:on_keyboard_event( event )
 					self.selection = self.cursor
 				end
 				local diff = 1
-				if event:is_held "right_ctrl" or event:is_held "left_ctrl" then
+				if event:is_held "rightCtrl" or event:is_held "leftCtrl" then
 					diff = extend_selection( self.text, false, self.cursor )
 				end
 				self:set_cursor( self.cursor - diff )
@@ -249,7 +249,7 @@ function TextInput:on_keyboard_event( event )
 					self.selection = self.cursor
 				end
 				local diff = 1
-				if event:is_held "right_ctrl" or event:is_held "left_ctrl" then
+				if event:is_held "rightCtrl" or event:is_held "leftCtrl" then
 					diff = extend_selection( self.text, true, self.cursor + 1 )
 				end
 				self:set_cursor( self.cursor + diff )
@@ -264,7 +264,7 @@ function TextInput:on_keyboard_event( event )
 			end
 		end
 
-		if event:matches "left_ctrl-a" or event:matches "right_ctrl-a" then
+		if event:matches "leftCtrl-a" or event:matches "rightCtrl-a" then
 			self.selection = self.selection or self.cursor
 			if self.selection > self.cursor then
 				self.selection, self.cursor = self.cursor, self.selection
@@ -290,18 +290,18 @@ function TextInput:on_keyboard_event( event )
 			if self.on_tab then
 				return self:on_tab()
 			end
-		elseif event:matches "v" and ( event:is_held "left_ctrl" or event:is_held "right_ctrl" ) then
+		elseif event:matches "v" and ( event:is_held "leftCtrl" or event:is_held "rightCtrl" ) then
 			local text = clipboard.get "plain-text"
 			if text then
 				self:write( text )
 			end
-		elseif event:matches "left_ctrl-c" or event:matches "right_ctrl-c" then
+		elseif event:matches "leftCtrl-c" or event:matches "rightCtrl-c" then
 			if self.selection then
 				clipboard.put {
 					["plain-text"] = self:get_selected_text();
 				}
 			end
-		elseif event:matches "left_ctrl-x" or event:matches "right_ctrl-x" then
+		elseif event:matches "leftCtrl-x" or event:matches "rightCtrl-x" then
 			if self.selection then
 				clipboard.put {
 					["plain-text"] = self:get_selected_text();
