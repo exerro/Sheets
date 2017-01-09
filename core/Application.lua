@@ -133,6 +133,38 @@ function Application:remove_screen( screen )
 
 end
 
+function Application:query( query )
+	local query_f = query_utils.get_function( query )
+	local nodes = {}
+	local matches = {}
+
+	for i = 1, #self.screens do
+		local c = self.screens[i]:get_children()
+
+		for n = 1, #c do
+			nodes[#nodes + 1] = c[n]
+		end
+	end
+
+	while nodes[1] do
+		local node = table.remove( nodes, 1 )
+
+		if query_f( node ) then
+			matches[#matches + 1] = node
+		end
+
+		if node.get_children then
+			local c = node:get_children()
+
+			for i = 1, #c do
+				table.insert( nodes, i, c[i] )
+			end
+		end
+	end
+
+	return matches
+end
+
 function Application:event( event, ... )
 	local params = { ... }
 

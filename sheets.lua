@@ -101,9 +101,10 @@ token = {
 }
 
  -- @require lib.class
- -- @require lib.timer
  -- @require lib.clipboard
  -- @require lib.parameters
+ -- @require lib.query_utils
+ -- @require lib.timer
 
  -- @ifn SHEETS_LOWRES
 	 -- @require graphics.Font

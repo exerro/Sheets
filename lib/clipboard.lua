@@ -1,4 +1,6 @@
 
+ -- @once
+
 local c = {}
 
 clipboard = {}

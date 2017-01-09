@@ -1,4 +1,6 @@
 
+ -- @once
+
 parameters = {}
 
 function parameters.check_constructor( _class, argc, ... )

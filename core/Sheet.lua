@@ -13,6 +13,7 @@ class "Sheet"
 	z = 0;
 
 	id = "ID";
+	tags = nil;
 	style = nil;
 
 	parent = nil;
@@ -41,11 +42,27 @@ function Sheet:Sheet( x, y, width, height )
 	self.width = width
 	self.height = height
 
+	self.tags = {}
+
 	self:IAnimation()
 	self:IChildContainer()
 	self.style = Style( self )
 
 	self.canvas = DrawingCanvas( width, height )
+end
+
+function Sheet:add_tag( tag )
+	self.tags[tag] = true
+	return self
+end
+
+function Sheet:remove_tag( tag )
+	self.tags[tag] = nil
+	return self
+end
+
+function Sheet:has_tag( tag )
+	return self.tags[tag] or false
 end
 
 function Sheet:set_x( x )

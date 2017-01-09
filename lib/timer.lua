@@ -1,4 +1,6 @@
 
+ -- @once
+
 timer = {}
 
 local timers = {}
