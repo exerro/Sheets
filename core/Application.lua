@@ -322,11 +322,14 @@ function handle_event( self, event, params, ... )
 		end
 
 	elseif event == "term_resize" then
-		--[[self.width, self.height = term.get_size()
+		local width, height = term.getSize()
+
 		for i = 1, #screens do
-			screens[i]:on_parent_resized()
-		end]]
-		-- TODO: fix this
+			if screens[i].terminals[1] == term then
+				screens[i]:set_width( width )
+				screens[i]:set_height( height )
+			end
+		end
 
 	elseif event == "timer" and self.mouse and params[1] == self.mouse.timer then
 		local e = MouseEvent( SHEETS_EVENT_MOUSE_HOLD, self.mouse.x, self.mouse.y, self.mouse.button, true )
