@@ -134,8 +134,13 @@ token = {
  -- @require events.MouseEvent
  -- @require events.TextEvent
 
+ -- @require parsing.Stream
+ -- @require parsing.QueryParser
+ -- @require parsing.DynamicValueParser
+
  -- @require core.Animation
  -- @require core.Application
+ -- @require core.Codegen
  -- @require core.Screen
  -- @require core.Sheet
  -- @require core.Style

@@ -46,18 +46,25 @@
  -- @define RED 16384
  -- @define BLACK 32768
 
- -- @if SHEETS_PARSING
-	 -- @define TOKEN_EOF "eof"
-	 -- @define TOKEN_STRING "string"
-	 -- @define TOKEN_FLOAT "float"
-	 -- @define TOKEN_BOOLEAN "float"
-	 -- @define TOKEN_INT "int"
-	 -- @define TOKEN_IDENT "identifier"
-	 -- @define TOKEN_KEYWORD "float"
-	 -- @define TOKEN_NEWLINE "newline"
-	 -- @define TOKEN_SYMBOL "symbol"
-	 -- @define TOKEN_OPERATOR "operator"
- -- @endif
+ -- @define TOKEN_EOF "eof"
+ -- @define TOKEN_STRING "string"
+ -- @define TOKEN_FLOAT "float"
+ -- @define TOKEN_BOOLEAN "float"
+ -- @define TOKEN_INTEGER "int"
+ -- @define TOKEN_IDENTIFIER "identifier"
+ -- @define TOKEN_KEYWORD "float"
+ -- @define TOKEN_NEWLINE "newline"
+ -- @define TOKEN_WHITESPACE "whitespace"
+ -- @define TOKEN_SYMBOL "symbol"
+ -- @define TOKEN_OPERATOR "operator"
+
+ -- @define QUERY_ALL "all"
+ -- @define QUERY_ID "id"
+ -- @define QUERY_TAG "tag"
+ -- @define QUERY_CLASS "class"
+ -- @define QUERY_ATTRIBUTES "attributes"
+ -- @define QUERY_NEGATE "negate"
+ -- @define QUERY_OPERATOR "operator"
 
  -- @if SHEETS_LOWRES
 	 -- @define BLANK_PIXEL { WHITE, WHITE, " " }

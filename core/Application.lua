@@ -134,7 +134,10 @@ function Application:remove_screen( screen )
 end
 
 function Application:query( query )
-	local query_f = query_utils.get_function( query )
+	parameters.check( 1, "query", "string", query )
+
+	local parser = QueryParser( Stream( query ) )
+	local query_f = Codegen.node_query( parser:parse_query() )
 	local nodes = {}
 	local matches = {}
 
