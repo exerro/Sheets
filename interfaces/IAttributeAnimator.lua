@@ -46,16 +46,16 @@ function IAttributeAnimator:animate_value( value, from, to, time, easing, rounde
 	return self:add_animation( value, setter, animation )
 end
 
-function IAttributeAnimator:animateX( to, time, easing )
-	return animate_attribute( self, "x", self.setX, self.x, to, time, easing )
+function IAttributeAnimator:animate_x( to, time, easing )
+	return animate_attribute( self, "x", self.set_x, self.x, to, time, easing )
 end
 
-function IAttributeAnimator:animateY( to, time, easing )
-	return animate_attribute( self, "y", self.setY, self.y, to, time, easing )
+function IAttributeAnimator:animate_y( to, time, easing )
+	return animate_attribute( self, "y", self.set_y, self.y, to, time, easing )
 end
 
-function IAttributeAnimator:animateZ( to, time, easing )
-	return animate_attribute( self, "z", self.setZ, self.z, to, time, easing )
+function IAttributeAnimator:animate_z( to, time, easing )
+	return animate_attribute( self, "z", self.set_z, self.z, to, time, easing )
 end
 
 function IAttributeAnimator:animate_width( to, time, easing )

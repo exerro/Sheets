@@ -140,30 +140,24 @@ token = {
  -- @require core.Sheet
  -- @require core.Style
  -- @require core.Thread
-
- -- @if SHEETS_PARSING
-	 -- @require exceptions.ParserException
-	 -- @require parsing.TokenPosition
-	 -- @require parsing.Token
-	 -- @require parsing.Parser
- -- @endif
+ -- @require core.ValueHandler
 
  -- @if SHEETS_BUTTON
 	 -- @require interfaces.IHasText
 	 -- @require elements.Button
  -- @endif
  -- @if SHEETS_CHECKBOX
-	 -- @require elements.Checkbox
+	 -- @/require elements.Checkbox
  -- @endif
  -- @if SHEETS_CONTAINER
 	 -- @require elements.Container
  -- @endif
  -- @if SHEETS_DRAGGABLE
- 	 -- @require interfaces.IHasText
-	 -- @require elements.Draggable
+ 	 -- @/require interfaces.IHasText
+	 -- @/require elements.Draggable
  -- @endif
  -- @if SHEETS_IMAGE
-	 -- @require elements.Image
+	 -- @/require elements.Image
  -- @endif
  -- @if SHEETS_KEYHANDLER
  	 -- @require elements.KeyHandler
@@ -172,14 +166,14 @@ token = {
 	 -- @require elements.Panel
  -- @endif
  -- @if SHEETS_SCROLLCONTAINER
-	 -- @require elements.ScrollContainer
+	 -- @/require elements.ScrollContainer
  -- @endif
  -- @if SHEETS_TEXT
- 	 -- @require interfaces.IHasText
-	 -- @require elements.Text
+ 	 -- @/require interfaces.IHasText
+	 -- @/require elements.Text
  -- @endif
  -- @if SHEETS_TEXTINPUT
-	 -- @require elements.TextInput
+	 -- @/require elements.TextInput
  -- @endif
 
  -- @if SHEETS_WRAP

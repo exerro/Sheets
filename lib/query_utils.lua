@@ -30,7 +30,7 @@ function query_utils.compile_function( query )
 	if query.type == "tag" then
 		return function( node ) return node:has_tag( name ) end
 	elseif query.type == "ID" then
-		return function( node ) return node.ID == name end
+		return function( node ) return node.id == name end
 	else
 		error( "TODO: fix this error", 0 )
 	end

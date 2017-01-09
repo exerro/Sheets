@@ -7,8 +7,20 @@ class "Button" extends "Sheet" implements "IHasText" {
 }
 
 function Button:Button( x, y, width, height, text )
-	self.text = text
-	return self:Sheet( x, y, width, height )
+	parameters.check_constructor( self.class, 5,
+		"x", "number", x,
+		"y", "number", y,
+		"width", "number", width,
+		"height", "number", height,
+		"text", "string", text == nil and "" or text
+	)
+
+	self:Sheet( x, y, width, height )
+	self:IHasText()
+
+	if text then
+		self:set_text( text )
+	end
 end
 
 function Button:on_pre_draw()

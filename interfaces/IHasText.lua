@@ -9,20 +9,25 @@ interface "IHasText" {
 	text_lines = nil;
 }
 
+function IHasText:IHasText()
+	self.values:add( "text", ValueHandler.string_type, "", function( self, text )
+		parameters.check( 1, "text", "string", text )
+
+		self.text = text
+		self.raw_text = text
+		self:wrap_text()
+		self:set_changed()
+		self.values:trigger "text"
+
+		return self
+	end )
+end
+
 function IHasText:auto_height()
 	if not self.text_lines then
 		self:wrap_text( true )
 	end
 	return self:set_height( #self.text_lines )
-end
-
-function IHasText:set_text( text )
-	parameters.check( 1, "text", "string", text )
-
-	self.text = text
-	self:wrap_text()
-	self:set_changed()
-	return self
 end
 
 function IHasText:wrap_text( ignore_height )

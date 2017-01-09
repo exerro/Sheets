@@ -18,13 +18,13 @@ class "Sheet"
 
 	parent = nil;
 
-	canvas = nil;
+	-- internal
 	changed = true;
+	canvas = nil;
 	cursor_x = 0;
 	cursor_y = 0;
 	cursor_colour = 0;
 	cursor_active = false;
-
 	handles_keyboard = false;
 	handles_text = false;
 }
@@ -37,18 +37,62 @@ function Sheet:Sheet( x, y, width, height )
 		"height", "number", height
 	)
 
-	self.x = x
-	self.y = y
-	self.width = width
-	self.height = height
-
+	self.values = ValueHandler( self )
+	self.canvas = DrawingCanvas( width, height )
 	self.tags = {}
+
+	self.values:add( "x", ValueHandler.integer_type, 0, function( self, x )
+		parameters.check( 1, "x", "number", x )
+
+		if self.x ~= x then
+			if self.parent then self.parent:set_changed( true ) end
+
+			self.x = x
+			self.raw_x = x
+			self.values:trigger "x"
+		end
+
+		return self
+	end )
+
+	self.values:add( "y", ValueHandler.integer_type, 0, function( self, y )
+		parameters.check( 1, "y", "number", y )
+
+		if self.y ~= y then
+			if self.parent then self.parent:set_changed( true ) end
+
+			self.y = y
+			self.raw_y = y
+			self.values:trigger "y"
+		end
+
+		return self
+	end )
+
+	self.values:add( "z", ValueHandler.integer_type, 0, function( self, z )
+		parameters.check( 1, "z", "number", z )
+
+		if self.z ~= z then
+			self.z = z
+
+			if self.parent then self.parent:reposition_child_z_index( self ) end
+
+			self.raw_z = z
+			self.values:trigger "z"
+		end
+
+		return self
+	end )
 
 	self:IAnimation()
 	self:IChildContainer()
+	self:ISize()
 	self.style = Style( self )
 
-	self.canvas = DrawingCanvas( width, height )
+	self:set_x( x )
+	self:set_y( y )
+	self:set_width( width )
+	self:set_height( height )
 end
 
 function Sheet:add_tag( tag )
@@ -65,37 +109,7 @@ function Sheet:has_tag( tag )
 	return self.tags[tag] or false
 end
 
-function Sheet:set_x( x )
-	parameters.check( 1, "x", "number", x )
-
-	if self.x ~= x then
-		self.x = x
-		if self.parent then self.parent:set_changed( true ) end
-	end
-	return self
-end
-
-function Sheet:set_y( y )
-	parameters.check( 1, "y", "number", y )
-
-	if self.y ~= y then
-		self.y = y
-		if self.parent then self.parent:set_changed( true ) end
-	end
-	return self
-end
-
-function Sheet:set_z( z )
-	parameters.check( 1, "z", "number", z )
-
-	if self.z ~= z then
-		self.z = z
-		if self.parent then self.parent:reposition_child_z_index( self ) end
-	end
-	return self
-end
-
-function Sheet:set__id( id )
+function Sheet:set_ID( id )
 	self.id = tostring( id )
 	return self
 end
