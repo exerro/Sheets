@@ -1,10 +1,5 @@
 
  -- @once
-
- -- @ifndef __INCLUDE_sheets
-	-- @error 'sheets' must be included before including 'sheets.events.KeyboardEvent'
- -- @endif
-
  -- @print Including sheets.events.KeyboardEvent
 
 class "KeyboardEvent" extends "Event" {
@@ -32,6 +27,6 @@ function KeyboardEvent:matches( hotkey )
 	return self.key == keys[hotkey:gsub( ".+%-", "" )]
 end
 
-function KeyboardEvent:isHeld( key )
+function KeyboardEvent:is_held( key )
 	return self.key == keys[key] or self.held[key]
 end

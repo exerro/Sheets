@@ -2,7 +2,7 @@
 timer = {}
 
 local timers = {}
-local timerID = 0
+local timer_id = 0
 local t, lt = os.clock()
 
 function timer.new( n )
@@ -21,9 +21,9 @@ end
 function timer.queue( n, response )
 	parameters.check( 2, "n", "number", n, "response", "function", response )
 
-	local timerID = timer.new( n )
-	timers[#timers + 1] = { time = finish, response = response, ID = timerID }
-	return timerID
+	local timer_id = timer.new( n )
+	timers[#timers + 1] = { time = finish, response = response, ID = timer_id }
+	return timer_id
 end
 
 function timer.cancel( ID )
@@ -42,14 +42,14 @@ function timer.step()
 	t = os.clock()
 end
 
-function timer.getDelta()
+function timer.get_delta()
 	return t - lt
 end
 
-function timer.update( timerID )
+function timer.update( timer_id )
 	local updated = false
 	for i = #timers, 1, -1 do
-		if timers[i].ID == timerID then
+		if timers[i].ID == timer_id then
 			table.remove( timers, i ).response()
 			updated = true
 		end

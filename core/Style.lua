@@ -1,20 +1,15 @@
 
  -- @once
-
- -- @ifndef __INCLUDE_sheets
-	-- @error 'sheets' must be included before including 'sheets.core.Style'
- -- @endif
-
  -- @print Including sheets.core.Style
 
-local function formatFieldName( name )
+local function format_field_name( name )
 	if not name:find "%." then
 		return name .. ".default"
 	end
 	return name
 end
 
-local function getDefaultFieldName( name )
+local function get_default_field_name( name )
 	return name:gsub( "%..-$", "", 1 ) .. ".default"
 end
 
@@ -25,18 +20,18 @@ class "Style" {
 	object = nil;
 }
 
-function Style.addToTemplate( cls, fields )
-	if not class.isClass( cls ) then throw( IncorrectParameterException( "expected Class class, got " .. class.type( cls ), 2 ) ) end
+function Style.add_to_template( cls, fields )
+	if not class.is_class( cls ) then throw( IncorrectParameterException( "expected Class class, got " .. class.type( cls ), 2 ) ) end
 	if type( fields ) ~= "table" then throw( IncorrectParameterException( "expected table fields, got " .. class.type( fields ), 2 ) ) end
 
 	template[cls] = template[cls] or {}
 	for k, v in pairs( fields ) do
-		template[cls][formatFieldName( k )] = v
+		template[cls][format_field_name( k )] = v
 	end
 end
 
 function Style:Style( object )
-	if not class.isInstance( object ) then throw( IncorrectConstructorException( "Style expects Instance object when created, got " .. class.type( object ), 3 ) ) end
+	if not class.is_instance( object ) then throw( IncorrectConstructorException( "Style expects Instance object when created, got " .. class.type( object ), 3 ) ) end
 
 	template[object.class] = template[object.class] or {}
 	self.fields = {}
@@ -44,7 +39,7 @@ function Style:Style( object )
 end
 
 function Style:clone( object )
-	if not class.isInstance( object ) then throw( IncorrectInitialiserException( "expected Instance object, got " .. class.type( object ), 2 ) ) end
+	if not class.is_instance( object ) then throw( IncorrectInitialiserException( "expected Instance object, got " .. class.type( object ), 2 ) ) end
 
 	local s = Style( object or self.object )
 	for k, v in pairs( self.fields ) do
@@ -53,19 +48,19 @@ function Style:clone( object )
 	return s
 end
 
-function Style:setField( field, value )
+function Style:set( field, value )
 	parameters.check( 1, "field", "string", field )
 
-	self.fields[formatFieldName( field )] = value
-	self.object:setChanged()
+	self.fields[format_field_name( field )] = value
+	self.object:set_changed()
 	return self
 end
 
-function Style:getField( field )
+function Style:get( field )
 	parameters.check( 1, "field", "string", field )
 
-	field = formatFieldName( field )
-	local default = getDefaultFieldName( field )
+	field = format_field_name( field )
+	local default = get_default_field_name( field )
 	if self.fields[field] ~= nil then
 		return self.fields[field]
 	elseif self.fields[default] ~= nil then

@@ -1,20 +1,15 @@
 
  -- @once
-
- -- @ifndef __INCLUDE_sheets
-	 -- @error 'sheets' must be included before including 'sheets.graphics.Font'
- -- @endif
-
  -- @print Including sheets.graphics.Font
 
  -- @error GRAPHICS_NO_TEXT flag is not yet supported
 
-local defaultHeader = {
+local default_header = {
 	mode = "bitmap";
 	height = 8;
 }
 
-local defaultCharacters = {
+local default_characters = {
 	['A'] = { width = 5;
 		{ 0, 0, 1, 0, 0 };
 		{ 0, 1, 0, 1, 0 };
@@ -26,11 +21,11 @@ local defaultCharacters = {
 		{ 1, 0, 0, 0, 1 } };
 }
 
-local function decodeFileHeader( h )
+local function decode_file_header( h )
 
 end
 
-local function decodeFileCharacters( h )
+local function decode_file_characters( h )
 
 end
 
@@ -54,13 +49,13 @@ function Font:Font( file, size )
 	if file then
 		local h = fs.open( file, "rb" )
 		if h then
-			header = decodeFileHeader( h )
-			characters = decodeFileCharacters( h )
+			header = decode_file_header( h )
+			characters = decode_file_characters( h )
 		else
 			return error( "File '" .. file .. "' cannot be opened", 2 )
 		end
 	else
-		header = defaultHeader
-		characters = defaultCharacters
+		header = default_header
+		characters = default_characters
 	end
 end

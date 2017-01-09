@@ -1,10 +1,5 @@
 
  -- @once
-
- -- @ifndef __INCLUDE_sheets
-	-- @error 'sheets' must be included before including 'sheets.elements.Container'
- -- @endif
-
  -- @print Including sheets.elements.Container
 
 -- needs to update to new exception system
@@ -17,19 +12,19 @@ function Container:draw()
 		local children = self.children
 		local cx, cy, cc
 
-		self:resetCursorBlink()
+		self:reset_cursor_blink()
 
-		self.canvas:clear( self.style:getField "colour" )
+		self.canvas:clear( self.style:get "colour" )
 
-		if self.onPreDraw then
-			self:onPreDraw()
+		if self.on_pre_draw then
+			self:on_pre_draw()
 		end
 
 		for i = 1, #children do
 			local child = children[i]
-			if child:isVisible() then
+			if child:is_visible() then
 				child:draw()
-				child.canvas:drawTo( self.canvas, child.x, child.y )
+				child.canvas:draw_to( self.canvas, child.x, child.y )
 
 				if child.cursor_active then
 					cx, cy, cc = child.x + child.cursor_x, child.y + child.cursor_y, child.cursor_colour
@@ -38,17 +33,17 @@ function Container:draw()
 		end
 
 		if cx then
-			self:setCursorBlink( cx, cy, cc )
+			self:set_cursor_blink( cx, cy, cc )
 		end
 
-		if self.onPostDraw then
-			self:onPostDraw()
+		if self.on_post_draw then
+			self:on_post_draw()
 		end
 
 		self.changed = false
 	end
 end
 
-Style.addToTemplate( Container, {
+Style.add_to_template( Container, {
 	["colour"] = WHITE;
 } )

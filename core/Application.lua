@@ -1,17 +1,12 @@
 
  -- @once
-
- -- @ifndef __INCLUDE_sheets
-	-- @error 'sheets' must be included before including 'sheets.core.Application'
- -- @endif
-
  -- @print Including sheets.core.Application
 
-local function exceptionHandler( e )
+local function exception_handler( e )
 	return error( tostring( e ), 0 )
 end
 
-local handleEvent
+local handle_event
 
 class "Application"
 {
@@ -35,7 +30,7 @@ class "Application"
 }
 
 function Application:Application( name, path )
-	self.screens = { Screen( self, term.getSize() ):addTerminal( term ) }
+	self.screens = { Screen( self, term.getSize() ):add_terminal( term ) }
 	self.screen = self.screens[1]
 
 	self.name = name
@@ -47,30 +42,30 @@ function Application:Application( name, path )
 	self.keys = {}
 end
 
-function Application:registerResourceLoader( type, loader )
+function Application:register_resource_loader( type, loader )
 	parameters.check( 2, "type", "string", type, "loader", "function", loader )
 
 	self.resource_loaders[type] = loader
 end
 
-function Application:unregisterResourceLoader( type )
+function Application:unregister_resource_loader( type )
 	parameters.check( 1, "type", "string", type )
 	self.resource_loaders[type] = nil
 end
 
-function Application:registerFileExtension( extension, type )
+function Application:register_file_extension( extension, type )
 	parameters.check( 2, "extension", "string", extension, "type", "string", type )
 
 	self.extensions[extension] = type
 end
 
-function Application:unregisterFileExtension( extension )
+function Application:unregister_file_extension( extension )
 	parameters.check( 1, "extension", "string", extension )
 
 	self.extensions[extension] = nil
 end
 
-function Application:loadResource( resource, type, ... )
+function Application:load_resource( resource, type, ... )
 	parameters.check( 2, "resource", "string", resource, "type", "string", type or "" )
 
 	if not type then
@@ -96,15 +91,15 @@ function Application:loadResource( resource, type, ... )
 	end
 end
 
-function Application:addThread( thread )
+function Application:add_thread( thread )
 	parameters.check( 1, "thread", Thread, thread )
 
 	self.threads[#self.threads + 1] = thread
-	
+
 	return thread
 end
 
-function Application:isKeyPressed( key )
+function Application:is_key_pressed( key )
 	parameters.check( 1, "key", "string", key )
 
 	self.resource_loaders = {}
@@ -118,15 +113,15 @@ function Application:stop()
 	return self
 end
 
-function Application:addScreen()
+function Application:add_screen()
 
-	local screen = Screen( self, term.getSize() )
+	local screen = Screen( self, term.get_size() )
 	self.screens[#self.screens + 1] = screen
 	return screen
 
 end
 
-function Application:removeScreen( screen )
+function Application:remove_screen( screen )
 
 	parameters.check( 1, "screen", Screen, screen )
 
@@ -156,7 +151,7 @@ function Application:event( event, ... )
 		screens[i] = self.screens[i]
 	end
 
-	return handleEvent( self, handle, event, params, ... )
+	return handle_event( self, handle, event, params, ... )
 end
 
 function Application:draw()
@@ -172,15 +167,15 @@ end
 
 function Application:update()
 
-	local dt = timer.getDelta()
+	local dt = timer.get_delta()
 	timer.step()
 
 	for i = 1, #self.screens do
 		self.screens[i]:update( dt )
 	end
 
-	if self.onUpdate then
-		self:onUpdate( dt )
+	if self.on_update then
+		self:on_update( dt )
 	end
 
 end
@@ -188,8 +183,8 @@ end
 function Application:load()
 	self.changed = true
 
-	if self.onLoad then
-		return self:onLoad()
+	if self.on_load then
+		return self:on_load()
 	end
 end
 
@@ -213,12 +208,12 @@ function Application:run()
 		end
 
 	end) {
-		Exception.default (exceptionHandler);
+		Exception.default (exception_handler);
 	}
 
 end
 
-function handleEvent( self, handle, event, params, ... )
+function handle_event( self, handle, event, params, ... )
 	if event == "mouse_click" then
 		self.mouse = {
 			x = params[2] - 1, y = params[3] - 1;
@@ -247,10 +242,11 @@ function handleEvent( self, handle, event, params, ... )
 	elseif event == "mouse_scroll" then
 		handle( MouseEvent( SHEETS_EVENT_MOUSE_SCROLL, params[2] - 1, params[3] - 1, params[1], true ) )
 
-	elseif event == "monitor_touch" then -- broken
+	elseif event == "monitor_touch" then
 		--[[handle( MouseEvent( SHEETS_EVENT_MOUSE_DOWN, params[2] - 1, params[3] - 1, 1 ) )
 		handle( MouseEvent( SHEETS_EVENT_MOUSE_UP, params[2] - 1, params[3] - 1, 1 ) )
 		handle( MouseEvent( SHEETS_EVENT_MOUSE_CLICK, params[2] - 1, params[3] - 1, 1 ) )]]
+		-- TODO: fix this
 
 	elseif event == "chatbox_something" then
 		-- handle( TextEvent( SHEETS_EVENT_VOICE, params[1] ) )
@@ -259,8 +255,8 @@ function handleEvent( self, handle, event, params, ... )
 		handle( TextEvent( SHEETS_EVENT_TEXT, params[1] ) )
 
 	elseif event == "paste" then
-		if self.keys.leftShift or self.keys.rightShift then
-			handle( KeyboardEvent( SHEETS_EVENT_KEY_DOWN, keys.v, { leftCtrl = true, rightCtrl = true } ) )
+		if self.keys.left_shift or self.keys.right_shift then -- TODO: why the left_ctrl/right_ctrl?
+			handle( KeyboardEvent( SHEETS_EVENT_KEY_DOWN, keys.v, { left_ctrl = true, right_ctrl = true } ) )
 		else
 			handle( TextEvent( SHEETS_EVENT_PASTE, params[1] ) )
 		end
@@ -274,10 +270,11 @@ function handleEvent( self, handle, event, params, ... )
 		handle( KeyboardEvent( SHEETS_EVENT_KEY_UP, params[1], self.keys ) )
 
 	elseif event == "term_resize" then
-		self.width, self.height = term.getSize()
+		--[[self.width, self.height = term.get_size()
 		for i = 1, #self.screens do
-			self.screens[i]:onParentResized()
-		end
+			self.screens[i]:on_parent_resized()
+		end]]
+		-- TODO: fix this
 
 	elseif event == "timer" and self.mouse and params[1] == self.mouse.timer then
 		handle( MouseEvent( SHEETS_EVENT_MOUSE_HOLD, self.mouse.x, self.mouse.y, self.mouse.button, true ) )

@@ -1,10 +1,5 @@
 
  -- @once
-
- -- @ifndef __INCLUDE_sheets
-	-- @error 'sheets' must be included before including 'sheets.exceptions.Exception'
- -- @endif
-
  -- @print Including sheets.exceptions.Exception
 
 local thrown
@@ -44,7 +39,7 @@ function Exception:Exception( name, data, level )
 	end
 end
 
-function Exception:getTraceback( initial, delimiter )
+function Exception:get_traceback( initial, delimiter )
 	initial = initial or ""
 	delimiter = delimiter or "\n"
 
@@ -55,22 +50,22 @@ function Exception:getTraceback( initial, delimiter )
 	return initial .. table.concat( self.trace, delimiter )
 end
 
-function Exception:getData()
-	if type( self.data ) == "string" or class.isClass( self.data ) or class.isInstance( self.data ) then
+function Exception:get_data()
+	if type( self.data ) == "string" or class.is_class( self.data ) or class.is_instance( self.data ) then
 		return tostring( self.data )
 	else
 		return textutils.serialize( seld.data )
 	end
 end
 
-function Exception:getDataAndTraceback( indent )
+function Exception:get_data_and_traceback( indent )
 	parameters.check( 1, "indent", "number", indent or 1 )
 
-	return self:getData() .. self:getTraceback( "\n" .. (" "):rep( indent or 1 ) .. "in ", "\n" .. (" "):rep( indent or 1 ) .. "in " )
+	return self:get_data() .. self:get_traceback( "\n" .. (" "):rep( indent or 1 ) .. "in ", "\n" .. (" "):rep( indent or 1 ) .. "in " )
 end
 
 function Exception:tostring()
-	return tostring( self.name ) .. " exception:\n  " .. self:getDataAndTraceback( 4 )
+	return tostring( self.name ) .. " exception:\n  " .. self:get_data_and_traceback( 4 )
 end
 
 function Exception.thrown()
@@ -78,11 +73,11 @@ function Exception.thrown()
 end
 
 function Exception.throw( e, data, level )
-	if class.isClass( e ) then
+	if class.is_class( e ) then
 		e = e( data, ( level or 1 ) + 1 )
 	elseif type( e ) == "string" then
 		e = Exception( e, data, ( level or 1 ) + 1 )
-	elseif not class.typeOf( e, Exception ) then
+	elseif not class.type_of( e, Exception ) then
 		return Exception.throw( "IncorrectParameterException", "expected class, string, or Exception e, got " .. class.type( e ) )
 	end
 	thrown = e

@@ -1,10 +1,5 @@
 
  -- @once
-
- -- @ifndef __INCLUDE_sheets
-	 -- @error 'sheets' must be included before including 'sheets.graphics.ScreenCanvas'
- -- @endif
-
  -- @print Including sheets.graphics.ScreenCanvas
 
  -- @if GRAPHICS_NO_TEXT
@@ -25,7 +20,7 @@ class "ScreenCanvas" extends "Canvas" {
 function ScreenCanvas:ScreenCanvas( width, height )
 	width = width or 0
 	height = height or 0
-	
+
 	if type( width ) ~= "number" then return error( "element attribute #1 'width' not a number (" .. class.type( width ) .. ")", 2 ) end
 	if type( height ) ~= "number" then return error( "element attribute #2 'height' not a number (" .. class.type( height ) .. ")", 2 ) end
 
@@ -46,7 +41,7 @@ function ScreenCanvas:reset()
 	end
 end
 
-function ScreenCanvas:drawToTerminals( terminals, sx, sy )
+function ScreenCanvas:draw_to_terminals( terminals, sx, sy )
 	sx = sx or 0
 	sy = sy or 0
 
@@ -57,14 +52,14 @@ function ScreenCanvas:drawToTerminals( terminals, sx, sy )
 	if type( sy ) ~= "number" then return error( "expected number y, got " .. class.type( sy ) ) end
 
 	local i = 1
-	local pixels, last = self.pixels, self.last
-	local sWidth = self.width
+	local buffer, last = self.buffer, self.last
+	local s_width = self.width
 
 	for y = 1, self.height do
 		local changed = false
-		for x = 1, sWidth do
+		for x = 1, s_width do
 
-			local px = pixels[i]
+			local px = buffer[i]
 			local ltpx = last[i]
 			if px[1] ~= ltpx[1] or px[2] ~= ltpx[2] or px[3] ~= ltpx[3] then
 				changed = true
@@ -76,9 +71,9 @@ function ScreenCanvas:drawToTerminals( terminals, sx, sy )
 
 		if changed then
 			local bc, tc, s = {}, {}, {}
-			i = i - sWidth
-			for x = 1, sWidth do
-				local px = pixels[i]
+			i = i - s_width
+			for x = 1, s_width do
+				local px = buffer[i]
 				bc[x] = hex[px[1]] or "0"
 				tc[x] = hex[px[2]] or "0"
 				s[x] = px[3] == "" and " " or px[3]
@@ -92,10 +87,10 @@ function ScreenCanvas:drawToTerminals( terminals, sx, sy )
 	end
 end
 
-function ScreenCanvas:drawToTerminal( term, sx, sy )
-	return self:drawToTerminals( { term }, sx, sy )
+function ScreenCanvas:draw_to_terminal( term, sx, sy )
+	return self:draw_to_terminals( { term }, sx, sy )
 end
 
-function ScreenCanvas:drawToScreen( x, y )
-	return self:drawToTerminal( term, x, y )
+function ScreenCanvas:draw_to_screen( x, y )
+	return self:draw_to_terminal( term, x, y )
 end

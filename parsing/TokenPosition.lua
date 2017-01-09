@@ -1,10 +1,5 @@
 
  -- @once
-
- -- @ifndef __INCLUDE_sheets
-	-- @error 'sheets' must be included before including 'sheets.parsing.TokenPosition'
- -- @endif
-
  -- @print Including sheets.parsing.TokenPosition
 
 class "TokenPosition" {
@@ -18,7 +13,7 @@ function TokenPosition:TokenPosition( source, line, character )
 	line = line or 1
 	character = character or 1
 
-	parameters.checkConstructor( self.class, 3, "source", "string", source, "line", "number", line, "character", "number", character )
+	parameters.check_constructor( self.class, 3, "source", "string", source, "line", "number", line, "character", "number", character )
 
 	self.source = source
 	self.line = line
@@ -42,7 +37,7 @@ function TokenPosition:add( position )
 	end
 end
 
-function TokenPosition:addOn( position )
+function TokenPosition:add_on( position )
 	if type( position ) == "number" then
 		self.character = self.character + position
 	else
@@ -54,4 +49,4 @@ function TokenPosition:addOn( position )
 end
 
 TokenPosition.meta.__add = TokenPosition.add
-TokenPosition.meta.__concat = TokenPosition.addOn
+TokenPosition.meta.__concat = TokenPosition.add_on

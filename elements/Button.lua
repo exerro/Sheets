@@ -1,10 +1,5 @@
 
  -- @once
-
- -- @ifndef __INCLUDE_sheets
-	-- @error 'sheets' must be included before including 'sheets.elements.Button'
- -- @endif
-
  -- @print Including sheets.elements.Button
 
 class "Button" extends "Sheet" implements "IHasText" {
@@ -16,43 +11,43 @@ function Button:Button( x, y, width, height, text )
 	return self:Sheet( x, y, width, height )
 end
 
-function Button:onPreDraw()
-	self.canvas:clear( self.down and self.style:getField "colour.pressed" or self.style:getField "colour" )
-	self:drawText( self.down and "pressed" or "default" )
+function Button:on_pre_draw()
+	self.canvas:clear( self.down and self.style:get "colour.pressed" or self.style:get "colour" )
+	self:draw_text( self.down and "pressed" or "default" )
 end
 
-function Button:onMouseEvent( event )
+function Button:on_mouse_event( event )
 	if event:is( SHEETS_EVENT_MOUSE_UP ) and self.down then
 		self.down = false
-		self:setChanged()
+		self:set_changed()
 	end
 
-	if event.handled or not event:isWithinArea( 0, 0, self.width, self.height ) or not event.within then
+	if event.handled or not event:is_within_area( 0, 0, self.width, self.height ) or not event.within then
 		return
 	end
 
 	if event:is( SHEETS_EVENT_MOUSE_DOWN ) and not self.down then
 		self.down = true
-		self:setChanged()
+		self:set_changed()
 		event:handle()
 	elseif event:is( SHEETS_EVENT_MOUSE_CLICK ) then
-		if self.onClick then
-			self:onClick( event.button, event.x, event.y )
+		if self.on_click then
+			self:on_click( event.button, event.x, event.y )
 		end
 		event:handle()
 	elseif event:is( SHEETS_EVENT_MOUSE_HOLD ) then
-		if self.onHold then
-			self:onHold( event.button, event.x, event.y )
+		if self.on_hold then
+			self:on_hold( event.button, event.x, event.y )
 		end
 		event:handle()
 	end
 end
 
-Style.addToTemplate( Button, {
+Style.add_to_template( Button, {
 	["colour"] = CYAN;
 	["colour.pressed"] = LIGHTBLUE;
-	["textColour"] = WHITE;
-	["textColour.pressed"] = WHITE;
+	["text-colour"] = WHITE;
+	["text-colour.pressed"] = WHITE;
 	["horizontal-alignment"] = ALIGNMENT_CENTRE;
 	["horizontal-alignment.pressed"] = ALIGNMENT_CENTRE;
 	["vertical-alignment"] = ALIGNMENT_CENTRE;

@@ -1,10 +1,5 @@
 
  -- @once
-
- -- @ifndef __INCLUDE_sheets
-	-- @error 'sheets' must be included before including 'sheets.core.Screen'
- -- @endif
-
  -- @print Including sheets.core.Screen
 
 class "Screen"
@@ -29,7 +24,7 @@ function Screen:Screen( application, width, height )
 	self.height = height
 end
 
-function Screen:getsTermEvents()
+function Screen:gets_term_events()
 	for i = 1, #self.terminals do
 		if self.terminals[i] == term then
 			return true
@@ -38,7 +33,7 @@ function Screen:getsTermEvents()
 	return false
 end
 
-function Screen:setChanged( state )
+function Screen:set_changed( state )
 	self.changed = state ~= false
 	if state ~= false then -- must have a parent Application
 		self.parent.changed = true
@@ -46,7 +41,7 @@ function Screen:setChanged( state )
 	return self
 end
 
-function Screen:addMonitor( side )
+function Screen:add_monitor( side )
 	parameters.check( 1, "side", "string", side )
 
 	if peripheral.getType( side ) ~= "monitor" then
@@ -56,40 +51,40 @@ function Screen:addMonitor( side )
 	local mon = peripheral.wrap( side )
 	self.monitors[side] = mon
 
-	return self:addTerminal( mon )
+	return self:add_terminal( mon )
 end
 
-function Screen:removeMonitor( side )
+function Screen:remove_monitor( side )
 	parameters.check( 1, "side", "string", side )
 
 	local mon = self.monitors[side]
 	if mon then
 		self.monitors[side] = nil
-		self:removeTerminal( mon )
+		self:remove_terminal( mon )
 	end
 
 	return self
 end
 
-function Screen:usesMonitor( side )
+function Screen:uses_monitor( side )
 	return self.monitors[side] ~= nil
 end
 
-function Screen:addTerminal( t )
+function Screen:add_terminal( t )
 	parameters.check( 1, "terminal", "table", t )
 
 	self.terminals[#self.terminals + 1] = t
 	self.canvas:reset()
 
-	return self:setChanged()
+	return self:set_changed()
 end
 
-function Screen:removeTerminal( t )
+function Screen:remove_terminal( t )
 	parameters.check( 1, "terminal", "table", t )
 
 	for i = #self.terminals, 1, -1 do
 		if self.terminals[i] == t then
-			self:setChanged()
+			self:set_changed()
 			return table.remove( self.terminals, i )
 		end
 	end
@@ -113,17 +108,17 @@ function Screen:draw()
 		for i = 1, #children do
 			local child = children[i]
 
-			if child:isVisible() then
+			if child:is_visible() then
 				child:draw()
-				child.canvas:drawTo( canvas, child.x, child.y )
-			
+				child.canvas:draw_to( canvas, child.x, child.y )
+
 				if child.cursor_active then
 					cx, cy, cc = child.x + child.cursor_x, child.y + child.cursor_y, child.cursor_colour
 				end
 			end
 		end
 
-		canvas:drawToTerminals( self.terminals )
+		canvas:draw_to_terminals( self.terminals )
 
 		self.changed = false
 		for i = 1, #self.terminals do
@@ -145,8 +140,8 @@ function Screen:handle( event )
 		c[i] = children[i]
 	end
 
-	if event:typeOf( MouseEvent ) then
-		local within = event:isWithinArea( 0, 0, self.width, self.height )
+	if event:type_of( MouseEvent ) then
+		local within = event:is_within_area( 0, 0, self.width, self.height )
 		for i = #c, 1, -1 do
 			c[i]:handle( event:clone( c[i].x, c[i].y, within ) )
 		end

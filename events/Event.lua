@@ -1,10 +1,5 @@
 
  -- @once
-
- -- @ifndef __INCLUDE_sheets
-	-- @error 'sheets' must be included before including 'sheets.events.Event'
- -- @endif
-
  -- @print Including sheets.events.Event
 
 class "Event" {

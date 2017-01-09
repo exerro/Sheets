@@ -1,10 +1,5 @@
 
  -- @once
-
- -- @ifndef __INCLUDE_sheets
-	-- @error 'sheets' must be included before including 'sheets.interfaces.IHasText'
- -- @endif
-
  -- @print Including sheets.interfaces.IHasText
 
 local wrapline, wrap
@@ -14,35 +9,35 @@ interface "IHasText" {
 	text_lines = nil;
 }
 
-function IHasText:autoHeight()
+function IHasText:auto_height()
 	if not self.text_lines then
-		self:wrapText( true )
+		self:wrap_text( true )
 	end
-	return self:setHeight( #self.text_lines )
+	return self:set_height( #self.text_lines )
 end
 
-function IHasText:setText( text )
+function IHasText:set_text( text )
 	parameters.check( 1, "text", "string", text )
 
 	self.text = text
-	self:wrapText()
-	self:setChanged()
+	self:wrap_text()
+	self:set_changed()
 	return self
 end
 
-function IHasText:wrapText( ignoreHeight )
-	self.text_lines = wrap( self.text, self.width, not ignoreHeight and self.height )
+function IHasText:wrap_text( ignore_height )
+	self.text_lines = wrap( self.text, self.width, not ignore_height and self.height )
 end
 
-function IHasText:drawText( mode )
+function IHasText:draw_text( mode )
 	local offset, lines = 0, self.text_lines
 	mode = mode or "default"
 
-	local horizontal_alignment = self.style:getField( "horizontal-alignment." .. mode )
-	local vertical_alignment = self.style:getField( "vertical-alignment." .. mode )
+	local horizontal_alignment = self.style:get( "horizontal-alignment." .. mode )
+	local vertical_alignment = self.style:get( "vertical-alignment." .. mode )
 
 	if not lines then
-		self:wrapText()
+		self:wrap_text()
 		lines = self.text_lines
 	end
 
@@ -54,30 +49,30 @@ function IHasText:drawText( mode )
 
 	for i = 1, #lines do
 
-		local xOffset = 0
+		local x_offset = 0
 		if horizontal_alignment == ALIGNMENT_CENTRE then
-			xOffset = math.floor( self.width / 2 - #lines[i] / 2 + .5 )
+			x_offset = math.floor( self.width / 2 - #lines[i] / 2 + .5 )
 		elseif horizontal_alignment == ALIGNMENT_RIGHT then
-			xOffset = self.width - #lines[i]
+			x_offset = self.width - #lines[i]
 		end
 
-		self.canvas:drawText( xOffset, offset + i - 1, lines[i], {
+		self.canvas:draw_text( x_offset, offset + i - 1, lines[i], {
 			colour = 0;
-			textColour = self.style:getField( "textColour." .. mode );
+			text_colour = self.style:get( "text-colour." .. mode );
 		} )
 
 	end
 end
 
-function IHasText:onPreDraw()
-	self:drawText "default"
+function IHasText:on_pre_draw()
+	self:draw_text "default"
 end
 
 function wrapline( text, width )
 	if text:sub( 1, width ):find "\n" then
 		return text:match "^(.-)\n[^%S\n]*(.*)$"
 	end
-	if #text < width then
+	if #text <= width then
 		return text
 	end
 	for i = width + 1, 1, -1 do

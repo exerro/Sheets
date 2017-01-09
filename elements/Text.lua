@@ -1,10 +1,5 @@
 
  -- @once
-
- -- @ifndef __INCLUDE_sheets
-	-- @error 'sheets' must be included before including 'sheets.elements.Text'
- -- @endif
-
  -- @print Including sheets.elements.Text
 
 class "Text" extends "Sheet" implements "IHasText" {}
@@ -14,14 +9,14 @@ function Text:Text( x, y, width, height, text )
 	return self:Sheet( x, y, width, height )
 end
 
-function Text:onPreDraw()
-	self.canvas:clear( self.style:getField "colour" )
-	self:drawText "default"
+function Text:on_pre_draw()
+	self.canvas:clear( self.style:get "colour" )
+	self:draw_text "default"
 end
 
-Style.addToTemplate( Text, {
+Style.add_to_template( Text, {
 	["colour"] = WHITE;
-	["textColour"] = GREY;
+	["text-colour"] = GREY;
 	["horizontal-alignment"] = ALIGNMENT_LEFT;
 	["vertical-alignment"] = ALIGNMENT_TOP;
 } )

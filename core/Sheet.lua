@@ -1,10 +1,5 @@
 
  -- @once
-
- -- @ifndef __INCLUDE_sheets
-	-- @error 'sheets' must be included before including 'sheets.core.Sheet'
- -- @endif
-
  -- @print Including sheets.core.Sheet
 
 class "Sheet"
@@ -29,12 +24,12 @@ class "Sheet"
 	cursor_colour = 0;
 	cursor_active = false;
 
-	handlesKeyboard = false;
-	handlesText = false;
+	handles_keyboard = false;
+	handles_text = false;
 }
 
 function Sheet:Sheet( x, y, width, height )
-	parameters.checkConstructor( self.class, 4,
+	parameters.check_constructor( self.class, 4,
 		"x", "number", x,
 		"y", "number", y,
 		"width", "number", width,
@@ -51,79 +46,65 @@ function Sheet:Sheet( x, y, width, height )
 	self.style = Style( self )
 
 	self.canvas = DrawingCanvas( width, height )
-
-	-- @if SHEETS_DYNAMIC
-	local vendor = DynamicValueVendor( self )
-
-	vendor:addAttribute( "x", {}, self.setX )
-	vendor:addAttribute( "y", {}, self.setY )
-	vendor:addAttribute( "z", {}, self.setZ )
-	vendor:addAttribute( "width", {}, self.setWidth )
-	vendor:addAttribute( "height", {}, self.setHeight )
-	vendor:addAttribute( "style", {}, self.setStyle )
-	vendor:addAttribute( "parent", {}, self.setParent )
-
-	self.dynamic = vendor
-	-- @endif
 end
 
-function Sheet:setX( x )
+function Sheet:set_x( x )
 	parameters.check( 1, "x", "number", x )
-	
+
 	if self.x ~= x then
 		self.x = x
-		if self.parent then self.parent:setChanged( true ) end
+		if self.parent then self.parent:set_changed( true ) end
 	end
 	return self
 end
 
-function Sheet:setY( y )
+function Sheet:set_y( y )
 	parameters.check( 1, "y", "number", y )
-	
+
 	if self.y ~= y then
 		self.y = y
-		if self.parent then self.parent:setChanged( true ) end
+		if self.parent then self.parent:set_changed( true ) end
 	end
 	return self
 end
 
-function Sheet:setZ( z )
+function Sheet:set_z( z )
 	parameters.check( 1, "z", "number", z )
 
 	if self.z ~= z then
 		self.z = z
-		if self.parent then self.parent:repositionChildZIndex( self ) end
+		if self.parent then self.parent:reposition_child_z_index( self ) end
 	end
 	return self
 end
 
-function Sheet:setID( id )
+function Sheet:set__id( id )
 	self.id = tostring( id )
 	return self
 end
 
-function Sheet:setStyle( style, children )
+function Sheet:set_style( style, children )
 	parameters.check( 1, "style", Style, style )
 
 	self.style = style:clone( self )
-	
+
 	if children and self.children then
 		for i = 1, #self.children do
-			self.children[i]:setStyle( style, true )
+			self.children[i]:set_style( style, true )
 		end
 	end
 
-	self:setChanged( true )
+	self:set_changed( true )
 	return self
 end
 
-function Sheet:setParent( parent )
-	if parent and not class.typeOf( parent, Sheet ) and not class.typeOf( parent, Screen ) then
+function Sheet:set_parent( parent )
+	if parent and not class.type_of( parent, Sheet ) and not class.type_of( parent, Screen ) then
 		Exception.throw( IncorrectParameterException( "expected Sheet or Screen parent, got " .. class.type( parent ), 2 ) )
 	end
 
 	if parent then
-		parent:addChild( self )
+		parent:add_child( self )
 	else
 		self:remove()
 	end
@@ -132,30 +113,30 @@ end
 
 function Sheet:remove()
 	if self.parent then
-		return self.parent:removeChild( self )
+		return self.parent:remove_child( self )
 	end
 end
 
-function Sheet:isVisible()
-	return self.parent and self.parent:isChildVisible( self )
+function Sheet:is_visible()
+	return self.parent and self.parent:is_child_visible( self )
 end
 
-function Sheet:bringToFront()
+function Sheet:bring_to_front()
 	if self.parent then
-		return self:setParent( self.parent )
+		return self:set_parent( self.parent )
 	end
 	return self
 end
 
-function Sheet:setChanged( state )
+function Sheet:set_changed( state )
 	self.changed = state ~= false
 	if state ~= false and self.parent and not self.parent.changed then
-		self.parent:setChanged()
+		self.parent:set_changed()
 	end
 	return self
 end
 
-function Sheet:setCursorBlink( x, y, colour )
+function Sheet:set_cursor_blink( x, y, colour )
 	colour = colour or GREY
 
 	parameters.check( 3, "x", "number", x, "y", "number", y, "colour", "number", colour )
@@ -167,7 +148,7 @@ function Sheet:setCursorBlink( x, y, colour )
 	return self
 end
 
-function Sheet:resetCursorBlink()
+function Sheet:reset_cursor_blink()
 	self.cursor_active = false
 	return self
 end
@@ -176,15 +157,15 @@ function Sheet:tostring()
 	return "[Instance] " .. self.class:type() .. " " .. tostring( self.id )
 end
 
-function Sheet:onParentResized() end
+function Sheet:on_parent_resized() end
 
 function Sheet:update( dt )
-	local children = self:getChildren()
+	local children = self:get_children()
 
-	self:updateAnimations( dt )
+	self:update_animations( dt )
 
-	if self.onUpdate then
-		self:onUpdate( dt )
+	if self.on_update then
+		self:on_update( dt )
 	end
 
 	for i = #children, 1, -1 do
@@ -195,19 +176,19 @@ end
 function Sheet:draw()
 	if self.changed then
 
-		local children = self:getChildren()
+		local children = self:get_children()
 		local cx, cy, cc
 
-		self:resetCursorBlink()
+		self:reset_cursor_blink()
 
-		if self.onPreDraw then
-			self:onPreDraw()
+		if self.on_pre_draw then
+			self:on_pre_draw()
 		end
 
 		for i = 1, #children do
 			local child = children[i]
 			child:draw()
-			child.canvas:drawTo( self.canvas, child.x, child.y )
+			child.canvas:draw_to( self.canvas, child.x, child.y )
 
 			if child.cursor_active then
 				cx, cy, cc = child.x + child.cursor_x, child.y + child.cursor_y, child.cursor_colour
@@ -215,11 +196,11 @@ function Sheet:draw()
 		end
 
 		if cx then
-			self:setCursorBlink( cx, cy, cc )
+			self:set_cursor_blink( cx, cy, cc )
 		end
 
-		if self.onPostDraw then
-			self:onPostDraw()
+		if self.on_post_draw then
+			self:on_post_draw()
 		end
 
 		self.changed = false
@@ -227,10 +208,10 @@ function Sheet:draw()
 end
 
 function Sheet:handle( event )
-	local children = self:getChildren()
+	local children = self:get_children()
 
-	if event:typeOf( MouseEvent ) then
-		local within = event:isWithinArea( 0, 0, self.width, self.height )
+	if event:type_of( MouseEvent ) then
+		local within = event:is_within_area( 0, 0, self.width, self.height )
 		for i = #children, 1, -1 do
 			children[i]:handle( event:clone( children[i].x, children[i].y, within ) )
 		end
@@ -240,20 +221,20 @@ function Sheet:handle( event )
 		end
 	end
 
-	if event:typeOf( MouseEvent ) then
-		if event:is( EVENT_MOUSE_PING ) and event:isWithinArea( 0, 0, self.width, self.height ) and event.within then
+	if event:type_of( MouseEvent ) then
+		if event:is( EVENT_MOUSE_PING ) and event:is_within_area( 0, 0, self.width, self.height ) and event.within then
 			event.button[#event.button + 1] = self
 		end
-		self:onMouseEvent( event )
-	elseif event:typeOf( KeyboardEvent ) and self.handlesKeyboard and self.onKeyboardEvent then
-		self:onKeyboardEvent( event )
-	elseif event:typeOf( TextEvent ) and self.handlesText and self.onTextEvent then
-		self:onTextEvent( event )
+		self:on_mouse_event( event )
+	elseif event:type_of( KeyboardEvent ) and self.handles_keyboard and self.on_keyboard_event then
+		self:on_keyboard_event( event )
+	elseif event:type_of( TextEvent ) and self.handles_text and self.on_text_event then
+		self:on_text_event( event )
 	end
 end
 
-function Sheet:onMouseEvent( event )
-	if not event.handled and event:isWithinArea( 0, 0, self.width, self.height ) and event.within then
+function Sheet:on_mouse_event( event )
+	if not event.handled and event:is_within_area( 0, 0, self.width, self.height ) and event.within then
 		if not event:is( EVENT_MOUSE_DRAG ) and not event:is( EVENT_MOUSE_SCROLL ) then
 			event:handle( self )
 		end

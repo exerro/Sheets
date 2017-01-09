@@ -1,10 +1,5 @@
 
  -- @once
-
- -- @ifndef __INCLUDE_sheets
-	-- @error 'sheets' must be included before including 'sheets.core.Thread'
- -- @endif
-
  -- @print Including sheets.core.Thread
 
 class "Thread" {

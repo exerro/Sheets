@@ -1,10 +1,5 @@
 
  -- @once
-
- -- @ifndef __INCLUDE_sheets
-	-- @error 'sheets' must be included before including 'sheets.interfaces.IAnimation'
- -- @endif
-
  -- @print Including sheets.interfaces.IAnimation
 
 interface "IAnimation" {}
@@ -13,7 +8,7 @@ function IAnimation:IAnimation()
 	self.animations = {}
 end
 
-function IAnimation:addAnimation( label, setter, animation )
+function IAnimation:add_animation( label, setter, animation )
 	parameters.check( 3,
 		"label", "string", label,
 		"setter", "function", setter,
@@ -31,7 +26,7 @@ function IAnimation:addAnimation( label, setter, animation )
 	return animation
 end
 
-function IAnimation:stopAnimation( label )
+function IAnimation:stop_animation( label )
 	parameters.check( 1, "label", "string", label )
 
 	local a = self.animations[label]
@@ -39,7 +34,7 @@ function IAnimation:stopAnimation( label )
 	return a
 end
 
-function IAnimation:updateAnimations( dt )
+function IAnimation:update_animations( dt )
 	parameters.check( 1, "dt", "number", dt )
 
 	local finished = {}

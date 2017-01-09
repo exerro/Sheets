@@ -1,10 +1,5 @@
 
  -- @once
-
- -- @ifndef __INCLUDE_sheets
-	 -- @error 'sheets' must be included before including 'sheets.graphics.area'
- -- @endif
-
  -- @print Including sheets.graphics.area
 
 -- @ifn CIRCLE_CORRECTION
@@ -84,7 +79,7 @@ local width, height = term.getSize()
 
 local area = {}
 
-function area.setDimensions( w, h )
+function area.set_dimensions( w, h )
 	width, height = w, h
 end
 
@@ -152,7 +147,7 @@ function area.circle( x, y, radius )
 	return areamt( t )
 end
 
-function area.correctedCircle( x, y, radius )
+function area.corrected_circle( x, y, radius )
 	local radius2 = radius * radius
 	local t = {}
 	local i = 1
@@ -175,7 +170,7 @@ function area.correctedCircle( x, y, radius )
 	return areamt( t )
 end
 
-function area.hLine( x, y, w )
+function area.h_line( x, y, w )
 	if y >= 0 and y < height then
 		x, w = range( 0, width, x, w )
 		local pos = y * width + x
@@ -188,7 +183,7 @@ function area.hLine( x, y, w )
 	return areamt {}
 end
 
-function area.vLine( x, y, h )
+function area.v_line( x, y, h )
 	if x >= 0 and x < width then
 		y, h = range( 0, height, y, h )
 		local pos = y * width + x + 1
@@ -212,11 +207,11 @@ function area.line( x1, y1, x2, y2 )
 
 	if dx == 0 then
 		if dy == 0 then
-			return newPointArea( x1, y1, width, height )
+			return new_point_area( x1, y1, width, height )
 		end
-		return newVLineArea( x1, y1, dy, width, height )
+		return new_v_line_area( x1, y1, dy, width, height )
 	elseif dy == 0 then
-		return newHLineArea( x1, y1, dx, width, height )
+		return new_h_line_area( x1, y1, dx, width, height )
 	end
 
 	local points = {}

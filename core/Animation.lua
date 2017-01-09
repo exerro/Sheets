@@ -1,10 +1,5 @@
 
  -- @once
-
- -- @ifndef __INCLUDE_sheets
-	-- @error 'sheets' must be included before including 'sheets.core.Animation'
- -- @endif
-
  -- @print Including sheets.core.Animation
 
 local sin, cos = math.sin, math.cos
@@ -33,12 +28,12 @@ function Animation:Animation()
 	self.frames = {}
 end
 
-function Animation:setRounded( value )
+function Animation:set_rounded( value )
 	self.rounded = value ~= false
 	return self
 end
 
-function Animation:addKeyFrame( initial, final, duration, easing )
+function Animation:add_key_frame( initial, final, duration, easing )
 	duration = duration or .5
 	easing = easing or easing_transition
 
@@ -75,7 +70,7 @@ function Animation:addKeyFrame( initial, final, duration, easing )
 	return self
 end
 
-function Animation:addPause( pause )
+function Animation:add_pause( pause )
 	pause = pause or 1
 	parameters.check( 1, "pause", "number", pause )
 
@@ -89,21 +84,21 @@ function Animation:addPause( pause )
 	return self
 end
 
-function Animation:frameFinished()
-	if type( self.onFrameFinished ) == "function" then
-		self:onFrameFinished( self.frame )
+function Animation:frame_finished()
+	if type( self.on_frame_finished ) == "function" then
+		self:on_frame_finished( self.frame )
 	end
 
 	self.frame = self.frame + 1
 
-	if not self.frames[self.frame] and type( self.onFinish ) == "function" then
-		self:onFinish()
+	if not self.frames[self.frame] and type( self.on_finish ) == "function" then
+		self:on_finish()
 	end
 end
 
 function Animation:update( dt )
 	parameters.check( 1, "dt", "number", dt )
-	
+
 	local frame = self.frames[self.frame]
 
 	if frame then
@@ -119,13 +114,13 @@ function Animation:update( dt )
 			self.value = value
 
 			if frame.clock >= frame.duration then
-				self:frameFinished()
+				self:frame_finished()
 			end
 
 		end
 
 		if frame.clock >= frame.duration then
-			self:frameFinished()
+			self:frame_finished()
 		end
 	end
 end

@@ -7,7 +7,7 @@ local names = {}
 local interfaces = {}
 local last_created
 
-local supportedMetaMethods = { __add = true, __sub = true, __mul = true, __div = true, __mod = true, __pow = true, __unm = true, __len = true, __eq = true, __lt = true, __lte = true, __tostring = true, __concat = true }
+local supported_meta_methods = { __add = true, __sub = true, __mul = true, __div = true, __mod = true, __pow = true, __unm = true, __len = true, __eq = true, __lt = true, __lte = true, __tostring = true, __concat = true }
 
 local function _tostring( self )
 	return "[Class] " .. self:type()
@@ -27,25 +27,25 @@ local function construct( t )
 	last_created = nil
 end
 
-local function newSuper( object, super )
+local function new_super( object, super )
 
-	local superProxy = {}
+	local super_proxy = {}
 
 	if super.super then
-		superProxy.super = newSuper( object, super.super )
+		super_proxy.super = new_super( object, super.super )
 	end
 
-	setmetatable( superProxy, { __index = function( t, k )
+	setmetatable( super_proxy, { __index = function( t, k )
 
 		if type( super[k] ) == "function" then
 			return function( self, ... )
 
-				if self == superProxy then
+				if self == super_proxy then
 					self = object
 				end
-				object.super = superProxy.super
+				object.super = super_proxy.super
 				local v = { super[k]( self, ... ) }
-				object.super = superProxy
+				object.super = super_proxy
 				return unpack( v )
 
 			end
@@ -57,7 +57,7 @@ local function newSuper( object, super )
 		return "[Super] " .. tostring( super ) .. " of " .. tostring( object )
 	end } )
 
-	return superProxy
+	return super_proxy
 
 end
 
@@ -67,11 +67,11 @@ function classobj:new( ... )
 	local instance = setmetatable( { class = self, meta = mt }, mt )
 
 	if self.super then
-		instance.super = newSuper( instance, self.super )
+		instance.super = new_super( instance, self.super )
 	end
 
 	for k, v in pairs( self.meta ) do
-		if supportedMetaMethods[k] then
+		if supported_meta_methods[k] then
 			mt[k] = v
 		end
 	end
@@ -86,8 +86,8 @@ function classobj:new( ... )
 		return self.class:type()
 	end
 
-	function instance:typeOf( class )
-		return self.class:typeOf( class )
+	function instance:type_of( class )
+		return self.class:type_of( class )
 	end
 
 	if not self.tostring then
@@ -118,8 +118,8 @@ function classobj:type()
 	return tostring( self.meta.__type )
 end
 
-function classobj:typeOf( super )
-	return super == self or ( self.super and self.super:typeOf( super ) ) or false
+function classobj:type_of( super )
+	return super == self or ( self.super and self.super:type_of( super ) ) or false
 end
 
 function class:new( name )
@@ -162,20 +162,20 @@ function class.type( object )
 	return _type
 end
 
-function class.typeOf( object, class )
+function class.type_of( object, class )
 	if type( object ) == "table" then
 		local ok, v = pcall( function() return getmetatable( object ).__CLASS or getmetatable( object ).__INSTANCE or error() end )
-		return ok and object:typeOf( class )
+		return ok and object:type_of( class )
 	end
 
 	return false
 end
 
-function class.isClass( object )
+function class.is_class( object )
 	return pcall( function() if not getmetatable( object ).__CLASS then error() end end ), nil
 end
 
-function class.isInstance( object )
+function class.is_instance( object )
 	return pcall( function() if not getmetatable( object ).__INSTANCE then error() end end ), nil
 end
 

@@ -1,10 +1,5 @@
 
  -- @once
-
- -- @ifndef __INCLUDE_sheets
-	-- @error 'sheets' must be included before including 'sheets.exceptions.IncorrectParameterException'
- -- @endif
-
  -- @print Including sheets.exceptions.IncorrectParameterException
 
 class "IncorrectParameterException" extends "Exception"

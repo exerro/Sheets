@@ -1,10 +1,5 @@
 
  -- @once
-
- -- @ifndef __INCLUDE_sheets
-	-- @error 'sheets' must be included before including 'sheets.elements.Image'
- -- @endif
-
  -- @print Including sheets.elements.Image
 
 class "Image" extends "Sheet" {
@@ -22,9 +17,9 @@ function Image:Image( x, y, img )
 				h.close()
 			end
 		end
-		img = image.decodePaintutils( img )
+		img = image.decode_paintutils( img )
 	elseif type( img ) ~= "table" then
-		parameters.checkConstructor( self.class, 1, "image", "string", img ) -- definitely error
+		parameters.check_constructor( self.class, 1, "image", "string", img ) -- definitely error
 	end
 
 	local width, height = #( img[1] or "" ), #img
@@ -33,51 +28,51 @@ function Image:Image( x, y, img )
 	return self:Sheet( x, y, width, height )
 end
 
-function Image:setWidth() end
-function Image:setHeight() end
+function Image:set_width() end
+function Image:set_height() end
 
-function Image:onPreDraw()
-	local shader = self.style:getField( "shader." .. ( self.down and "pressed" or "default" ) )
+function Image:on_pre_draw()
+	local shader = self.style:get( "shader." .. ( self.down and "pressed" or "default" ) )
 
 	if not self.fill then
-		self.fill = self.canvas:getArea( GRAPHICS_AREA_FILL )
+		self.fill = self.canvas:get_area( GRAPHICS_AREA_FILL )
 	end
 
 	image.apply( self.image, self.canvas )
 
 	if shader then
-		self.canvas:mapShader( self.fill, shader )
+		self.canvas:map_shader( self.fill, shader )
 	end
 end
 
-function Image:onMouseEvent( event )
+function Image:on_mouse_event( event )
 	if event:is( SHEETS_EVENT_MOUSE_UP ) and self.down then
 		self.down = false
-		self:setChanged()
+		self:set_changed()
 	end
 
-	if event.handled or not event:isWithinArea( 0, 0, self.width, self.height ) or not event.within then
+	if event.handled or not event:is_within_area( 0, 0, self.width, self.height ) or not event.within then
 		return
 	end
 
 	if event:is( SHEETS_EVENT_MOUSE_DOWN ) and not self.down then
 		self.down = true
-		self:setChanged()
+		self:set_changed()
 		event:handle()
 	elseif event:is( SHEETS_EVENT_MOUSE_CLICK ) then
-		if self.onClick then
-			self:onClick( event.button, event.x, event.y )
+		if self.on_click then
+			self:on_click( event.button, event.x, event.y )
 		end
 		event:handle()
 	elseif event:is( SHEETS_EVENT_MOUSE_HOLD ) then
-		if self.onHold then
-			self:onHold( event.button, event.x, event.y )
+		if self.on_hold then
+			self:on_hold( event.button, event.x, event.y )
 		end
 		event:handle()
 	end
 end
 
-Style.addToTemplate( Image, {
+Style.add_to_template( Image, {
 	["shader"] = false;
 	["shader.pressed"] = false;
 } )

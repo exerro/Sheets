@@ -1,16 +1,11 @@
 
  -- @once
-
- -- @ifndef __INCLUDE_sheets
-	-- @error 'sheets' must be included before including 'sheets.KeyHandler'
- -- @endif
-
  -- @print Including sheets.KeyHandler
 
 class "KeyHandler" extends "Sheet"
 {
 	shortcuts = {};
-	handlesKeyboard = true;
+	handles_keyboard = true;
 }
 
 function KeyHandler:KeyHandler()
@@ -18,7 +13,7 @@ function KeyHandler:KeyHandler()
 	return self:Sheet( 0, 0, 0, 0 )
 end
 
-function KeyHandler:addShortcut( shortcut, handler )
+function KeyHandler:add_shortcut( shortcut, handler )
 	parameters.check( 2,
 		"shortcut", "string", shortcut,
 		"handler", "function", handler
@@ -26,20 +21,19 @@ function KeyHandler:addShortcut( shortcut, handler )
 	self.shortcuts[shortcut] = handler
 end
 
-function KeyHandler:removeShortcut( shortcut )
+function KeyHandler:remove_shortcut( shortcut )
 	parameters.check( 1,
 		"shortcut", "string", shortcut
 	)
 	self.shortcuts[shortcut] = nil
 end
 
-function KeyHandler:onKeyboardEvent( event )
+function KeyHandler:on_keyboard_event( event )
 	if not event.handled and event:is( SHEETS_EVENT_KEY_DOWN ) then
 		local shortcuts = self.shortcuts
 		local k, v = next( shortcuts )
 
 		while k do
-
 			if event:matches( k ) then
 				event:handle()
 				v( self )

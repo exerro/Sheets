@@ -1,11 +1,5 @@
 
-
  -- @once
-
- -- @ifndef __INCLUDE_sheets
-	-- @error 'sheets' must be included before including 'sheets.events.MouseEvent'
- -- @endif
-
  -- @print Including sheets.events.MouseEvent
 
 class "MouseEvent" extends "Event" {
@@ -24,7 +18,7 @@ function MouseEvent:MouseEvent( event, x, y, button, within )
 	self.within = within
 end
 
-function MouseEvent:isWithinArea( x, y, width, height )
+function MouseEvent:is_within_area( x, y, width, height )
 	parameters.check( 4,
 		"x", "number", x,
 		"y", "number", y,

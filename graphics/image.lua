@@ -1,38 +1,33 @@
 
  -- @once
-
- -- @ifndef __INCLUDE_sheets
-	 -- @error 'sheets' must be included before including 'sheets.graphics.image'
- -- @endif
-
  -- @print Including sheets.graphics.image
 
-local hexLookup = {}
+local hex_lookup = {}
 for i = 0, 15 do
-	hexLookup[2 ^ i] = ("%x"):format( i )
-	hexLookup[("%x"):format( i )] = 2 ^ i
-	hexLookup[("%X"):format( i )] = 2 ^ i
+	hex_lookup[2 ^ i] = ("%x"):format( i )
+	hex_lookup[("%x"):format( i )] = 2 ^ i
+	hex_lookup[("%X"):format( i )] = 2 ^ i
 end
 
 image = {}
 
-function image.decodePaintutils( str, canvas )
+function image.decode_paintutils( str, canvas )
 	local lines = {}
 	for line in str:gmatch "[^\n]+" do
-		local decodedLine = {}
+		local decoded_line = {}
 		for i = 1, #line do
 			-- @if GRAPHICS_NO_TEXT
-				decodedLine[i] = hexLookup[ line:sub( i, i ) ] or 0
+				decoded_line[i] = hex_lookup[ line:sub( i, i ) ] or 0
 			-- @else
-				decodedLine[i] = { hexLookup[ line:sub( i, i ) ] or 0, 1, " " }
+				decoded_line[i] = { hex_lookup[ line:sub( i, i ) ] or 0, 1, " " }
 			-- @endif
 		end
-		lines[#lines + 1] = decodedLine
+		lines[#lines + 1] = decoded_line
 	end
 	return lines
 end
 
-function image.encodePaintutils( canvas )
+function image.encode_paintutils( canvas )
 
 end
 
@@ -50,8 +45,8 @@ function image.apply( map, canvas )
 	end
 
 	-- @if GRAPHICS_NO_TEXT
-		canvas:mapColours( coords, pixels )
+		canvas:map_colours( coords, pixels )
 	-- @else
-		canvas:mapPixels( coords, pixels )
+		canvas:map_pixels( coords, pixels )
 	-- @endif
 end

@@ -1,10 +1,5 @@
 
  -- @once
-
- -- @ifndef __INCLUDE_sheets
-	-- @error 'sheets' must be included before including 'sheets.parsing.Token'
- -- @endif
-
  -- @print Including sheets.parsing.Token
 
 class "Token" {
@@ -18,7 +13,7 @@ function Token:Token( token, value, position )
 	value = value or ""
 	position = position or TokenPosition()
 
-	parameters.checkConstructor( self.class, 3, "token", "string", token, "value", type( value ), value, "position", TokenPosition, position )
+	parameters.check_constructor( self.class, 3, "token", "string", token, "value", type( value ), value, "position", TokenPosition, position )
 
 	self.token = token
 	self.value = value

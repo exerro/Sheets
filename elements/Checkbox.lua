@@ -1,10 +1,5 @@
 
  -- @once
-
- -- @ifndef __INCLUDE_sheets
-	-- @error 'sheets' must be included before including 'sheets.elements.Checkbox'
- -- @endif
-
  -- @print Including sheets.elements.Checkbox
 
 class "Checkbox" extends "Sheet" {
@@ -17,43 +12,43 @@ function Checkbox:Checkbox( x, y, checked )
 	self:Sheet( x, y, 1, 1 )
 end
 
-function Checkbox:setWidth() end
-function Checkbox:setHeight() end
+function Checkbox:set_width() end
+function Checkbox:set_height() end
 
 function Checkbox:toggle()
 	self.checked = not self.checked
-	if self.onToggle then
-		self:onToggle()
+	if self.on_toggle then
+		self:on_toggle()
 	end
-	if self.checked and self.onCheck then
-		self:onCheck()
-	elseif not self.checked and self.onUnCheck then
-		self:onUnCheck()
+	if self.checked and self.on_check then
+		self:on_check()
+	elseif not self.checked and self.on_uncheck then
+		self:on_uncheck()
 	end
-	self:setChanged()
+	self:set_changed()
 end
 
-function Checkbox:onPreDraw()
-	self.canvas:drawPoint( 0, 0, {
-		colour = self.style:getField( "colour." .. ( ( self.down and "pressed" ) or ( self.checked and "checked" ) or "default" ) );
-		textColour = self.style:getField( "checkColour." .. ( self.down and "pressed" or "default" ) );
+function Checkbox:on_pre_draw()
+	self.canvas:draw_point( 0, 0, {
+		colour = self.style:get( "colour." .. ( ( self.down and "pressed" ) or ( self.checked and "checked" ) or "default" ) );
+		text_colour = self.style:get( "check-colour." .. ( self.down and "pressed" or "default" ) );
 		character = self.checked and "x" or " ";
 	} )
 end
 
-function Checkbox:onMouseEvent( event )
+function Checkbox:on_mouse_event( event )
 	if event:is( SHEETS_EVENT_MOUSE_UP ) and self.down then
 		self.down = false
-		self:setChanged()
+		self:set_changed()
 	end
 
-	if event.handled or not event:isWithinArea( 0, 0, self.width, self.height ) or not event.within then
+	if event.handled or not event:is_within_area( 0, 0, self.width, self.height ) or not event.within then
 		return
 	end
 
 	if event:is( SHEETS_EVENT_MOUSE_DOWN ) and not self.down then
 		self.down = true
-		self:setChanged()
+		self:set_changed()
 		event:handle()
 	elseif event:is( SHEETS_EVENT_MOUSE_CLICK ) then
 		self:toggle()
@@ -63,10 +58,10 @@ function Checkbox:onMouseEvent( event )
 	end
 end
 
-Style.addToTemplate( Checkbox, {
+Style.add_to_template( Checkbox, {
 	["colour"] = LIGHTGREY;
 	["colour.checked"] = LIGHTGREY;
 	["colour.pressed"] = GREY;
-	["checkColour"] = BLACK;
-	["checkColour.pressed"] = LIGHTGREY;
+	["check-colour"] = BLACK;
+	["check-colour.pressed"] = LIGHTGREY;
 } )

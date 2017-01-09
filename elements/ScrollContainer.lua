@@ -1,10 +1,5 @@
 
  -- @once
-
- -- @ifndef __INCLUDE_sheets
-	-- @error 'sheets' must be included before including 'sheets.elements.ScrollContainer'
- -- @endif
-
  -- @print Including sheets.elements.ScrollContainer
 
 -- needs to update to new exception system
@@ -13,21 +8,21 @@ class "ScrollContainer" extends "Sheet" {
 	scrollX = 0;
 	scrollY = 0;
 
-	horizontalPadding = 0;
-	verticalPadding = 0;
+	horizontal_padding = 0;
+	vertical_padding = 0;
 
-	heldScrollbar = false;
+	held_scrollbar = false;
 	down = false;
 }
 
 function ScrollContainer:ScrollContainer( x, y, width, height, element )
-	if class.typeOf( x, Sheet ) then
+	if class.type_of( x, Sheet ) then
 		element = x
 		x, y, width, height = x.x, x.y, x.width, x.height
 		element.x, element.y = 0, 0
 	end
 
-	parameters.checkConstructor( self.class, 4,
+	parameters.check_constructor( self.class, 4,
 		"x", "number", x,
 		"y", "number", y,
 		"width", "number", width,
@@ -38,73 +33,73 @@ function ScrollContainer:ScrollContainer( x, y, width, height, element )
 	self:Sheet( x, y, width, height )
 
 	if element then
-		self:addChild( element )
+		self:add_child( element )
 	end
 end
 
-function ScrollContainer:setScrollX( scroll )
+function ScrollContainer:set_scroll_x( scroll )
 	parameters.check( 1, "scroll", "number", scroll )
 
 	self.scrollX = scroll
-	return self:setChanged()
+	return self:set_changed()
 end
 
-function ScrollContainer:setScrollY( scroll )
+function ScrollContainer:set_scroll_y( scroll )
 	parameters.check( 1, "scroll", "number", scroll )
 
 	self.scrollY = scroll
-	return self:setChanged()
+	return self:set_changed()
 end
 
-function ScrollContainer:getContentWidth()
-	local width = self.horizontalPadding
+function ScrollContainer:get_content_width()
+	local width = self.horizontal_padding
 	local children = self.children
 
 	for i = 1, #self.children do
-		local childWidth = children[i].x + children[i].width + self.horizontalPadding
-		if childWidth > width then
-			width = childWidth
+		local child_width = children[i].x + children[i].width + self.horizontal_padding
+		if child_width > width then
+			width = child_width
 		end
 	end
 
 	return width
 end
 
-function ScrollContainer:getContentHeight()
-	local height = self.verticalPadding
+function ScrollContainer:get_content_height()
+	local height = self.vertical_padding
 	local children = self.children
 
 	for i = 1, #self.children do
-		local childWidth = children[i].y + children[i].height + self.verticalPadding
-		if childWidth > height then
-			height = childWidth
+		local child_width = children[i].y + children[i].height + self.vertical_padding
+		if child_width > height then
+			height = child_width
 		end
 	end
 
 	return height
 end
 
-function ScrollContainer:getDisplayWidth( h, v )
+function ScrollContainer:get_display_width( h, v )
 	return v and self.width - 1 or self.width
 end
 
-function ScrollContainer:getDisplayHeight( h, v )
+function ScrollContainer:get_display_height( h, v )
 	return h and self.height - 1 or self.height
 end
 
-function ScrollContainer:getActiveScrollbars( cWidth, cHeight )
-	if cWidth > self.width or cHeight > self.height then
-		return cWidth >= self.width, cHeight >= self.height
+function ScrollContainer:get_active_scrollbars( c_width, c_height )
+	if c_width > self.width or c_height > self.height then
+		return c_width >= self.width, c_height >= self.height
 	end
 	return false, false
 end
 
-function ScrollContainer:getScrollbarSizes( cWidth, cHeight, horizontal, vertical )
-	return math.floor( self:getDisplayWidth( horizontal, vertical ) / cWidth * self:getDisplayWidth( horizontal, vertical ) + .5 ), math.floor( self:getDisplayHeight( horizontal, vertical ) / cHeight * self.height + .5 )
+function ScrollContainer:get_scrollbar_sizes( c_width, c_height, horizontal, vertical )
+	return math.floor( self:get_display_width( horizontal, vertical ) / c_width * self:get_display_width( horizontal, vertical ) + .5 ), math.floor( self:get_display_height( horizontal, vertical ) / c_height * self.height + .5 )
 end
 
-function ScrollContainer:getScrollbarPositions( cWidth, cHeight, horizontal, vertical )
-	return math.floor( self.scrollX / cWidth * self:getDisplayWidth( horizontal, vertical ) + .5 ), math.floor( self.scrollY / cHeight * self.height + .5 )
+function ScrollContainer:get_scrollbar_positions( c_width, c_height, horizontal, vertical )
+	return math.floor( self.scrollX / c_width * self:get_display_width( horizontal, vertical ) + .5 ), math.floor( self.scrollY / c_height * self.height + .5 )
 end
 
 function ScrollContainer:draw()
@@ -114,17 +109,17 @@ function ScrollContainer:draw()
 		local cx, cy, cc
 		local ox, oy = self.scrollX, self.scrollY
 
-		self:resetCursorBlink()
+		self:reset_cursor_blink()
 
-		if self.onPreDraw then
-			self:onPreDraw()
+		if self.on_pre_draw then
+			self:on_pre_draw()
 		end
 
 		for i = 1, #children do
 			local child = children[i]
-			if child:isVisible() then
+			if child:is_visible() then
 				child:draw()
-				child.canvas:drawTo( self.canvas, child.x - ox, child.y - oy )
+				child.canvas:draw_to( self.canvas, child.x - ox, child.y - oy )
 
 				if child.cursor_active then
 					cx, cy, cc = child.x + child.cursor_x - ox, child.y + child.cursor_y - oy, child.cursor_colour
@@ -133,11 +128,11 @@ function ScrollContainer:draw()
 		end
 
 		if cx then
-			self:setCursorBlink( cx, cy, cc )
+			self:set_cursor_blink( cx, cy, cc )
 		end
 
-		if self.onPostDraw then
-			self:onPostDraw()
+		if self.on_post_draw then
+			self:on_post_draw()
 		end
 
 		self.changed = false
@@ -154,73 +149,73 @@ function ScrollContainer:handle( event )
 
 	if self.down and event:is( SHEETS_EVENT_MOUSE_UP ) then
 		self.down = false
-		self.heldScrollbar = false
-		self:setChanged()
+		self.held_scrollbar = false
+		self:set_changed()
 		event:handle()
 	elseif self.down and event:is( SHEETS_EVENT_MOUSE_DRAG ) then
-		local cWidth, cHeight = self:getContentWidth(), self:getContentHeight()
-		local h, v = self:getActiveScrollbars( cWidth, cHeight )
+		local c_width, c_height = self:get_content_width(), self:get_content_height()
+		local h, v = self:get_active_scrollbars( c_width, c_height )
 
-		if self.heldScrollbar == "h" then
-			self.scrollX = math.max( math.min( math.floor( ( event.x - self.down ) / self:getDisplayWidth( h, v ) * cWidth ), cWidth - self:getDisplayWidth( h, v ) ), 0 )
-			self:setChanged()
+		if self.held_scrollbar == "h" then
+			self.scrollX = math.max( math.min( math.floor( ( event.x - self.down ) / self:get_display_width( h, v ) * c_width ), c_width - self:get_display_width( h, v ) ), 0 )
+			self:set_changed()
 			event:handle()
-		elseif self.heldScrollbar == "v" then
-			self.scrollY = math.max( math.min( math.floor( ( event.y - self.down ) / self.height * cHeight ), cHeight - self:getDisplayHeight( h, v ) ), 0 )
-			self:setChanged()
+		elseif self.held_scrollbar == "v" then
+			self.scrollY = math.max( math.min( math.floor( ( event.y - self.down ) / self.height * c_height ), c_height - self:get_display_height( h, v ) ), 0 )
+			self:set_changed()
 			event:handle()
 		end
 	end
 
-	if event:typeOf( MouseEvent ) and not event.handled and event:isWithinArea( 0, 0, self.width, self.height ) and event.within then
-		local cWidth, cHeight = self:getContentWidth(), self:getContentHeight()
-		local h, v = self:getActiveScrollbars( cWidth, cHeight )
+	if event:type_of( MouseEvent ) and not event.handled and event:is_within_area( 0, 0, self.width, self.height ) and event.within then
+		local c_width, c_height = self:get_content_width(), self:get_content_height()
+		local h, v = self:get_active_scrollbars( c_width, c_height )
 
 		if event:is( SHEETS_EVENT_MOUSE_DOWN ) then
 			if event.x == self.width - 1 and v then
-				local px, py = self:getScrollbarPositions( cWidth, cHeight, h, v )
-				local sx, sy = self:getScrollbarSizes( cWidth, cHeight, h, v )
+				local px, py = self:get_scrollbar_positions( c_width, c_height, h, v )
+				local sx, sy = self:get_scrollbar_sizes( c_width, c_height, h, v )
 				local down = event.y
 
 				if down < px then
-					self.scrollY = math.floor( down / self.height * cHeight )
+					self.scrollY = math.floor( down / self.height * c_height )
 					down = 0
 				elseif down >= px + sx then
-					self.scrollY = math.floor( ( down - sy + 1 ) / self.height * cHeight )
+					self.scrollY = math.floor( ( down - sy + 1 ) / self.height * c_height )
 					down = sy - 1
 				else
 					down = down - py
 				end
 
-				self.heldScrollbar = "v"
+				self.held_scrollbar = "v"
 				self.down = down
-				self:setChanged()
+				self:set_changed()
 				event:handle()
 			elseif event.y == self.height - 1 and h then
-				local px, py = self:getScrollbarPositions( cWidth, cHeight, h, v )
-				local sx, sy = self:getScrollbarSizes( cWidth, cHeight, h, v )
+				local px, py = self:get_scrollbar_positions( c_width, c_height, h, v )
+				local sx, sy = self:get_scrollbar_sizes( c_width, c_height, h, v )
 				local down = event.x
 
 				if down < px then
-					self.scrollX = math.floor( down / self:getDisplayWidth( h, v ) * cWidth )
+					self.scrollX = math.floor( down / self:get_display_width( h, v ) * c_width )
 					down = 0
 				elseif down >= px + sx then
-					self.scrollX = math.floor( ( down - sx + 1 ) / self:getDisplayWidth( h, v ) * cWidth )
+					self.scrollX = math.floor( ( down - sx + 1 ) / self:get_display_width( h, v ) * c_width )
 					down = sx - 1
 				else
 					down = down - px
 				end
 
-				self.heldScrollbar = "h"
+				self.held_scrollbar = "h"
 				self.down = down
-				self:setChanged()
+				self:set_changed()
 				event:handle()
 			end
 		elseif event:is( SHEETS_EVENT_MOUSE_SCROLL ) then
 			if v then
-				self:setScrollY( math.max( math.min( oy + event.button, cHeight - self:getDisplayHeight( h, v ) ), 0 ) )
+				self:set_scroll_y( math.max( math.min( oy + event.button, c_height - self:get_display_height( h, v ) ), 0 ) )
 			elseif h then
-				self:setScrollX( math.max( math.min( ox + event.button, cWidth - self:getDisplayWidth( h, v ) ), 0 ) )
+				self:set_scroll_x( math.max( math.min( ox + event.button, c_width - self:get_display_width( h, v ) ), 0 ) )
 			end
 		elseif event:is( SHEETS_EVENT_MOUSE_CLICK ) or event:is( SHEETS_EVENT_MOUSE_HOLD ) then
 			if event.x == self.width - 1 and v or event.y == self.height - 1 and h then
@@ -229,8 +224,8 @@ function ScrollContainer:handle( event )
 		end
 	end
 
-	if event:typeOf( MouseEvent ) then
-		local within = event:isWithinArea( 0, 0, self.width, self.height )
+	if event:type_of( MouseEvent ) then
+		local within = event:is_within_area( 0, 0, self.width, self.height )
 		for i = #c, 1, -1 do
 			c[i]:handle( event:clone( c[i].x - ox, c[i].y - oy, within ) )
 		end
@@ -240,51 +235,51 @@ function ScrollContainer:handle( event )
 		end
 	end
 
-	if event:typeOf( MouseEvent ) then
-		if event:is( EVENT_MOUSE_PING ) and event:isWithinArea( 0, 0, self.width, self.height ) and event.within then
+	if event:type_of( MouseEvent ) then
+		if event:is( EVENT_MOUSE_PING ) and event:is_within_area( 0, 0, self.width, self.height ) and event.within then
 			event.button[#event.button + 1] = self
 		end
-		self:onMouseEvent( event )
-	elseif event:typeOf( KeyboardEvent ) and self.handlesKeyboard and self.onKeyboardEvent then
-		self:onKeyboardEvent( event )
-	elseif event:typeOf( TextEvent ) and self.handlesText and self.onTextEvent then
-		self:onTextEvent( event )
+		self:on_mouse_event( event )
+	elseif event:type_of( KeyboardEvent ) and self.handles_keyboard and self.on_keyboard_event then
+		self:on_keyboard_event( event )
+	elseif event:type_of( TextEvent ) and self.handles_text and self.on_text_event then
+		self:on_text_event( event )
 	end
 end
 
-function ScrollContainer:onPreDraw()
-	self.canvas:clear( self.style:getField "colour" )
+function ScrollContainer:on_pre_draw()
+	self.canvas:clear( self.style:get "colour" )
 end
 
-function ScrollContainer:onPostDraw()
-	local cWidth, cHeight = self:getContentWidth(), self:getContentHeight()
-	local h, v = self:getActiveScrollbars( cWidth, cHeight )
+function ScrollContainer:on_post_draw()
+	local c_width, c_height = self:get_content_width(), self:get_content_height()
+	local h, v = self:get_active_scrollbars( c_width, c_height )
 	if h or v then
-		local px, py = self:getScrollbarPositions( cWidth, cHeight, h, v )
-		local sx, sy = self:getScrollbarSizes( cWidth, cHeight, h, v )
+		local px, py = self:get_scrollbar_positions( c_width, c_height, h, v )
+		local sx, sy = self:get_scrollbar_sizes( c_width, c_height, h, v )
 
 		if h then
-			local c1 = self.style:getField "horizontal-bar"
-			local c2 = self.heldScrollbar == "h" and
-					   self.style:getField "horizontal-bar.active"
-					or self.style:getField "horizontal-bar.bar"
+			local c1 = self.style:get "horizontal-bar"
+			local c2 = self.held_scrollbar == "h" and
+					   self.style:get "horizontal-bar.active"
+					or self.style:get "horizontal-bar.bar"
 
-			self.canvas:mapColour( self.canvas:getArea( GRAPHICS_AREA_HLINE, 0, self.height - 1, self:getDisplayWidth( h, v ) ), c1 )
-			self.canvas:mapColour( self.canvas:getArea( GRAPHICS_AREA_HLINE, px, self.height - 1, sx ), c2 )
+			self.canvas:map_colour( self.canvas:get_area( GRAPHICS_AREA_HLINE, 0, self.height - 1, self:get_display_width( h, v ) ), c1 )
+			self.canvas:map_colour( self.canvas:get_area( GRAPHICS_AREA_HLINE, px, self.height - 1, sx ), c2 )
 		end
 		if v then
-			local c1 = self.style:getField "vertical-bar"
-			local c2 = self.heldScrollbar == "v" and
-					   self.style:getField "vertical-bar.active"
-					or self.style:getField "vertical-bar.bar"
+			local c1 = self.style:get "vertical-bar"
+			local c2 = self.held_scrollbar == "v" and
+					   self.style:get "vertical-bar.active"
+					or self.style:get "vertical-bar.bar"
 
-			self.canvas:mapColour( self.canvas:getArea( GRAPHICS_AREA_VLINE, self.width - 1, 0, self.height ), c1 )
-			self.canvas:mapColour( self.canvas:getArea( GRAPHICS_AREA_VLINE, self.width - 1, py, sy ), c2 )
+			self.canvas:map_colour( self.canvas:get_area( GRAPHICS_AREA_VLINE, self.width - 1, 0, self.height ), c1 )
+			self.canvas:map_colour( self.canvas:get_area( GRAPHICS_AREA_VLINE, self.width - 1, py, sy ), c2 )
 		end
 	end
 end
 
-function ScrollContainer:getChildrenAt( x, y )
+function ScrollContainer:get_children_at( x, y )
 	parameters.check( 2, "x", "number", x, "y", "number", y )
 
 	local c = {}
@@ -304,7 +299,7 @@ function ScrollContainer:getChildrenAt( x, y )
 	return elements
 end
 
-function ScrollContainer:isChildVisible( child )
+function ScrollContainer:is_child_visible( child )
 	parameters.check( 1, "child", Sheet, child )
 
 	local ox, oy = self.scrollX, self.scrollY
@@ -312,7 +307,7 @@ function ScrollContainer:isChildVisible( child )
 	return child.x + child.width - ox > 0 and child.y + child.height - oy > 0 and child.x - ox < self.width and child.y - oy < self.height
 end
 
-Style.addToTemplate( ScrollContainer, {
+Style.add_to_template( ScrollContainer, {
 	["colour"] = WHITE;
 	["horizontal-bar"] = GREY;
 	["horizontal-bar.bar"] = LIGHTGREY;

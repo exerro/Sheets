@@ -1,10 +1,5 @@
 
  -- @once
-
- -- @ifndef __INCLUDE_sheets
-	 -- @error 'sheets' must be included before including 'sheets.graphics.Canvas'
- -- @endif
-
  -- @print Including sheets.graphics.Canvas
 
  -- @require graphics.area as area
@@ -25,7 +20,7 @@ class "Canvas" {
 
 	colour = WHITE;
 
-	pixels = {};
+	buffer = {};
 }
 
 function Canvas:Canvas( width, height )
@@ -37,97 +32,97 @@ function Canvas:Canvas( width, height )
 
 	self.width = width
 	self.height = height
-	self.pixels = {}
+	self.buffer = {}
 
 	local px = BLANK_PIXEL
 	for i = 1, width * height do
-		self.pixels[i] = px
+		self.buffer[i] = px
 	end
 end
 
-function Canvas:setWidth( width )
+function Canvas:set_width( width )
 	if type( width ) ~= "number" then return error( "expected number width, got " .. class.type( width ) ) end
 
 	width = math.floor( width )
-	local height, pixels = self.height, self.pixels
-	local sWidth = self.width
+	local height, buffer = self.height, self.buffer
+	local s_width = self.width
 	local px = { self.colour, WHITE, " " }
 
-	while sWidth < width do
+	while s_width < width do
 		for i = 1, height do
-			insert( pixels, ( sWidth + 1 ) * i, px )
+			insert( buffer, ( s_width + 1 ) * i, px )
 		end
-		sWidth = sWidth + 1
+		s_width = s_width + 1
 	end
 
-	while sWidth > width do
+	while s_width > width do
 		for i = height, 1, -1 do
-			remove( pixels, sWidth * i )
+			remove( buffer, s_width * i )
 		end
-		sWidth = sWidth - 1
+		s_width = s_width - 1
 	end
 
-	self.width = sWidth
+	self.width = s_width
 end
 
-function Canvas:setHeight( height )
+function Canvas:set_height( height )
 	if type( height ) ~= "number" then return error( "expected number height, got " .. class.type( height ) ) end
 
 	height = math.floor( height )
-	local width, pixels = self.width, self.pixels
-	local sHeight = self.height
+	local width, buffer = self.width, self.buffer
+	local s_height = self.height
 	local px = { self.colour, WHITE, " " }
 
-	while sHeight < height do
+	while s_height < height do
 		for i = 1, width do
-			pixels[#pixels + 1] = px
+			buffer[#buffer + 1] = px
 		end
-		sHeight = sHeight + 1
+		s_height = s_height + 1
 	end
 
-	while sHeight > height do
+	while s_height > height do
 		for i = 1, width do
-			pixels[#pixels] = nil
+			buffer[#buffer] = nil
 		end
-		sHeight = sHeight - 1
+		s_height = s_height - 1
 	end
 
-	self.height = sHeight
+	self.height = s_height
 end
 
  -- @if GRAPHICS_NO_TEXT
- 	function Canvas:getPixel( x, y )
- 		local sWidth = self.width
- 		if x >= 0 and x < sWidth and y >= 0 and y < self.height then
- 			return self.pixels[y * sWidth + x + 1]
+ 	function Canvas:get_pixel( x, y )
+ 		local s_width = self.width
+ 		if x >= 0 and x < s_width and y >= 0 and y < self.height then
+ 			return self.buffer[y * s_width + x + 1]
  		end
  	end
  -- @else
- 	function Canvas:getPixel( x, y )
- 		local sWidth = self.width
- 		if x >= 0 and x < sWidth and y >= 0 and y < self.height then
- 			local px = self.pixels[y * sWidth + x + 1]
+ 	function Canvas:get_pixel( x, y )
+ 		local s_width = self.width
+ 		if x >= 0 and x < s_width and y >= 0 and y < self.height then
+ 			local px = self.buffer[y * s_width + x + 1]
  			return px[1], px[2], px[3]
  		end
  	end
  -- @endif
 
-function Canvas:mapColour( coords, colour )
+function Canvas:map_colour( coords, colour )
 	if type( coords ) ~= "table" then return error( "expected table coords, got " .. class.type( coords ) ) end
 	if type( colour ) ~= "number" then return error( "expected number colour, got " .. class.type( colour ) ) end
 
 	local px = { colour, WHITE, " " }
-	local pxls = self.pixels
+	local pxls = self.buffer
 	for i = 1, #coords do
 		pxls[coords[i]] = px
 	end
 end
 
-function Canvas:mapColours( coords, colours )
+function Canvas:map_colours( coords, colours )
 	if type( coords ) ~= "table" then return error( "expected table coords, got " .. class.type( coords ) ) end
 	if type( colours ) ~= "table" then return error( "expected table colours, got " .. class.type( colours ) ) end
 
-	local pxls = self.pixels
+	local pxls = self.buffer
 	local l = #colours
 	for i = 1, #coords do
 		pxls[coords[i]] = { colours[( i - 1 ) % l + 1], WHITE, " " }
@@ -135,19 +130,19 @@ function Canvas:mapColours( coords, colours )
 end
 
  --@ ifn GRAPHICS_NO_TEXT
-	function Canvas:mapPixel( coords, pixel )
+	function Canvas:map_pixel( coords, pixel )
 		if type( coords ) ~= "table" then return error( "expected table coords, got " .. class.type( coords ) ) end
 		if type( pixel ) ~= "table" then return error( "expected table pixel, got " .. class.type( pixel ) ) end
-		local pxls = self.pixels
+		local pxls = self.buffer
 		for i = 1, #coords do
 			pxls[coords[i]] = pixel
 		end
 	end
 
-	function Canvas:mapPixels( coords, pixels )
+	function Canvas:map_pixels( coords, pixels )
 		if type( coords ) ~= "table" then return error( "expected table coords, got " .. class.type( coords ) ) end
 		if type( pixels ) ~= "table" then return error( "expected table pixels, got " .. class.type( pixels ) ) end
-		local pxls = self.pixels
+		local pxls = self.buffer
 		for i = 1, #coords do
 			pxls[coords[i]] = pixels[i]
 		end
@@ -155,10 +150,10 @@ end
  -- @endif
 
  --@ if GRAPHICS_NO_TEXT
- 	function Canvas:mapShader( coords, shader )
+ 	function Canvas:map_shader( coords, shader )
 		if type( coords ) ~= "table" then return error( "expected table coords, got " .. class.type( coords ) ) end
 		if type( shader ) ~= "function" then return error( "expected function shader, got " .. class.type( shader ) ) end
-		local pxls = self.pixels
+		local pxls = self.buffer
 		local width = self.width
 		local changed = {}
 
@@ -178,11 +173,11 @@ end
 		end
  	end
  -- @else
-	function Canvas:mapShader( coords, shader )
+	function Canvas:map_shader( coords, shader )
 		if type( coords ) ~= "table" then return error( "expected table coords, got " .. class.type( coords ) ) end
 		if type( shader ) ~= "function" then return error( "expected function shader, got " .. class.type( shader ) ) end
 
-		local pxls = self.pixels
+		local pxls = self.buffer
 		local width = self.width
 		local changed = {}
 
@@ -205,39 +200,39 @@ end
  -- @endif
 
 function Canvas:shift( area, x, y, blank )
-	local sWidth = self.width
+	local s_width = self.width
 	if type( area ) == "number" then
 		x, y, blank = area, x, y
 		area = {}
-		for i = 1, sWidth * self.height do
+		for i = 1, s_width * self.height do
 			area[i] = i
 		end
 	end
-	local diff = y * sWidth + x
-	local pixels = self.pixels
+	local diff = y * s_width + x
+	local buffer = self.buffer
 	for i = 1, #area do
-		pixels[i] = pixels[i + diff] or blank
+		buffer[i] = buffer[i + diff] or blank
 	end
 end
 
-function Canvas:drawColour( coords, colour )
+function Canvas:draw_colour( coords, colour )
 	if type( coords ) ~= "table" then return error( "expected table coords, got " .. class.type( coords ) ) end
 	if type( colour ) ~= "number" then return error( "expected number colour, got " .. class.type( colour ) ) end
 
 	if colour == TRANSPARENT then return end
 	local px = { colour, WHITE, " " }
-	local pixels = self.pixels
+	local buffer = self.buffer
 	for i = 1, #coords do
-		pixels[coords[i]] = px
+		buffer[coords[i]] = px
 	end
 end
 
-function Canvas:drawColours( coords, colours )
+function Canvas:draw_colours( coords, colours )
 	if type( coords ) ~= "table" then return error( "expected table coords, got " .. class.type( coords ) ) end
 	if type( colours ) ~= "table" then return error( "expected table colours, got " .. class.type( colours ) ) end
 
 	local l = #colours
-	local pxls = self.pixels
+	local pxls = self.buffer
 	for i = 1, #coords do
 		if colours[i] ~= TRANSPARENT then
 			pxls[coords[i]] = { colours[( i - 1 ) % l + 1], WHITE, " " }
@@ -246,11 +241,11 @@ function Canvas:drawColours( coords, colours )
 end
 
  --@ ifn GRAPHICS_NO_TEXT
-	function Canvas:drawPixel( coords, pixel )
+	function Canvas:draw_pixel( coords, pixel )
 		if type( coords ) ~= "table" then return error( "expected table coords, got " .. class.type( coords ) ) end
 		if type( pixel ) ~= "table" then return error( "expected table pixel, got " .. class.type( pixel ) ) end
 
-		local pxls = self.pixels
+		local pxls = self.buffer
 		if pixel[1] == TRANSPARENT and ( pixel[2] == TRANSPARENT or pixel[3] == "" ) then
 			return -- not gonna draw anything
 		elseif pixel[1] == TRANSPARENT or pixel[2] == TRANSPARENT or pixel[3] == "" then
@@ -276,15 +271,15 @@ end
 		end
 	end
 
-	function Canvas:drawPixels( coords, pixels )
+	function Canvas:draw_pixels( coords, pixels )
 		if type( coords ) ~= "table" then return error( "expected table coords, got " .. class.type( coords ) ) end
 		if type( pixels ) ~= "table" then return error( "expected table pixels, got " .. class.type( pixels ) ) end
 
 		local l = #pixels
-		local pxls = self.pixels
-		local modNeeded = l < #coords
+		local pxls = self.buffer
+		local mod_needed = l < #coords
 		for i = 1, #coords do
-			local px = modNeeded and pixels[( i - 1 ) % l + 1] or pixels[i]
+			local px = mod_needed and pixels[( i - 1 ) % l + 1] or pixels[i]
 			local bc, tc, char = px[1], px[2], px[3]
 			local cpx
 			if bc == TRANSPARENT then
@@ -306,58 +301,58 @@ function Canvas:clear( colour )
 
 	local px = { colour or self.colour, colour and WHITE or TRANSPARENT, " " }
 	for i = 1, self.width * self.height do
-		self.pixels[i] = px
+		self.buffer[i] = px
 	end
 end
 
 function Canvas:clone( _class )
-	if _class and not class.isClass( _class ) then return error( "expected Class class, got " .. class.type( _class ) ) end
+	if _class and not class.is_class( _class ) then return error( "expected Class class, got " .. class.type( _class ) ) end
 
 	local new = ( _class or self.class )( self.width, self.height )
-	new.pixels = self.pixels
+	new.buffer = self.buffer
 	return new
 end
 
 function Canvas:copy( _class )
-	if _class and not class.isClass( _class ) then return error( "expected Class class, got " .. class.type( _class ) ) end
+	if _class and not class.is_class( _class ) then return error( "expected Class class, got " .. class.type( _class ) ) end
 
 	local new = ( _class or self.class )( self.width, self.height )
-	local b1, b2 = new.pixels, self.pixels
+	local b1, b2 = new.buffer, self.buffer
 	for i = 1, #b2 do
 		b1[i] = b2[i]
 	end
 	return new
 end
 
-function Canvas:drawTo( canvas, offsetX, offsetY )
+function Canvas:draw_to( canvas, offsetX, offsetY )
 	offsetX, offsetY = offsetX or 0, offsetY or 0
 
-	if not class.typeOf( canvas, Canvas ) then return error( "expected Canvas canvas, got " .. class.type( canvas ) ) end
+	if not class.type_of( canvas, Canvas ) then return error( "expected Canvas canvas, got " .. class.type( canvas ) ) end
 	if type( offsetX ) ~= "number" then return error( "expected number offsetX, got " .. class.type( offsetX ) ) end
 	if type( offsetY ) ~= "number" then return error( "expected number offsetY, got " .. class.type( offsetY ) ) end
 
 	local width, height = self.width, self.height
-	local otherWidth, otherHeight = canvas.width, canvas.height
+	local other_width, other_height = canvas.width, canvas.height
 
-	local toDrawCoords = {}
-	local toDrawPixels = {}
+	local to_draw_coords = {}
+	local to_draw_pixels = {}
 	local pc = 1
-	local pixels = self.pixels
+	local buffer = self.buffer
 
-	local a, b = range( 0, otherWidth, offsetX, width )
+	local a, b = range( 0, other_width, offsetX, width )
 
 	a = a - offsetX + 1
 	b = a + b - 1
 
 	for y = 0, height - 1 do
 		local my = y + offsetY
-		if my >= 0 and my < otherHeight then
+		if my >= 0 and my < other_height then
 			local coord = y * width
-			local otherCoord = my * otherWidth + offsetX
+			local other_coord = my * other_width + offsetX
 			for i = a, b do
-				if pixels[coord + i] then
-					toDrawPixels[pc] = pixels[coord + i]
-					toDrawCoords[pc] = otherCoord + i
+				if buffer[coord + i] then
+					to_draw_pixels[pc] = buffer[coord + i]
+					to_draw_coords[pc] = other_coord + i
 					pc = pc + 1
 				end
 			end
@@ -365,14 +360,14 @@ function Canvas:drawTo( canvas, offsetX, offsetY )
 	end
 
 	-- @if GRAPHICS_NO_TEXT
-		canvas:drawColours( toDrawCoords, toDrawPixels )
+		canvas:draw_colours( to_draw_coords, to_draw_pixels )
 	-- @else
-		canvas:drawPixels( toDrawCoords, toDrawPixels )
+		canvas:draw_pixels( to_draw_coords, to_draw_pixels )
 	-- @endif
 end
 
-function Canvas:getArea( mode, a, b, c, d )
-	area.setDimensions( self.width, self.height )
+function Canvas:get_area( mode, a, b, c, d )
+	area.set_dimensions( self.width, self.height )
 	if mode == GRAPHICS_AREA_FILL then
 		return area.fill()
 	elseif mode == GRAPHICS_AREA_BOX then
@@ -392,13 +387,13 @@ function Canvas:getArea( mode, a, b, c, d )
 		if type( b ) ~= "number" then return error( "expected number y, got " .. class.type( b ) ) end
 		if type( c ) ~= "number" then return error( "expected number width, got " .. class.type( c ) ) end
 
-		return area.hLine( a, b, c )
+		return area.h_line( a, b, c )
 	elseif mode == GRAPHICS_AREA_VLINE then
 		if type( a ) ~= "number" then return error( "expected number x, got " .. class.type( a ) ) end
 		if type( b ) ~= "number" then return error( "expected number y, got " .. class.type( b ) ) end
 		if type( c ) ~= "number" then return error( "expected number height, got " .. class.type( c ) ) end
 
-		return area.vLine( a, b, c )
+		return area.v_line( a, b, c )
 	elseif mode == GRAPHICS_AREA_LINE then
 		if type( a ) ~= "number" then return error( "expected number x1, got " .. class.type( a ) ) end
 		if type( b ) ~= "number" then return error( "expected number y1, got " .. class.type( b ) ) end
@@ -417,7 +412,7 @@ function Canvas:getArea( mode, a, b, c, d )
 		if type( b ) ~= "number" then return error( "expected number y, got " .. class.type( b ) ) end
 		if type( c ) ~= "number" then return error( "expected number radius, got " .. class.type( c ) ) end
 
-		return area.correctedCircle( a, b, c )
+		return area.corrected_circle( a, b, c )
 	else
 		return error( "unexpected mode: " .. tostring( mode ) )
 	end
