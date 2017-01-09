@@ -18,6 +18,7 @@ class "Application"
 
 	screens = {};
 	screen = nil;
+	collated_children = {};
 
 	resource_loaders = {};
 	extensions = {};
@@ -36,6 +37,7 @@ function Application:Application( name, path )
 	self.name = name
 	self.path = path or name
 
+	self.collated_children = {}
 	self.resource_loaders = {}
 	self.extensions = {}
 	self.threads = {}
@@ -133,35 +135,78 @@ function Application:remove_screen( screen )
 
 end
 
+function Application:update_collated( mode, child, data )
+	local collated = self.collated_children
+
+	if mode == "child-added" then
+		if data:type_of( Screen ) then
+			local v = data
+
+			data = nil
+
+			for i = 1, #self.screens do
+				if self.screens[i] == v then
+					repeat
+						i = i + 1
+					until not self.screens[i] or #self.screens[i].collated_children > 0
+
+					if self.screens[i] then
+						data = self.screens[i].collated_children[1]
+					end
+					break
+				end
+			end
+		end
+
+		if data then
+			for i = #collated, 1, -1 do
+				if collated[i] == data then
+					i = i - 1
+
+					for n = 1, #child.collated_children do
+						table.insert( collated, i + n, child.collated_children[n] )
+					end
+
+					table.insert( collated, i + #child.collated_children + 1, child )
+				end
+			end
+		else
+			for i = 1, #child.collated_children do
+				collated[#collated + 1] = child.collated_children[i]
+			end
+
+			collated[#collated + 1] = child
+		end
+	elseif mode == "child-removed" then
+		local open, close = child.collated_children[1] or child, child
+		local removing = false
+
+		for i = #collated, 1, -1 do
+			if collated[i] == close then removing = true end
+			local brk = collated[i] == open
+			if removing then table.remove( collated, i ) end
+			if brk then break end
+		end
+	end
+
+	local s = {}
+
+	for i = 1, #collated do
+		s[i] = collated[i].id
+	end
+end
+
 function Application:query( query )
 	parameters.check( 1, "query", "string", query )
 
 	local parser = QueryParser( Stream( query ) )
 	local query_f = Codegen.node_query( parser:parse_query() )
-	local nodes = {}
+	local nodes = self.collated_children
 	local matches = {}
 
-	for i = 1, #self.screens do
-		local c = self.screens[i]:get_children()
-
-		for n = 1, #c do
-			nodes[#nodes + 1] = c[n]
-		end
-	end
-
-	while nodes[1] do
-		local node = table.remove( nodes, 1 )
-
-		if query_f( node ) then
-			matches[#matches + 1] = node
-		end
-
-		if node.get_children then
-			local c = node:get_children()
-
-			for i = 1, #c do
-				table.insert( nodes, i, c[i] )
-			end
+	for i = 1, #nodes do
+		if query_f( nodes[i] ) then
+			matches[#matches + 1] = nodes[i]
 		end
 	end
 
