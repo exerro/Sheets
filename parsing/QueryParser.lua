@@ -1,5 +1,5 @@
 
-local operator_list = { ["&"] = 1, ["|"] = 0 }
+local operator_list = { ["&"] = 1, ["|"] = 0, [">"] = true }
 
 local function parse_name( stream )
 	local name = stream:skip_value( TOKEN_IDENTIFIER ) or error( "TODO: fix this error" )
@@ -26,13 +26,12 @@ function QueryParser:parse_term()
 		negation_count = negation_count + 1
 	end
 
-	if self.stream:skip( TOKEN_SYMBOL, "#" ) then -- ID
+	if self.stream:test( TOKEN_IDENTIFIER ) or self.stream:skip( TOKEN_SYMBOL, "#" ) then -- ID
 		obj = { type = QUERY_ID, value = parse_name( self.stream ) }
-	elseif self.stream:skip( TOKEN_SYMBOL, "." ) then -- tag
-		obj = { type = QUERY_TAG, value = parse_name( self.stream ) }
 	elseif self.stream:skip( TOKEN_SYMBOL, "*" ) then
 		obj = { type = QUERY_ALL }
-	-- TODO: QUERY_CLASS
+	elseif self.stream:skip( TOKEN_SYMBOL, "?" ) then
+		obj = { type = QUERY_CLASS, value = parse_name( self.stream ) }
 	elseif self.stream:skip( TOKEN_SYMBOL, "(" ) then
 		print( self.stream:peek().value )
 		obj = self:parse_query()
@@ -40,7 +39,21 @@ function QueryParser:parse_term()
 		if not self.stream:skip( TOKEN_SYMBOL, ")" ) then
 			error "TODO: fix this error"
 		end
-	else
+	end
+
+	local tags = {}
+
+	while self.stream:skip( TOKEN_SYMBOL, "." ) do -- tag
+		local tag = { type = QUERY_TAG, value = parse_name( self.stream ) }
+
+		if obj then
+			obj = { type = QUERY_OPERATOR, operator = "&", lvalue = obj, rvalue = tag }
+		else
+			obj = tag
+		end
+	end
+
+	if not obj then
 		error "TODO: fix this error"
 	end
 

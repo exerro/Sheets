@@ -17,6 +17,9 @@ local symbols = {
 	["#"] = true;
 	["!"] = true;
 	["&"] = true; ["|"] = true;
+	["?"] = true;
+	[">"] = true; ["<"] = true;
+	[">="] = true; ["<="] = true;
 }
 
 local keywords = {
@@ -136,6 +139,7 @@ function Stream:consume_symbol()
 	elseif symbols[s2] then
 		value = s2
 	elseif not symbols[s1] then
+		print( s1, s2, s3 )
 		error( "TODO: fix this error" )
 	end
 
