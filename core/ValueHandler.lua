@@ -54,7 +54,11 @@ function ValueHandler:respawn( name )
 
 	for i = 1, #t do
 		local l = t[i]
-		l[1].values:unsubscribe( l[2], l[3] )
+		if l[1] == "value" then
+			l[2].values:unsubscribe( l[3], l[4] )
+		elseif l[1] == "query" then
+			l[2]:unsubscribe( l[3], l[4] )
+		end
 	end
 
 	self.lifetimes[name] = {}
@@ -62,11 +66,11 @@ end
 
 function ValueHandler:subscribe( name, lifetime, callback )
 	self.subscriptions[name] = self.subscriptions[name] or {}
+	lifetime[#lifetime + 1] = { "value", self.object, name, callback }
 
 	local t = self.subscriptions[name]
 
 	t[#t + 1] = callback
-	lifetime[#lifetime + 1] = { self.object, name, callback }
 end
 
 function ValueHandler:unsubscribe( name, callback )
@@ -74,6 +78,7 @@ function ValueHandler:unsubscribe( name, callback )
 		for i = #self.subscriptions[name], 1, -1 do
 			if self.subscriptions[name][i] == callback then
 				table.remove( self.subscriptions[name], i )
+				return callback
 			end
 		end
 	end

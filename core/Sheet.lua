@@ -27,6 +27,7 @@ class "Sheet"
 	cursor_active = false;
 	handles_keyboard = false;
 	handles_text = false;
+	values = nil;
 }
 
 function Sheet:Sheet( x, y, width, height )
@@ -40,6 +41,12 @@ function Sheet:Sheet( x, y, width, height )
 	self.values = ValueHandler( self )
 	self.canvas = DrawingCanvas( width, height )
 	self.tags = {}
+
+	self:IAnimation()
+	self:ICollatedChildren()
+	self:IChildContainer()
+	self:ISize()
+	self.style = Style( self )
 
 	self.values:add( "x", ValueHandler.integer_type, 0, function( self, x )
 		parameters.check( 1, "x", "number", x )
@@ -83,11 +90,6 @@ function Sheet:Sheet( x, y, width, height )
 
 		return self
 	end )
-
-	self:IAnimation()
-	self:IChildContainer()
-	self:ISize()
-	self.style = Style( self )
 
 	self:set_x( x )
 	self:set_y( y )

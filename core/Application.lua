@@ -8,8 +8,7 @@ end
 
 local handle_event
 
-class "Application"
-{
+class "Application" implements "IQueryable" {
 	name = "UnNamed Application";
 	path = "";
 
@@ -18,7 +17,6 @@ class "Application"
 
 	screens = {};
 	screen = nil;
-	collated_children = {};
 
 	resource_loaders = {};
 	extensions = {};
@@ -37,11 +35,13 @@ function Application:Application( name, path )
 	self.name = name
 	self.path = path or name
 
-	self.collated_children = {}
 	self.resource_loaders = {}
 	self.extensions = {}
 	self.threads = {}
 	self.keys = {}
+
+	self:ICollatedChildren()
+	self:IQueryable()
 end
 
 function Application:register_resource_loader( type, loader )
@@ -104,9 +104,6 @@ end
 function Application:is_key_pressed( key )
 	parameters.check( 1, "key", "string", key )
 
-	self.resource_loaders = {}
-	self.extensions = {}
-
 	return self.keys[key] ~= nil
 end
 
@@ -116,15 +113,14 @@ function Application:stop()
 end
 
 function Application:add_screen()
-
 	local screen = Screen( self, term.get_size() )
-	self.screens[#self.screens + 1] = screen
-	return screen
 
+	self.screens[#self.screens + 1] = screen
+
+	return screen
 end
 
 function Application:remove_screen( screen )
-
 	parameters.check( 1, "screen", Screen, screen )
 
 	for i = #self.screens, 1, -1 do
@@ -132,7 +128,6 @@ function Application:remove_screen( screen )
 			return table.remove( self.screens, i )
 		end
 	end
-
 end
 
 function Application:update_collated( mode, child, data )
@@ -189,28 +184,7 @@ function Application:update_collated( mode, child, data )
 		end
 	end
 
-	local s = {}
-
-	for i = 1, #collated do
-		s[i] = collated[i].id
-	end
-end
-
-function Application:query( query )
-	parameters.check( 1, "query", "string", query )
-
-	local parser = QueryParser( Stream( query ) )
-	local query_f = Codegen.node_query( parser:parse_query() )
-	local nodes = self.collated_children
-	local matches = {}
-
-	for i = 1, #nodes do
-		if query_f( nodes[i] ) then
-			matches[#matches + 1] = nodes[i]
-		end
-	end
-
-	return matches
+	self.query_tracker:update( mode, child )
 end
 
 function Application:event( event, ... )

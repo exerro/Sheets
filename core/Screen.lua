@@ -13,6 +13,7 @@ class "Screen"
 	canvas = nil;
 	parent = nil;
 	changed = true;
+	values = nil;
 }
 
 function Screen:Screen( application, width, height )
@@ -20,9 +21,16 @@ function Screen:Screen( application, width, height )
 	self.terminals = {}
 	self.monitors = {}
 	self.canvas = ScreenCanvas( width, height )
-	self.width = width
-	self.height = height
 	self.root_application = application
+	self.values = ValueHandler( self )
+
+	self:IAnimation()
+	self:ICollatedChildren()
+	self:IChildContainer()
+	self:ISize()
+
+	self:set_width( width )
+	self:set_height( height )
 end
 
 function Screen:gets_term_events()

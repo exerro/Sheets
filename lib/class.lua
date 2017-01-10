@@ -191,13 +191,14 @@ function extends( name )
 	end
 
 	last_created:extends( names[name] )
-	
+
 	return construct
 end
 
 function interface( name )
 	interfaces[name] = {}
 	_ENV[name] = interfaces[name]
+	last_created = interfaces[name]
 	return function( t )
 		if type( t ) ~= "table" then
 			return error( "expected table t, got " .. class.type( t ) )
@@ -217,6 +218,6 @@ function implements( name )
 	for k, v in pairs( interfaces[name] ) do
 		last_created[k] = v
 	end
-	
+
 	return construct
 end

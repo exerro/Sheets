@@ -2,7 +2,9 @@
  -- @once
  -- @print Including sheets.interfaces.IAnimation
 
-interface "IAnimation" {}
+interface "IAnimation" {
+	animations = {}
+}
 
 function IAnimation:IAnimation()
 	self.animations = {}

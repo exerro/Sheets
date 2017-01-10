@@ -125,7 +125,9 @@ token = {
 
  -- @require interfaces.IAnimation
  -- @require interfaces.IAttributeAnimator
+ -- @require interfaces.ICollatedChildren
  -- @require interfaces.IChildContainer
+ -- @require interfaces.IQueryable
  -- @require interfaces.ISize
 
  -- @require events.Event
@@ -141,6 +143,7 @@ token = {
  -- @require core.Animation
  -- @require core.Application
  -- @require core.Codegen
+ -- @require core.QueryTracker
  -- @require core.Screen
  -- @require core.Sheet
  -- @require core.Style
