@@ -161,7 +161,7 @@ end
 
 function Sheet:set_changed( state )
 	self.changed = state ~= false
-	if state ~= false and self.parent and not self.parent.changed then
+	if state ~= false and self.parent and not self.parent.changed then -- TODO: why not self.parent.changed?
 		self.parent:set_changed()
 	end
 	return self
@@ -187,8 +187,6 @@ end
 function Sheet:tostring()
 	return "[Instance] " .. self.class:type() .. " " .. tostring( self.id )
 end
-
-function Sheet:on_parent_resized() end
 
 function Sheet:update( dt )
 	local children = self:get_children()

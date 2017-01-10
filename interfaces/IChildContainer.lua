@@ -88,6 +88,12 @@ function IChildContainer:add_child( child )
 	self:update_collated( "child-added", child, index <= #children and (children[index].collated_children[1] or children[index]) or self )
 	table.insert( children, index, child )
 
+	child.root_application = self.root_application
+
+	for i = 1, #child.collated_children do
+		child.collated_children[i].root_application = self.root_application
+	end
+
 	return child
 end
 
@@ -97,6 +103,12 @@ function IChildContainer:remove_child( child )
 			child.parent = nil
 			self:set_changed()
 			self:update_collated( "child-removed", child )
+
+			child.root_application = nil
+
+			for i = 1, #child.collated_children do
+				child.collated_children[i].root_application = nil
+			end
 
 			return table.remove( self.children, i )
 		end
@@ -114,35 +126,6 @@ function IChildContainer:get_children()
 	return c
 end
 
-function IChildContainer:get_child_by_id( id )
-	parameters.check( 1, "id", "string", id )
-
-	for i = #self.children, 1, -1 do
-		local c = self.children[i]:get_child_by_id( id )
-		if c then
-			return c
-		elseif self.children[i].id == id then
-			return self.children[i]
-		end
-	end
-end
-
-function IChildContainer:get_children_by_id( id )
-	parameters.check( 1, "id", "string", id )
-
-	local t = {}
-	for i = #self.children, 1, -1 do
-		local subt = self.children[i]:get_children_by_id( id )
-		for i = 1, #subt do
-			t[#t + 1] = subt[i]
-		end
-		if self.children[i].id == id then
-			t[#t + 1] = self.children[i]
-		end
-	end
-	return t
-end
-
 function IChildContainer:get_children_at( x, y )
 	parameters.check( 2, "x", "number", x, "y", "number", y )
 
@@ -154,6 +137,19 @@ function IChildContainer:get_children_at( x, y )
 	end
 
 	return elements
+end
+
+function IChildContainer:get_child_by_id( id )
+	parameters.check( 1, "id", "string", id )
+
+	for i = #self.children, 1, -1 do
+		local c = self.children[i]:get_child_by_id( id )
+		if c then
+			return c
+		elseif self.children[i].id == id then
+			return self.children[i]
+		end
+	end
 end
 
 function IChildContainer:is_child_visible( child )

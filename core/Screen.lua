@@ -22,6 +22,7 @@ function Screen:Screen( application, width, height )
 	self.canvas = ScreenCanvas( width, height )
 	self.width = width
 	self.height = height
+	self.root_application = application
 end
 
 function Screen:gets_term_events()

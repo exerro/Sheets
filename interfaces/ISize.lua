@@ -12,17 +12,11 @@ function ISize:ISize()
 		parameters.check( 1, "width", "number", width )
 
 		if self.width ~= width then
-			local children = self:get_children()
-
 			self.width = width
 			self.raw_width = width
 			self.canvas:set_width( width )
 			self:set_changed()
 			self.values:trigger "width"
-
-			for i = 1, #children do
-				children[i]:on_parent_resized()
-			end
 		end
 
 		return self
@@ -32,18 +26,13 @@ function ISize:ISize()
 		parameters.check( 1, "height", "number", height )
 
 		if self.height ~= height then
-			local children = self:get_children()
-
 			self.height = height
 			self.raw_height = height
 			self.canvas:set_height( height )
 			self:set_changed()
 			self.values:trigger "height"
-
-			for i = 1, #children do
-				children[i]:on_parent_resized()
-			end
 		end
+		
 		return self
 	end )
 end
