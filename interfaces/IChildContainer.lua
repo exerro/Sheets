@@ -17,6 +17,16 @@ function IChildContainer:IChildContainer()
 	end
 end
 
+function IChildContainer:child_value_changed( child )
+	if self.query_tracker then
+		self.query_tracker:update( "child-changed", child )
+	end
+
+	if self.parent then
+		return self.parent:child_value_changed( child )
+	end
+end
+
 function IChildContainer:add_child( child )
 	parameters.check( 1, "child", Sheet, child )
 

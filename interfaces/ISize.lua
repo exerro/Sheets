@@ -17,6 +17,10 @@ function ISize:ISize()
 			self.canvas:set_width( width )
 			self:set_changed()
 			self.values:trigger "width"
+
+			if self.parent then
+				self.parent:child_value_changed( self )
+			end
 		end
 
 		return self
@@ -31,8 +35,12 @@ function ISize:ISize()
 			self.canvas:set_height( height )
 			self:set_changed()
 			self.values:trigger "height"
+
+			if self.parent then
+				self.parent:child_value_changed( self )
+			end
 		end
-		
+
 		return self
 	end )
 end

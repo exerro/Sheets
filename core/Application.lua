@@ -29,12 +29,10 @@ class "Application" implements "IQueryable" {
 }
 
 function Application:Application( name, path )
-	self.screens = { Screen( self, term.getSize() ):add_terminal( term ) }
-	self.screen = self.screens[1]
-
 	self.name = name
 	self.path = path or name
-
+	
+	self.screens = {}
 	self.resource_loaders = {}
 	self.extensions = {}
 	self.threads = {}
@@ -42,6 +40,9 @@ function Application:Application( name, path )
 
 	self:ICollatedChildren()
 	self:IQueryable()
+
+	self.screens[1] = Screen( self, term.getSize() ):add_terminal( term )
+	self.screen = self.screens[1]
 end
 
 function Application:register_resource_loader( type, loader )
@@ -128,6 +129,10 @@ function Application:remove_screen( screen )
 			return table.remove( self.screens, i )
 		end
 	end
+end
+
+function Application:child_value_changed( child )
+	return self.query_tracker:update( "child-changed", child )
 end
 
 function Application:update_collated( mode, child, data )

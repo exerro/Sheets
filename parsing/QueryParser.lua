@@ -21,6 +21,7 @@ end
 
 function QueryParser:parse_term()
 	local negation_count, obj = 0
+	local ID_parsed = false
 
 	while self.stream:skip( TOKEN_SYMBOL, "!" ) do
 		negation_count = negation_count + 1
@@ -28,6 +29,7 @@ function QueryParser:parse_term()
 
 	if self.stream:test( TOKEN_IDENTIFIER ) or self.stream:skip( TOKEN_SYMBOL, "#" ) then -- ID
 		obj = { type = QUERY_ID, value = parse_name( self.stream ) }
+		ID_parsed = true
 	elseif self.stream:skip( TOKEN_SYMBOL, "*" ) then
 		obj = { type = QUERY_ALL }
 	elseif self.stream:skip( TOKEN_SYMBOL, "?" ) then
@@ -43,7 +45,7 @@ function QueryParser:parse_term()
 
 	local tags = {}
 
-	while self.stream:skip( TOKEN_SYMBOL, "." ) do -- tag
+	while not ID_parsed and self.stream:skip( TOKEN_SYMBOL, "." ) do -- tag
 		local tag = { type = QUERY_TAG, value = parse_name( self.stream ) }
 
 		if obj then

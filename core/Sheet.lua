@@ -52,11 +52,14 @@ function Sheet:Sheet( x, y, width, height )
 		parameters.check( 1, "x", "number", x )
 
 		if self.x ~= x then
-			if self.parent then self.parent:set_changed( true ) end
-
 			self.x = x
 			self.raw_x = x
 			self.values:trigger "x"
+
+			if self.parent then
+				self.parent:set_changed( true )
+				self.parent:child_value_changed( self )
+			end
 		end
 
 		return self
@@ -66,11 +69,14 @@ function Sheet:Sheet( x, y, width, height )
 		parameters.check( 1, "y", "number", y )
 
 		if self.y ~= y then
-			if self.parent then self.parent:set_changed( true ) end
-
 			self.y = y
 			self.raw_y = y
 			self.values:trigger "y"
+
+			if self.parent then
+				self.parent:set_changed( true )
+				self.parent:child_value_changed( self )
+			end
 		end
 
 		return self
@@ -81,11 +87,13 @@ function Sheet:Sheet( x, y, width, height )
 
 		if self.z ~= z then
 			self.z = z
-
-			if self.parent then self.parent:reposition_child_z_index( self ) end
-
 			self.raw_z = z
 			self.values:trigger "z"
+
+			if self.parent then
+				self.parent:reposition_child_z_index( self )
+				self.parent:child_value_changed( self )
+			end
 		end
 
 		return self
@@ -99,11 +107,21 @@ end
 
 function Sheet:add_tag( tag )
 	self.tags[tag] = true
+
+	if self.parent then
+		self.parent:child_value_changed( self )
+	end
+
 	return self
 end
 
 function Sheet:remove_tag( tag )
 	self.tags[tag] = nil
+
+	if self.parent then
+		self.parent:child_value_changed( self )
+	end
+
 	return self
 end
 
@@ -113,6 +131,11 @@ end
 
 function Sheet:set_ID( id )
 	self.id = tostring( id )
+
+	if self.parent then
+		self.parent:child_value_changed( self )
+	end
+	
 	return self
 end
 
@@ -141,6 +164,7 @@ function Sheet:set_parent( parent )
 	else
 		self:remove()
 	end
+
 	return self
 end
 
@@ -178,6 +202,7 @@ function Sheet:set_cursor_blink( x, y, colour )
 	self.cursor_x = x
 	self.cursor_y = y
 	self.cursor_colour = colour
+
 	return self
 end
 

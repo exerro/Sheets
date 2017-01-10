@@ -116,7 +116,7 @@ function QueryTracker:update( mode, child )
 				local callbacks = self.subscriptions[self.queries[i][3]]
 
 				for n = 1, #callbacks do
-					callbacks[n]()
+					callbacks[n]( "child-added", child )
 				end
 			end
 		elseif remove then
@@ -130,7 +130,7 @@ function QueryTracker:update( mode, child )
 						table.remove( t, n )
 
 						for n = 1, #callbacks do
-							callbacks[n]()
+							callbacks[n]( "child-removed", child )
 						end
 
 						break

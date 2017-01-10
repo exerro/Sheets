@@ -18,6 +18,10 @@ function IHasText:IHasText()
 		self:wrap_text()
 		self:set_changed()
 		self.values:trigger "text"
+		
+		if self.parent then
+			self.parent:child_value_changed( self )
+		end
 
 		return self
 	end )
@@ -27,6 +31,7 @@ function IHasText:auto_height()
 	if not self.text_lines then
 		self:wrap_text( true )
 	end
+
 	return self:set_height( #self.text_lines )
 end
 

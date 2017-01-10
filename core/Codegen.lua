@@ -10,7 +10,7 @@ local function node_query_internal( query, name )
 		return ("%s:type():lower()=='%s'"):format( name, query.value:lower() )
 	elseif query.type == QUERY_NEGATE then
 		local i = node_query_internal( query.value, name )
-		return i == "true" and "false" or i == "false" and "true" or "not " .. i
+		return i == "true" and "false" or i == "false" and "true" or "not (" .. i .. ")"
 	elseif query.type == QUERY_ATTRIBUTES then
 		-- TODO!
 		error "NYI"
