@@ -2,11 +2,16 @@
  -- @once
  -- @print Including sheets.interfaces.IQueryable
 
-local function query_raw( self, query, track )
-	parameters.check( 1, "query", "string", query )
+local function query_raw( self, query, track, parsed )
+	if not parsed then
+		parameters.check( 1, "query", "string", query )
 
-	local parser = QueryParser( Stream( query ) )
-	local query_f = Codegen.node_query( parser:parse_query() )
+		local parser = QueryParser( Stream( query ) )
+		
+		query = parser:parse_query()
+	end
+
+	local query_f = Codegen.node_query( query )
 	local nodes = self.collated_children
 	local matches = {}
 
@@ -32,9 +37,17 @@ function IQueryable:IQueryable()
 end
 
 function IQueryable:query( query )
-	return query_raw( self, query, false )
+	return query_raw( self, query, false, false )
 end
 
 function IQueryable:query_tracked( query )
-	return query_raw( self, query, true )
+	return query_raw( self, query, true, false )
+end
+
+function IQueryable:preparsed_query( query )
+	return query_raw( self, query, false, true )
+end
+
+function IQueryable:preparsed_query_tracked( query )
+	return query_raw( self, query, true, true )
 end

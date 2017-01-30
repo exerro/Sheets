@@ -33,6 +33,11 @@ local op_precedences = {
 	["^"] = 6;
 }
 
+local lua_operators = {
+	["|"] = "or";
+	["&"] = "and";
+}
+
 local function parse_name( stream )
 	return stream:skip_value( TOKEN_IDENTIFIER )
 end
@@ -92,7 +97,7 @@ function DynamicValueParser:parse_primary_expression()
 		end
 
 		if self:get_context().enable_queries and self.stream:skip( TOKEN_SYMBOL, "$" ) then
-			local dynamic = self.stream:skip( TOKEN_SYMBOL, "$" ) and true or false
+			local dynamic = not self.stream:skip( TOKEN_SYMBOL, "$" )
 			local query = self.query_parser:parse_term( true )
 
 			return { type = dynamic and DVALUE_DQUERY or DVALUE_QUERY, query = query, source = source }
@@ -120,10 +125,14 @@ function DynamicValueParser:parse_primary_expression()
 	elseif self.stream:test( TOKEN_STRING ) then
 		return { type = DVALUE_STRING, value = self.stream:next().value }
 	elseif self:get_context().enable_queries and self.stream:skip( TOKEN_SYMBOL, "$" ) then
-		local dynamic = self.stream:skip( TOKEN_SYMBOL, "$" ) and true or false
+		local dynamic = not self.stream:skip( TOKEN_SYMBOL, "$" )
 		local query = self.query_parser:parse_term( true )
 
 		return { type = dynamic and DVALUE_DQUERY or DVALUE_QUERY, query = query, source = { type = DVALUE_APPLICATION } }
+	elseif self.stream:skip( TOKEN_SYMBOL, "(" ) then
+		local expr = self:parse_expression() or error "TODO: fix this error"
+
+		return self.stream:skip( TOKEN_SYMBOL, ")" ) and expr or error "TODO: fix this error"
 	end
 
 	return nil
@@ -132,13 +141,16 @@ end
 function DynamicValueParser:parse_term()
 	local operators = {}
 
-	while self.stream:test( TOKEN_SYMBOL, "#" ) or self.stream:test( TOKEN_SYMBOL, "!" ) do
+	while self.stream:test( TOKEN_SYMBOL, "#" )
+	   or self.stream:test( TOKEN_SYMBOL, "!" )
+	   or self.stream:test( TOKEN_SYMBOL, "-" )
+	   or self.stream:test( TOKEN_SYMBOL, "+" ) do
 		operators[#operators + 1] = self.stream:next().value
 	end
 
 	local term = self:parse_primary_expression()
 
-	while true do
+	while term do
 		if self.stream:skip( TOKEN_SYMBOL, "." ) then
 			term = { type = DVALUE_DOTINDEX, value = term, index = parse_name( self.stream ) or error "TODO: fix this error" }
 		elseif self.stream:skip( TOKEN_SYMBOL, "(" ) then
@@ -212,7 +224,7 @@ function DynamicValueParser:parse_expression()
 		while self.stream:skip( TOKEN_WHITESPACE ) do end
 
 		operand_stack[#operand_stack + 1] = self:parse_term() or error "TODO: fix this"
-		operator_stack[#operator_stack + 1] = op
+		operator_stack[#operator_stack + 1] = lua_operators[op] or op
 		precedences[#precedences + 1] = prec
 
 		while self.stream:skip( TOKEN_WHITESPACE ) do end

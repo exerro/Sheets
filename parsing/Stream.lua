@@ -178,6 +178,10 @@ function Stream:consume()
 	end
 end
 
+function Stream:is_EOF()
+	return self:peek().type == TOKEN_EOF
+end
+
 function Stream:peek()
 	if self.buffer then
 		return self.buffer

@@ -4,6 +4,7 @@
 
 interface "IChildContainer" implements "ICollatedChildren" {
 	children = {};
+	root_application = nil;
 }
 
 function IChildContainer:IChildContainer()
