@@ -10,20 +10,25 @@ local symbols = {
 	["["] = true; ["]"] = true;
 	["{"] = true; ["}"] = true;
 	["."] = true; [":"] = true;
+	[","] = true; [";"] = true;
 	["="] = true;
 	["$"] = true;
 	["+"] = true; ["-"] = true;
 	["*"] = true; ["/"] = true;
+	["%"] = true; ["^"] = true;
 	["#"] = true;
 	["!"] = true;
 	["&"] = true; ["|"] = true;
 	["?"] = true;
 	[">"] = true; ["<"] = true;
 	[">="] = true; ["<="] = true;
+	["!="] = true; ["=="] = true;
 }
 
 local keywords = {
-
+	["self"] = true;
+	["application"] = true;
+	["parent"] = true;
 }
 
 class "Stream" {
@@ -90,7 +95,7 @@ function Stream:consume_number()
 	local char = self.character
 	local num = self.text:match( "%d*%.?%d+e[%+%-]?%d+", self.position )
 	         or self.text:match( "%d*%.?%d+", self.position )
-	local type = (num:find "%." or num:find "e-")
+	local type = (num:find "%." or num:find "e%-")
 		     and TOKEN_FLOAT or TOKEN_INTEGER
 
 	self.position = self.position + #num

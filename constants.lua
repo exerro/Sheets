@@ -56,15 +56,31 @@
  -- @define TOKEN_NEWLINE "newline"
  -- @define TOKEN_WHITESPACE "whitespace"
  -- @define TOKEN_SYMBOL "symbol"
- -- @define TOKEN_OPERATOR "operator"
 
- -- @define QUERY_ALL "all"
+ -- @define QUERY_ANY "any"
  -- @define QUERY_ID "id"
  -- @define QUERY_TAG "tag"
  -- @define QUERY_CLASS "class"
  -- @define QUERY_ATTRIBUTES "attributes"
  -- @define QUERY_NEGATE "negate"
  -- @define QUERY_OPERATOR "operator"
+
+ -- @define DVALUE_SELF "self"
+ -- @define DVALUE_APPLICATION "application"
+ -- @define DVALUE_PARENT "parent"
+ -- @define DVALUE_IDENTIFIER "identifier"
+ -- @define DVALUE_INTEGER "integer"
+ -- @define DVALUE_FLOAT "float"
+ -- @define DVALUE_BOOLEAN "boolean"
+ -- @define DVALUE_STRING "string"
+ -- @define DVALUE_PERCENTAGE "percentage"
+ -- @define DVALUE_QUERY "query"
+ -- @define DVALUE_DQUERY "dynamic query"
+ -- @define DVALUE_DOTINDEX "dotindex"
+ -- @define DVALUE_CALL "call"
+ -- @define DVALUE_INDEX "index"
+ -- @define DVALUE_UNEXPR "unary operator expression"
+ -- @define DVALUE_BINEXPR "binary operator expression"
 
  -- @if SHEETS_LOWRES
 	 -- @define BLANK_PIXEL { WHITE, WHITE, " " }

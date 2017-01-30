@@ -18,7 +18,7 @@ function QueryTracker:track( query, nodes )
 	local ID = self.ID
 
 	self.queries[#self.queries + 1] = { query, nodes, ID }
-	self.ID = self.ID + 1
+	self.ID = ID + 1
 	self.lifetimes[ID] = {}
 
 	return ID
@@ -57,7 +57,7 @@ function QueryTracker:untrack( ID )
 			end
 
 			self.lifetimes[ID] = nil
-			self.subscriptions[ID] = nil
+			self.subscriptions[ID] = nil -- TODO: really?
 
 			return table.remove( self.queries, i )
 		end
@@ -65,11 +65,10 @@ function QueryTracker:untrack( ID )
 end
 
 function QueryTracker:subscribe( ID, lifetime, callback )
+	local t = self.subscriptions[ID] or {}
+
 	lifetime[#lifetime + 1] = { "query", self, ID, callback }
-	self.subscriptions[ID] = self.subscriptions[ID] or {}
-
-	local t = self.subscriptions[ID]
-
+	self.subscriptions[ID] = t
 	t[#t + 1] = callback
 end
 
@@ -110,31 +109,35 @@ function QueryTracker:update( mode, child )
 				end
 			end
 
-			if nodes[n] ~= child then
+			if nodes[n] ~= child then -- if it's not already in the query
 				table.insert( nodes, n, child )
 
-				local callbacks = self.subscriptions[self.queries[i][3]]
+				local callbacks = self.subscriptions[self.queries[i][3]] or {}
 
 				for n = 1, #callbacks do
 					callbacks[n]( "child-added", child )
 				end
+			else
+				local callbacks = self.subscriptions[self.queries[i][3]]
+
+				for n = 1, #callbacks do
+					callbacks[n]( "child-changed", child )
+				end
 			end
 		elseif remove then
-			for i = 1, #self.queries do
-				local t = self.queries[i][2]
+			local t = self.queries[i][2]
 
-				for n = 1, #t do
-					if t[n] == child then
-						local callbacks = self.subscriptions[self.queries[i][3]]
+			for n = 1, #t do
+				if t[n] == child then
+					local callbacks = self.subscriptions[self.queries[i][3]]
 
-						table.remove( t, n )
+					table.remove( t, n )
 
-						for n = 1, #callbacks do
-							callbacks[n]( "child-removed", child )
-						end
-
-						break
+					for n = 1, #callbacks do
+						callbacks[n]( "child-removed", child )
 					end
+
+					break
 				end
 			end
 		end

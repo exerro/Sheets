@@ -1,5 +1,5 @@
 
-local operator_list = { ["&"] = 1, ["|"] = 0, [">"] = true }
+local operator_list = { ["&"] = 1, ["|"] = 0, [">"] = 2 }
 
 local function parse_name( stream )
 	local name = stream:skip_value( TOKEN_IDENTIFIER ) or error( "TODO: fix this error" )
@@ -19,9 +19,8 @@ function QueryParser:QueryParser( stream )
 	self.stream = stream
 end
 
-function QueryParser:parse_term()
+function QueryParser:parse_term( is_root )
 	local negation_count, obj = 0
-	local ID_parsed = false
 
 	while self.stream:skip( TOKEN_SYMBOL, "!" ) do
 		negation_count = negation_count + 1
@@ -31,7 +30,7 @@ function QueryParser:parse_term()
 		obj = { type = QUERY_ID, value = parse_name( self.stream ) }
 		ID_parsed = true
 	elseif self.stream:skip( TOKEN_SYMBOL, "*" ) then
-		obj = { type = QUERY_ALL }
+		obj = { type = QUERY_ANY }
 	elseif self.stream:skip( TOKEN_SYMBOL, "?" ) then
 		obj = { type = QUERY_CLASS, value = parse_name( self.stream ) }
 	elseif self.stream:skip( TOKEN_SYMBOL, "(" ) then
@@ -41,11 +40,13 @@ function QueryParser:parse_term()
 		if not self.stream:skip( TOKEN_SYMBOL, ")" ) then
 			error "TODO: fix this error"
 		end
+
+		return obj
 	end
 
 	local tags = {}
 
-	while not ID_parsed and self.stream:skip( TOKEN_SYMBOL, "." ) do -- tag
+	while (not is_root or not obj) and self.stream:skip( TOKEN_SYMBOL, "." ) do -- tag
 		local tag = { type = QUERY_TAG, value = parse_name( self.stream ) }
 
 		if obj then
