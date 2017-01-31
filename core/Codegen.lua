@@ -1,4 +1,62 @@
 
+local cache = {}
+
+local GENERIC_SETTER = [[return function( self, value )
+	self.values:respawn %q
+	self[%q] = value
+
+	if type( value ) ~= "string" then
+		-- do type check
+		self[%q] = value
+
+		%s
+
+		self.values:trigger %q
+
+		return self
+	end
+
+	%s
+
+	local parser = DynamicValueParser( Stream( value ) )
+
+	parser:set_context( "enable_queries", true )
+
+	%s
+
+	local value_parsed = parser:parse_expression()
+
+	%s
+
+	local lifetime = self.values.lifetimes[%q]
+	local setter_f, queries
+
+	local function update()
+		self[%q] = setter_f( self )
+
+		%s
+
+		return self.values:trigger %q
+	end
+
+	if not parser.stream:is_EOF() then
+		error "TODO: fix this error"
+	end
+
+	setter_f, queries = Codegen.dynamic_value( value_parsed, lifetime, parser.environment, self, update )
+
+	for i = 1, #queries do
+		queries[i].tracker:subscribe( queries[i].ID, lifetime, function()
+			setter_f( nil, i, queries[i].result[1] )
+			update()
+		end )
+	end
+
+	update()
+
+	return self
+end]]
+
 local function node_query_internal( query, name )
 	if query.type == QUERY_ID then
 		return ("%s.id=='%s'"):format( name, query.value )
@@ -68,7 +126,9 @@ local function dynamic_value_query( query, index, lifetime, env, obj, queries, n
 
 	local el = els[1] or error "TODO: fix this area"
 
-	el.values:subscribe( index, lifetime, updater )
+	if index then
+		el.values:subscribe( index, lifetime, updater )
+	end
 
 	if query.type == DVALUE_QUERY then
 		names[#names + 1] = el
@@ -84,7 +144,7 @@ local function dynamic_value_internal( value, lifetime, env, obj, queries, names
 	or value.type == DVALUE_BOOLEAN then
 		return value.value
 	elseif value.type == DVALUE_STRING then
-		return ("%q"):format( value )
+		return ("%q"):format( value.value )
 	elseif value.type == DVALUE_SELF then
 		return "self"
 	elseif value.type == DVALUE_PARENT then
@@ -104,6 +164,7 @@ local function dynamic_value_internal( value, lifetime, env, obj, queries, names
 		if value.value.type == DVALUE_QUERY or value.value.type == DVALUE_DQUERY then
 			return dynamic_value_query( value.value, value.index, lifetime, env, obj, queries, names, updater )
 		elseif value.value.type == DVALUE_SELF then
+			obj.values:subscribe( value.index, lifetime, updater )
 			return "self." .. value.index
 		else
 			error "TODO: fix this error"
@@ -157,49 +218,63 @@ function Codegen.dynamic_value( parsed_value, lifetime, env, obj, updater )
 	return f( lifetime, updater, obj, unpack( names_v ) )( queries_p, queries_t ), queries
 end
 
-function Codegen.generic_setter( property )
-	local f = assert( (load or loadstring)( ([[return function( self, value )
-		self.values:respawn %q
-		self[%q] = value
+function Codegen.dynamic_property_setter( property, options )
+	cache[property] = cache[property] or {}
+	options = options or {}
+	options.parent_changed = options.parent_changed == nil or options.parent_changed
 
-		if type( value ) ~= "string" then
-			-- do type check
-			self[%q] = value
-			return self.values:trigger %q
+	local t1 = {}
+	local t2 = {}
+	local t3 = {}
+	local t4 = {}
+
+	if options.update_canvas_width then
+		t4[#t4 + 1] = "self.canvas:set_width( self.width )"
+		options.self_changed = true
+	end
+	if options.update_canvas_height then
+		t4[#t4 + 1] = "self.canvas:set_height( self.height )"
+		options.self_changed = true
+	end
+
+	if options.self_changed then
+		t4[#t4 + 1] = "if not self.changed then self:set_changed() end"
+	elseif options.parent_changed then
+		t4[#t4 + 1] = "if self.parent and not self.parent.changed then self.parent:set_changed() end"
+	end
+
+	if options.self_changed or options.parent_changed then
+		t4[#t4 + 1] = "if self.parent then self.parent:child_value_changed( self ) end"
+	end
+
+	if options.text_value then
+		t1[#t1 + 1] = "if value:sub( 1, 1 ) == '!' then value = value:sub( 2 ) else value = ('%q'):format( value ) end"
+	end
+
+	t4[#t4 + 1] = options.custom_update_code
+
+	local s4 = table.concat( t4, "\n" ) -- code to run on value update
+	local s3 = table.concat( t3, "\n" ) -- code to update the AST
+	local s2 = table.concat( t2, "\n" ) -- code to change the environment
+	local s1 = table.concat( t1, "\n" ) -- code to update the string value
+
+	for i = 1, #cache[property] do
+		local c = cache[property][i]
+		if c[1] == s1 and c[2] == s2 and c[3] == s3 and c[4] == s4 then
+			return c.f
 		end
+	end
 
-		local parser = DynamicValueParser( Stream( value ) )
-		local value_parsed = parser:parse_expression()
-		local lifetime = self.values.lifetimes[%q]
-		local setter_f, queries
-
-		parser:set_context( "enable_queries", true )
-
-		local function update()
-			self[%q] = setter_f( self )
-			self.values:trigger %q
-		end
-
-		if not parser.stream:isEOF() then
-			error "TODO: fix this error"
-		end
-
-		setter_f, queries = Codegen.dynamic_value( value_parsed, lifetime, parser.environment, self, update )
-
-		for i = 1, #queries do
-			queries[i].tracker:subscribe( queries[i].ID, lifetime, function()
-				setter_f( nil, i, queries[i].result[1] )
-				self[%q] = setter_f( self )
-				self.values:trigger %q
-			end )
-		end
-
-		update()
-	end]]):format( property, "raw_" .. property, property, property, property, property, property, property, property ), "property '" .. property .. "'", nil, _ENV ) )
+	local str = GENERIC_SETTER:format( property, "raw_" .. property, property, s4, property, s1, s2, s3, property, property, s4, property )
+	local f = assert( (load or loadstring)( str, "property '" .. property .. "'", nil, _ENV ) )
 
 	if setfenv then
 		setfenv( f, getfenv() )
 	end
 
-	return f()
+	local fr = f()
+
+	cache[property][#cache[property] + 1] = { s1, s2, s3, s4, f = fr }
+
+	return fr
 end

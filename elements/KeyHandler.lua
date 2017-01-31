@@ -10,6 +10,7 @@ class "KeyHandler" extends "Sheet"
 
 function KeyHandler:KeyHandler()
 	self.shortcuts = {}
+	self:initialise()
 	return self:Sheet( 0, 0, 0, 0 )
 end
 

@@ -6,6 +6,11 @@
 
 class "Container" extends "Sheet" {}
 
+function Container:Container( x, y, w, h )
+	self:initialise()
+	self:Sheet( x, y, w, h )
+end
+
 function Container:draw()
 	if self.changed then
 

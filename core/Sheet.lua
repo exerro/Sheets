@@ -31,15 +31,18 @@ class "Sheet"
 }
 
 function Sheet:Sheet( x, y, width, height )
-	parameters.check_constructor( self.class, 4,
-		"x", "number", x,
-		"y", "number", y,
-		"width", "number", width,
-		"height", "number", height
-	)
+	self:set_x( x )
+	self:set_y( y )
+	self:set_width( width )
+	self:set_height( height )
 
+	self.canvas:set_width( self.width )
+	self.canvas:set_height( self.height )
+end
+
+function Sheet:initialise()
 	self.values = ValueHandler( self )
-	self.canvas = DrawingCanvas( width, height )
+	self.canvas = DrawingCanvas( 1, 1 )
 	self.tags = {}
 
 	self:IAnimation()
@@ -48,61 +51,9 @@ function Sheet:Sheet( x, y, width, height )
 	self:ISize()
 	self.style = Style( self )
 
-	self.values:add( "x", ValueHandler.integer_type, 0, function( self, x )
-		parameters.check( 1, "x", "number", x )
-
-		if self.x ~= x then
-			self.x = x
-			self.raw_x = x
-			self.values:trigger "x"
-
-			if self.parent then
-				self.parent:set_changed( true )
-				self.parent:child_value_changed( self )
-			end
-		end
-
-		return self
-	end )
-
-	self.values:add( "y", ValueHandler.integer_type, 0, function( self, y )
-		parameters.check( 1, "y", "number", y )
-
-		if self.y ~= y then
-			self.y = y
-			self.raw_y = y
-			self.values:trigger "y"
-
-			if self.parent then
-				self.parent:set_changed( true )
-				self.parent:child_value_changed( self )
-			end
-		end
-
-		return self
-	end )
-
-	self.values:add( "z", ValueHandler.integer_type, 0, function( self, z )
-		parameters.check( 1, "z", "number", z )
-
-		if self.z ~= z then
-			self.z = z
-			self.raw_z = z
-			self.values:trigger "z"
-
-			if self.parent then
-				self.parent:reposition_child_z_index( self )
-				self.parent:child_value_changed( self )
-			end
-		end
-
-		return self
-	end )
-
-	self:set_x( x )
-	self:set_y( y )
-	self:set_width( width )
-	self:set_height( height )
+	self.values:add( "x", ValueHandler.integer_type, 0, Codegen.dynamic_property_setter( "x" ) )
+	self.values:add( "y", ValueHandler.integer_type, 0, Codegen.dynamic_property_setter( "y" ) )
+	self.values:add( "z", ValueHandler.integer_type, 0, Codegen.dynamic_property_setter( "z", { custom_update_code = "if self.parent then self.parent:reposition_child_z_index( self ) end" } ) )
 end
 
 function Sheet:add_tag( tag )
@@ -135,7 +86,7 @@ function Sheet:set_ID( id )
 	if self.parent then
 		self.parent:child_value_changed( self )
 	end
-	
+
 	return self
 end
 
