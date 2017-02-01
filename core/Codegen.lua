@@ -67,20 +67,14 @@ local GENERIC_SETTER = [[return function( self, value )
 end]]
 
 local GENERIC_GETTER_FUNCTION = [[
-local lifetime, updater, default, properties, nodes, %s = ...
+local lifetime, updater, default, node_list, %s = ...
 return function( self, i, value )
 	if self then
 		return %s or default
 	else
-		if properties[i] then
-			if nodes[i] then
-				nodes[i].values:unsubscribe( properties[i], updater )
-			end
-			if value then
-				value.values:subscribe( properties[i], lifetime, updater )
-			end
-		end
-		nodes[i] = value
+		%s
+		node_list[i] = value
+		%s
 	end
 end]]
 
@@ -134,54 +128,30 @@ local function node_query_internal( query, name )
 	end
 end
 
-local function dynamic_value_query( query, index, lifetime, env, obj, queries, names, updater )
-	local source
-	if query.source.type == DVALUE_APPLICATION then
-		source = obj.root_application
-	else
-		error "TODO: fix this error"
-	end
-
-	local els, ID
-
-	if query.type == DVALUE_DQUERY then
-		els, ID = source:preparsed_query_tracked( query.query )
-		queries[#queries + 1] = { tracker = source.query_tracker, ID = ID, result = els, index = index }
-	else
-		els = source:preparsed_query( query.query )
-	end
-
-	local el = els[1] or error "TODO: fix this area"
-
-	if index then
-		el.values:subscribe( index, lifetime, updater )
-	end
-
-	if query.type == DVALUE_QUERY then
-		names[#names + 1] = el
-		return "n" .. #names .. (index and "." .. index or "")
-	else
-		return "nodes[" .. #queries .. "]" .. (index and "." .. index or "")
-	end
-end
-
-local function dynamic_value_internal( value, lifetime, env, obj, queries, names, updater )
+local function dynamic_value_internal( value, state )
 	if value.type == DVALUE_INTEGER
 	or value.type == DVALUE_FLOAT
 	or value.type == DVALUE_BOOLEAN then
-		return value.value
+		state.expressions[#state.expressions + 1] = tostring( value.value )
+		return #state.expressions
 
 	elseif value.type == DVALUE_STRING then
-		return ("%q"):format( value.value )
+		state.expressions[#state.expressions + 1] = ("%q"):format( value.value )
+		return #state.expressions
 
 	elseif value.type == DVALUE_SELF then
-		return "self"
+		state.expressions[#state.expressions + 1] = "self"
+		return #state.expressions
 
 	elseif value.type == DVALUE_PARENT then
-		return "self.parent"
+		state.tracking[#state.tracking + 1] = { type = "parent", object = obj }
+		state.expressions[#state.expressions + 1] = "node_list[" .. #state.tracking .. "]"
+		return #state.expressions
 
 	elseif value.type == DVALUE_APPLICATION then
-		return "self.root_application"
+		state.tracking[#state.tracking + 1] = { type = "application", object = obj }
+		state.expressions[#state.expressions + 1] = "node_list[" .. #state.tracking .. "]"
+		return #state.expressions
 
 	elseif value.type == DVALUE_IDENTIFIER then
 		-- names[#names + 1] = env[value.value]
@@ -190,60 +160,64 @@ local function dynamic_value_internal( value, lifetime, env, obj, queries, names
 		error "NYI"
 
 	elseif value.type == DVALUE_PERCENTAGE then
-
-	elseif value.type == DVALUE_UNEXPR then
-		return value.operator .. " "
-		    .. dynamic_value_internal( value.value, lifetime, env, obj, queries, names, updater )
-
-	elseif value.type == DVALUE_CALL then
-		local params = {}
-
-		for i = 1, #value.parameters do
-			params[i] = dynamic_value_internal( value.parameters[i], lifetime, env, obj, queries, names, updater )
-		end
-
-		return dynamic_value_internal( value.value, lifetime, env, obj, queries, names, updater )
-		    .. "(" .. table.concat( params, ", " ) .. ")"
-	elseif value.type == DVALUE_INDEX then
-		return dynamic_value_internal( value.value, lifetime, env, obj, queries, names, updater )
-		    .. "(" .. dynamic_value_internal( value.index, lifetime, env, obj, queries, names, updater ) .. ")"
-
-	elseif value.type == DVALUE_BINEXPR then
-		return dynamic_value_internal( value.lvalue, lifetime, env, obj, queries, names, updater )
-		    .. " " .. value.operator .. " "
-		    .. dynamic_value_internal( value.rvalue, lifetime, env, obj, queries, names, updater )
-
-	elseif value.type == DVALUE_DOTINDEX then
-		if value.value.type == DVALUE_QUERY or value.value.type == DVALUE_DQUERY then
-			return dynamic_value_query( value.value, value.index, lifetime, env, obj, queries, names, updater )
-
-		elseif value.value.type == DVALUE_SELF then
-			obj.values:subscribe( value.index, lifetime, updater )
-			return "self." .. value.index
-
-		elseif value.value.type == DVALUE_PARENT then
-			queries.parent = {
-				child = obj;
-				value = obj.parent;
-				index = value.index;
-			}
-
-			return "self.parent." .. value.index
-
-		elseif value.value.type == DVALUE_IDENTIFIER then
-			error "TODO: fix this error"
-
-		elseif value.value.type == DVALUE_APPLICATION then
-			error "TODO: fix this error"
-
-		else
-			error "TODO: fix this error"
-
-		end
-	elseif query.type == DVALUE_DQUERY then
 		error "NYI"
 
-	elseif query.type == DVALUE_DQUERY then
+	elseif value.type == DVALUE_UNEXPR then
+		local idx = dynamic_value_internal( value.value, state )
+		state.expressions[#state.expressions + 1] = "n" .. idx .. "~=nil and " .. value.operator .. " n" .. idx
+		return #state.expressions
+
+	elseif value.type == DVALUE_CALL then
+		local params = { "n" .. dynamic_value_internal( value.value, state ) }
+
+		for i = 1, #value.parameters do
+			params[i + 1] = "n" .. dynamic_value_internal( value.parameters[i], state )
+		end
+
+		state.expressions[#state.expressions + 1] = table.concat( params, "~=nil and " ) .. "~=nil and " .. params[1] .. "(" .. table.concat( params, ", ", 2 ) .. ")"
+
+		return #state.expressions
+	elseif value.type == DVALUE_INDEX then
+		local lidx = dynamic_value_internal( value.value, state )
+		local ridx = dynamic_value_internal( value.index, state )
+		state.expressions[#state.expressions + 1] = "n" .. lidx .. "~=nil and " .. "n" .. ridx .. "~=nil and " .. " n" .. lidx .. "[n" .. ridx .. "]"
+		return #state.expressions
+
+	elseif value.type == DVALUE_BINEXPR then
+		local lidx = dynamic_value_internal( value.lvalue, state )
+		local ridx = dynamic_value_internal( value.rvalue, state )
+
+		if value.operator == "or" or value.operator == "and" then
+			state.expressions[#state.expressions + 1] = "n" .. lidx .. " " .. value.operator .. " n" .. ridx
+		elseif value.operator == "==" or value.operator == "~=" then
+			state.expressions[#state.expressions + 1] = "n" .. lidx .. value.operator .. "n" .. ridx
+		else
+			state.expressions[#state.expressions + 1] = "n" .. lidx .. "~=nil and " .. "n" .. ridx .. "~=nil and " .. " n" .. lidx .. " " .. value.operator .. " n" .. ridx
+		end
+
+		return #state.expressions
+
+	elseif value.type == DVALUE_DOTINDEX then
+		local idx = dynamic_value_internal( value.value, state )
+		state.expressions[#state.expressions + 1] = "n" .. idx .. "~=nil and " .. "n" .. idx .. "." .. value.index
+		return #state.expressions
+
+	elseif value.type == DVALUE_QUERY then
+		local substate = {
+			lifetime = state.lifetime;
+			env = state.env;
+			obj = state.obj;
+			tracking = state.tracking;
+			names = state.names;
+			expressions = {};
+			updater = state.updater;
+		}
+
+		state.tracking[#state.tracking + 1] = { type = "query", object = obj, query = value.query, source = dynamic_value_internal( value.source, substate ), expressions = substate.expressions }
+		state.expressions[#state.expressions + 1] = "node_list[" .. #state.tracking .. "]"
+		return #state.expressions
+
+	elseif value.type == DVALUE_DQUERY then
 		error "NYI"
 
 	else
@@ -260,14 +234,28 @@ end
 
 function Codegen.dynamic_value( parsed_value, lifetime, env, obj, updater, default )
 	local names = {}
-	local queries = {}
-	local script_value = dynamic_value_internal( parsed_value, lifetime, env, obj, queries, names, updater )
-	local names_n, names_v = { "self" }, {}
-	local queries_t, queries_p = {}, {}
+	local tracking = {}
+	local expressions = {}
+	local state = {
+		lifetime = lifetime;
+		env = env;
+		obj = obj;
+		tracking = tracking;
+		names = names;
+		expressions = expressions;
+		updater = updater;
+	}
+	local return_index = dynamic_value_internal( parsed_value, state )
+	local names_n, names_v = { "self" }, { obj }
+	local node_list = {}
+	local index_count = 0
 
-	for i = 1, #queries do
-		queries_t[i] = queries[i].result[1]
-		queries_p[i] = queries[i].index
+	do return state end
+
+	for i = 1, #tracking do
+		if tracking[i].type == "dynamic query" then
+			node_list[i] = tracking[i].result[1]
+		end
 	end
 
 	for i = 1, #names do
@@ -275,9 +263,12 @@ function Codegen.dynamic_value( parsed_value, lifetime, env, obj, updater, defau
 		names_v[i] = names[i]
 	end
 
-	local f, err = assert( load( GENERIC_GETTER_FUNCTION:format( table.concat( names_n, ", " ), script_value ), "dynamic value" ) )
+	local s1 = ""
+	local s2 = index_count == 0 and "" or "end" -- end if any dotindexes tracked
 
-	return f( lifetime, updater, default, queries_p, queries_t, obj, unpack( names_v ) ), queries
+	local f, err = assert( load( GENERIC_GETTER_FUNCTION:format( table.concat( names_n, ", " ), script_value, s1, s2 ), "dynamic value" ) )
+
+	return f( lifetime, updater, default, node_list, unpack( names_v ) ), tracking
 end
 
 function Codegen.dynamic_property_setter( property, options )

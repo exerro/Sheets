@@ -35,10 +35,22 @@ end
 
 function ValueHandler:add( name, type, default, setter )
 	self.object["set_" .. name] = setter
-	self.object[name] = default
 	self.object["raw_" .. name] = default
-	self.lifetimes[name] = {}
+	self.object[name] = default
 	self.values[name] = type
+	self.lifetimes[name] = {}
+end
+
+function ValueHandler:remove( name )
+	self.lifetimes[name] = nil
+	self.values[name] = nil
+	self.object[name] = nil
+	self.object["raw_" .. name] = nil
+	self.object["set_" .. name] = nil
+end
+
+function ValueHandler:has( name )
+	return self.lifetimes[name] ~= nil
 end
 
 function ValueHandler:trigger( name )

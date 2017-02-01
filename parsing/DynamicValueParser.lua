@@ -36,6 +36,7 @@ local op_precedences = {
 local lua_operators = {
 	["|"] = "or";
 	["&"] = "and";
+	["!="] = "~=";
 }
 
 local function parse_name( stream )
@@ -164,7 +165,7 @@ function DynamicValueParser:parse_term()
 					parameters[#parameters + 1] = self:parse_expression() or error "TODO: fix this error"
 					while self.stream:skip( TOKEN_WHITESPACE ) do end
 				until not self.stream:skip( TOKEN_SYMBOL, "," )
-	
+
 				if not self.stream:skip( TOKEN_SYMBOL, ")" ) then
 					error "TODO: fix this error"
 				end
@@ -208,7 +209,7 @@ function DynamicValueParser:parse_expression()
 		local op = self.stream:next().value
 		local prec = op_precedences[op]
 
-		while precedences[1] and precedences[#precedences] > prec do
+		while precedences[1] and precedences[#precedences] >= prec do
 			local rvalue = table.remove( operand_stack, #operand_stack )
 
 			table.remove( precedences, #precedences )
