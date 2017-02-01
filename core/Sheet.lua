@@ -54,6 +54,19 @@ function Sheet:initialise()
 	self.values:add( "x", ValueHandler.integer_type, 0, Codegen.dynamic_property_setter( "x" ) )
 	self.values:add( "y", ValueHandler.integer_type, 0, Codegen.dynamic_property_setter( "y" ) )
 	self.values:add( "z", ValueHandler.integer_type, 0, Codegen.dynamic_property_setter( "z", { custom_update_code = "if self.parent then self.parent:reposition_child_z_index( self ) end" } ) )
+	self.values:add( "parent", ValueHandler.optional_sheet_type, nil, function( self, parent )
+		if parent and not class.type_of( parent, Sheet ) and not class.type_of( parent, Screen ) then
+			Exception.throw( IncorrectParameterException( "expected Sheet or Screen parent, got " .. class.type( parent ), 2 ) )
+		end
+
+		if parent then
+			parent:add_child( self )
+		else
+			self:remove()
+		end
+
+		return self
+	end )
 end
 
 function Sheet:add_tag( tag )
@@ -102,20 +115,6 @@ function Sheet:set_style( style, children )
 	end
 
 	self:set_changed( true )
-	return self
-end
-
-function Sheet:set_parent( parent )
-	if parent and not class.type_of( parent, Sheet ) and not class.type_of( parent, Screen ) then
-		Exception.throw( IncorrectParameterException( "expected Sheet or Screen parent, got " .. class.type( parent ), 2 ) )
-	end
-
-	if parent then
-		parent:add_child( self )
-	else
-		self:remove()
-	end
-
 	return self
 end
 

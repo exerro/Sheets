@@ -161,10 +161,10 @@ function DynamicValueParser:parse_term()
 			if not self.stream:skip( TOKEN_SYMBOL, ")" ) then
 				repeat
 					while self.stream:skip( TOKEN_WHITESPACE ) do end
-					parameters[#parameters + 1] = self:parse_expression()
+					parameters[#parameters + 1] = self:parse_expression() or error "TODO: fix this error"
 					while self.stream:skip( TOKEN_WHITESPACE ) do end
 				until not self.stream:skip( TOKEN_SYMBOL, "," )
-
+	
 				if not self.stream:skip( TOKEN_SYMBOL, ")" ) then
 					error "TODO: fix this error"
 				end
@@ -173,7 +173,7 @@ function DynamicValueParser:parse_term()
 			term = { type = DVALUE_CALL, value = term, parameters = parameters }
 		elseif self.stream:skip( TOKEN_SYMBOL, "[" ) then
 			while self.stream:skip( TOKEN_WHITESPACE ) do end
-			local index = self:parse_expression()
+			local index = self:parse_expression() or error "TODO: fix this error"
 			while self.stream:skip( TOKEN_WHITESPACE ) do end
 
 			if not self.stream:skip( TOKEN_SYMBOL, ")" ) then

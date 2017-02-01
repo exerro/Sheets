@@ -52,9 +52,36 @@ local GENERIC_SETTER = [[return function( self, value )
 		end )
 	end
 
+	if queries.parent then
+		if queries.parent.value then
+			queries.parent.child.values:subscribe( "child", lifetime, function()
+				setter_f( nil, "parent", queries.parent.child.parent )
+				update()
+			end )
+		end
+	end
+
 	update()
 
 	return self
+end]]
+
+local GENERIC_GETTER_FUNCTION = [[
+local lifetime, updater, default, properties, nodes, %s = ...
+return function( self, i, value )
+	if self then
+		return %s or default
+	else
+		if properties[i] then
+			if nodes[i] then
+				nodes[i].values:unsubscribe( properties[i], updater )
+			end
+			if value then
+				value.values:subscribe( properties[i], lifetime, updater )
+			end
+		end
+		nodes[i] = value
+	end
 end]]
 
 local function node_query_internal( query, name )
@@ -143,32 +170,82 @@ local function dynamic_value_internal( value, lifetime, env, obj, queries, names
 	or value.type == DVALUE_FLOAT
 	or value.type == DVALUE_BOOLEAN then
 		return value.value
+
 	elseif value.type == DVALUE_STRING then
 		return ("%q"):format( value.value )
+
 	elseif value.type == DVALUE_SELF then
 		return "self"
+
 	elseif value.type == DVALUE_PARENT then
 		return "self.parent"
+
 	elseif value.type == DVALUE_APPLICATION then
 		return "self.root_application"
+
 	elseif value.type == DVALUE_IDENTIFIER then
-		names[#names + 1] = env[value.value]
-		return "n" .. #names
+		-- names[#names + 1] = env[value.value]
+		-- return "n" .. #names
+
+		error "NYI"
+
+	elseif value.type == DVALUE_PERCENTAGE then
+
 	elseif value.type == DVALUE_UNEXPR then
-		return value.operator .. " " .. dynamic_value_internal( value.value, lifetime, env, obj, queries, names, updater )
+		return value.operator .. " "
+		    .. dynamic_value_internal( value.value, lifetime, env, obj, queries, names, updater )
+
+	elseif value.type == DVALUE_CALL then
+		local params = {}
+
+		for i = 1, #value.parameters do
+			params[i] = dynamic_value_internal( value.parameters[i], lifetime, env, obj, queries, names, updater )
+		end
+
+		return dynamic_value_internal( value.value, lifetime, env, obj, queries, names, updater )
+		    .. "(" .. table.concat( params, ", " ) .. ")"
+	elseif value.type == DVALUE_INDEX then
+		return dynamic_value_internal( value.value, lifetime, env, obj, queries, names, updater )
+		    .. "(" .. dynamic_value_internal( value.index, lifetime, env, obj, queries, names, updater ) .. ")"
+
 	elseif value.type == DVALUE_BINEXPR then
 		return dynamic_value_internal( value.lvalue, lifetime, env, obj, queries, names, updater )
 		    .. " " .. value.operator .. " "
 		    .. dynamic_value_internal( value.rvalue, lifetime, env, obj, queries, names, updater )
+
 	elseif value.type == DVALUE_DOTINDEX then
 		if value.value.type == DVALUE_QUERY or value.value.type == DVALUE_DQUERY then
 			return dynamic_value_query( value.value, value.index, lifetime, env, obj, queries, names, updater )
+
 		elseif value.value.type == DVALUE_SELF then
 			obj.values:subscribe( value.index, lifetime, updater )
 			return "self." .. value.index
+
+		elseif value.value.type == DVALUE_PARENT then
+			queries.parent = {
+				child = obj;
+				value = obj.parent;
+				index = value.index;
+			}
+
+			return "self.parent." .. value.index
+
+		elseif value.value.type == DVALUE_IDENTIFIER then
+			error "TODO: fix this error"
+
+		elseif value.value.type == DVALUE_APPLICATION then
+			error "TODO: fix this error"
+
 		else
 			error "TODO: fix this error"
+
 		end
+	elseif query.type == DVALUE_DQUERY then
+		error "NYI"
+
+	elseif query.type == DVALUE_DQUERY then
+		error "NYI"
+
 	else
 		-- TODO: every other type of node
 		error "TODO: fix this error"
@@ -181,7 +258,7 @@ function Codegen.node_query( parsed_query )
 	return load( "local n=...return " .. node_query_internal( parsed_query, "n" ), "query" )
 end
 
-function Codegen.dynamic_value( parsed_value, lifetime, env, obj, updater )
+function Codegen.dynamic_value( parsed_value, lifetime, env, obj, updater, default )
 	local names = {}
 	local queries = {}
 	local script_value = dynamic_value_internal( parsed_value, lifetime, env, obj, queries, names, updater )
@@ -198,24 +275,9 @@ function Codegen.dynamic_value( parsed_value, lifetime, env, obj, updater )
 		names_v[i] = names[i]
 	end
 
-	local f, err = assert( load( [[
-		local lifetime, updater, ]] .. table.concat( names_n, ", " ) .. [[ = ...
-		return function( ... )
-			local properties, nodes = ...
-			return function( self, i, value )
-				if self then
-					return ]] .. script_value .. [[--
-				else
-					if properties[i] then
-						nodes[i].values:unsubscribe( properties[i], updater )
-						value.values:subscribe( properties[i], lifetime, updater )
-					end
-					nodes[i] = value
-				end
-			end
-		end]], "dynamic value" ) )
+	local f, err = assert( load( GENERIC_GETTER_FUNCTION:format( table.concat( names_n, ", " ), script_value ), "dynamic value" ) )
 
-	return f( lifetime, updater, obj, unpack( names_v ) )( queries_p, queries_t ), queries
+	return f( lifetime, updater, default, queries_p, queries_t, obj, unpack( names_v ) ), queries
 end
 
 function Codegen.dynamic_property_setter( property, options )

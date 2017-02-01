@@ -10,7 +10,13 @@ interface "IHasText" {
 }
 
 function IHasText:IHasText()
+	local function wrap()
+		self:wrap_text()
+	end
+
 	self.values:add( "text", ValueHandler.string_type, "", Codegen.dynamic_property_setter( "text", { text_value = true, custom_update_code = "self:wrap_text()" } ) )
+	self.values:subscribe( "width", {}, wrap )
+	self.values:subscribe( "text", {}, wrap )
 end
 
 function IHasText:auto_height()
