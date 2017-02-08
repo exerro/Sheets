@@ -60,12 +60,10 @@ function Sheet:initialise()
 		end
 
 		if parent then
-			parent:add_child( self )
+			return parent:add_child( self )
 		else
-			self:remove()
+			return self:remove()
 		end
-
-		return self
 	end )
 end
 

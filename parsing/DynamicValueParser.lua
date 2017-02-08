@@ -51,7 +51,8 @@ class "DynamicValueParser" {
 
 function DynamicValueParser:DynamicValueParser( stream )
 	self.stream = stream
-	self.context = { { environment = {} } }
+	self.environment = {}
+	self.context = { { environment = self.environment } }
 	self.query_parser = QueryParser( stream )
 end
 

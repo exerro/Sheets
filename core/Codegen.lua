@@ -133,14 +133,16 @@ local GENERIC_SETTER = [[return function( self, value )
 	%s
 
 	local value_parsed = parser:parse_expression()
+		or error "TODO: fix this error"
 
 	%s
 
 	local lifetime = self.values.lifetimes[%q]
-	local setter_f, queries
+	local default  = self.values.defaults[%q]
+	local setter_f, initialiser_f
 
 	local function update()
-		self[%q] = setter_f( self )
+		self[%q] = setter_f( self ) or default
 
 		%s
 
@@ -151,33 +153,12 @@ local GENERIC_SETTER = [[return function( self, value )
 		error "TODO: fix this error"
 	end
 
-	setter_f, queries = Codegen.dynamic_value( value_parsed, lifetime, parser.environment, self, update )
+	setter_f, initialiser_f = Codegen.dynamic_value( value_parsed, lifetime, parser.environment, self, update )
 
-	for i = 1, #queries do
-		queries[i].tracker:subscribe( queries[i].ID, lifetime, function()
-			setter_f( nil, i, queries[i].result[1] )
-			update()
-		end )
-	end
-
-	if queries.parent then
-		if queries.parent.value then
-			queries.parent.child.values:subscribe( "child", lifetime, function()
-				setter_f( nil, "parent", queries.parent.child.parent )
-				update()
-			end )
-		end
-	end
-
+	initialiser_f()
 	update()
 
 	return self
-end]]
-
-local GENERIC_GETTER_FUNCTION = [[
-local lifetime, updater, default = ...
-return function( self, i, value )
-	return %s or default
 end]]
 
 local function node_query_internal( query, name )
@@ -231,6 +212,7 @@ local function node_query_internal( query, name )
 end
 
 local function dynamic_value_internal( value, state )
+	if not value then return error "here" end
 	if value.type == DVALUE_INTEGER
 	or value.type == DVALUE_FLOAT
 	or value.type == DVALUE_BOOLEAN then
@@ -306,10 +288,42 @@ local function dynamic_value_internal( value, state )
 		return t
 
 	elseif value.type == DVALUE_IDENTIFIER then
-		-- names[#names + 1] = env[value.value]
-		-- return "n" .. #names
+		if state.environment[value.value] ~= nil then
+			state.inputs[#state.inputs + 1] = state.environment[value.value];
 
-		error "NYI"
+			return {
+				value = "i" .. #state.inputs;
+				complex = false;
+				update = nil;
+				initialise = nil;
+				dependants = {};
+				dependencies = {};
+			}
+
+		elseif state.object.values:has( value.value ) then
+			local nr = #state.names + 1
+			local nu = #state.names + 2
+			local t = {
+				value = "n" .. nr;
+				complex = true;
+				update = "f" .. nu .. "()";
+				initialise = "self.values:subscribe( '" .. value.value .. "', lifetime, f" .. nu .. " )\nf" .. nu .. "()";
+				dependants = {};
+				dependencies = {};
+			}
+
+			state.names[nr] = "n" .. nr
+			state.names[nu] = "f" .. nu
+			state.functions[#state.functions + 1] = {
+				code = SELF_INDEX_UPDATER:gsub( "NAME", "n" .. nr ):gsub( "INDEX", value.value ):gsub( "FUNC", "f" .. nu );
+				node = t;
+			}
+
+			return t
+
+		else
+			error "TODO: fix this error"
+		end
 
 	elseif value.type == DVALUE_PERCENTAGE then
 		error "NYI"
@@ -320,7 +334,7 @@ local function dynamic_value_internal( value, state )
 		local t = {
 			value = "n" .. n;
 			complex = false;
-			update = "n" .. n .. " = " .. val.value .. " ~= nil and " .. value.operator .. " " .. val.value;
+			update = "n" .. n .. " = " .. val.value .. " ~= nil and " .. value.operator .. " " .. val.value .. " or nil";
 			initialise = nil;
 			dependants = {};
 			dependencies = { val };
@@ -345,7 +359,7 @@ local function dynamic_value_internal( value, state )
 		local t = {
 			value = "n" .. n;
 			complex = false;
-			update = "n" .. n .. " = " .. val.value .. " ~= nil and " .. table.concat( params_strval, " ~= nil and " ) .. " ~= nil and " .. val.value .. "(" .. table.concat( params_strval, ", " ) .. ")";
+			update = "n" .. n .. " = " .. val.value .. " ~= nil and " .. table.concat( params_strval, " ~= nil and " ) .. " ~= nil and " .. val.value .. "(" .. table.concat( params_strval, ", " ) .. ") or nil";
 			initialise = nil;
 			dependants = {};
 			dependencies = { val, unpack( params ) };
@@ -406,7 +420,7 @@ local function dynamic_value_internal( value, state )
 				(value.operator == "or" or value.operator == "and") and lvalue.value .. " " .. value.operator .. " " .. rvalue.value
 				-- or value.operator == "==" and "" -- potentially $abc == $def == true if both are undefined
 				-- or value.operator == "~=" and "" -- potentially $abc != $def == true if one is undefined and false if both are undefined
-				or lvalue.value .. " ~= nil and " .. rvalue.value .. " ~= nil and " .. lvalue.value .. " " .. value.operator .. " " .. rvalue.value
+				or lvalue.value .. " ~= nil and " .. rvalue.value .. " ~= nil and " .. lvalue.value .. " " .. value.operator .. " " .. rvalue.value .. " or nil"
 			);
 			initialise = nil;
 			dependants = {};
@@ -424,7 +438,7 @@ local function dynamic_value_internal( value, state )
 		local nr = #state.names + 1
 		local nu = #state.names + 2
 		local t = {
-			value = "n" .. nr .. " and n" .. nr .. "." .. value.index;
+			value = "(n" .. nr .. " and n" .. nr .. "." .. value.index .. ")";
 			complex = true;
 			update = "f" .. nu .. "()";
 			initialise = nil;
@@ -520,18 +534,19 @@ function Codegen.node_query( parsed_query )
 	return load( "local n=...return " .. node_query_internal( parsed_query, "n" ), "query" )
 end
 
-function Codegen.dynamic_value( parsed_value, lifetime, env, obj, updater, default )
+function Codegen.dynamic_value( parsed_value, lifetime, env, obj, updater )
 	local names = {}
 	local functions = {}
 	local inputs = {}
 	local state = {
-		env = env;
+		environment = env;
 		object = obj;
 		names = names;
 		functions = functions;
 		inputs = inputs;
 		property_wait = false;
 	}
+	if not parsed_value then return error "here" end
 	local return_value = dynamic_value_internal( parsed_value, state )
 
 	local roots = {}
@@ -551,11 +566,10 @@ function Codegen.dynamic_value( parsed_value, lifetime, env, obj, updater, defau
 		if #t.dependencies == 0 then
 			roots[#roots + 1] = t
 		else
-			local idx = #roots_tocheck
 			local added = false
 			for n = 1, #t.dependencies do
 				if t.dependencies[n].update or t.dependencies[n].initialise then
-					roots_tocheck[idx + n] = t.dependencies[n]
+					roots_tocheck[#roots_tocheck + 1] = t.dependencies[n]
 					added = true
 				end
 			end
@@ -606,7 +620,7 @@ function Codegen.dynamic_value( parsed_value, lifetime, env, obj, updater, defau
 
 	local s = initialisers[#initialisers]
 
-	if s:find "^f%d+%(%)" then
+	if s and s:find "^f%d+%(%)" then
 		if #initialisers == 1 then
 			initialise_function = s:match "^f%d+"
 		else
@@ -615,10 +629,10 @@ function Codegen.dynamic_value( parsed_value, lifetime, env, obj, updater, defau
 	end
 
 	local code
-	     = "local self, lifetime, updater, default"
+	     = "local self, lifetime, updater"
 			.. (#inputs > 0 and ", " .. table.concat( input_names, ", ") or "")
 			.. " = ...\n"
-	    .. "local " .. table.concat( names, ", " ) .. "\n"
+	    .. (#names > 0 and "local " .. table.concat( names, ", " ) .. "\n" or "")
 		.. (state.property_wait and PROPERTY_WAIT or "")
 		.. table.concat( func_compiled, "\n" ) .. "\n"
 		.. "return function() return " .. return_value.value .. " end, "
@@ -629,9 +643,15 @@ function Codegen.dynamic_value( parsed_value, lifetime, env, obj, updater, defau
 	do
 		local h = fs.open( "demo/log.txt", "w" )
 
-		h.write( code )
+		h.write( code .. "\n" .. #roots_tocheck[1].dependencies )
 		h.close()
 	end
+
+	local fenv = getfenv and getfenv() and _ENV
+	local f, err = assert( (load or loadstring)( code, "dynamic value", nil, fenv ) )
+	local getter, initialiser = (setfenv and setfenv( f, fenv ) or f)( obj, lifetime, updater, unpack( inputs ) )
+
+	return getter, initialiser
 end
 
 function Codegen.dynamic_property_setter( property, options )
@@ -681,7 +701,7 @@ function Codegen.dynamic_property_setter( property, options )
 		end
 	end
 
-	local str = GENERIC_SETTER:format( property, "raw_" .. property, property, s4, property, s1, s2, s3, property, property, s4, property )
+	local str = GENERIC_SETTER:format( property, "raw_" .. property, property, s4, property, s1, s2, s3, property, property, property, s4, property )
 	local f = assert( (load or loadstring)( str, "property '" .. property .. "'", nil, _ENV ) )
 
 	if setfenv then

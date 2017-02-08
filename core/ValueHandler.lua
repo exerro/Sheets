@@ -7,6 +7,7 @@ class "ValueHandler" {
 	lifetimes = {};
 	values = {};
 	subscriptions = {};
+	defaults = {};
 
 	integer_type = "integer";
 	boolean_type = "boolean";
@@ -19,6 +20,7 @@ function ValueHandler:ValueHandler( object )
 	self.lifetimes = {}
 	self.values = {}
 	self.subscriptions = {}
+	self.defaults = {}
 
 	function object:set( t )
 		for k, v in pairs( t ) do
@@ -38,6 +40,7 @@ function ValueHandler:add( name, type, default, setter )
 	self.object["raw_" .. name] = default
 	self.object[name] = default
 	self.values[name] = type
+	self.defaults[name] = default
 	self.lifetimes[name] = {}
 end
 
@@ -83,6 +86,8 @@ function ValueHandler:subscribe( name, lifetime, callback )
 	local t = self.subscriptions[name]
 
 	t[#t + 1] = callback
+
+	return callback
 end
 
 function ValueHandler:unsubscribe( name, callback )

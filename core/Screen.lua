@@ -21,7 +21,7 @@ function Screen:Screen( application, width, height )
 	self.terminals = {}
 	self.monitors = {}
 	self.canvas = ScreenCanvas( width, height )
-	self.root_application = application
+	self.application = application
 	self.values = ValueHandler( self )
 
 	self:IAnimation()

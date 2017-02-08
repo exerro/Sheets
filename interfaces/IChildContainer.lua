@@ -4,7 +4,7 @@
 
 interface "IChildContainer" implements "ICollatedChildren" {
 	children = {};
-	root_application = nil;
+	application = nil;
 }
 
 function IChildContainer:IChildContainer()
@@ -53,11 +53,14 @@ function IChildContainer:add_child( child )
 	self:update_collated( "child-added", child, index <= #children and (children[index].collated_children[1] or children[index]) or self )
 	table.insert( children, index, child )
 
-	child.root_application = self.root_application
+	child.application = self.application
 
 	for i = 1, #child.collated_children do
-		child.collated_children[i].root_application = self.root_application
+		child.collated_children[i].application = self.application
 	end
+
+	child.values:trigger "parent"
+	child.values:trigger "application"
 
 	return child
 end
@@ -66,16 +69,19 @@ function IChildContainer:remove_child( child )
 	for i = 1, #self.children do
 		if self.children[i] == child then
 			child.parent = nil
+			child.application = nil
 			self:set_changed()
 			self:update_collated( "child-removed", child )
 
-			child.root_application = nil
-
 			for i = 1, #child.collated_children do
-				child.collated_children[i].root_application = nil
+				child.collated_children[i].application = nil
 			end
 
-			return table.remove( self.children, i )
+			table.remove( self.children, i )
+			child.values:trigger "parent"
+			child.values:trigger "application"
+
+			return child
 		end
 	end
 end
