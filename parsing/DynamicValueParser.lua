@@ -78,33 +78,18 @@ function DynamicValueParser:get_context()
 end
 
 function DynamicValueParser:parse_primary_expression()
-	if self.stream:test( TOKEN_KEYWORD, "self" ) or self.stream:test( TOKEN_KEYWORD, "application" ) or self.stream:test( TOKEN_KEYWORD, "parent" ) or self.stream:test( TOKEN_IDENTIFIER ) then
-		local source
+	if self.stream:skip( TOKEN_KEYWORD, "self" ) then
+		return { type = DVALUE_SELF }
 
-		if self.stream:skip( TOKEN_KEYWORD, "self" ) then
-			source = { type = DVALUE_SELF }
-		elseif self.stream:skip( TOKEN_KEYWORD, "application" ) then
-			source = { type = DVALUE_APPLICATION }
-		elseif self.stream:skip( TOKEN_KEYWORD, "parent" ) then
-			source = { type = DVALUE_PARENT }
-		elseif self.stream:test( TOKEN_IDENTIFIER ) then
-			source = { type = DVALUE_IDENTIFIER, value = parse_name( self.stream ) }
-		end
+	elseif self.stream:skip( TOKEN_KEYWORD, "application" ) then
+		return { type = DVALUE_APPLICATION }
 
-		if source.type == DVALUE_IDENTIFIER then
-			if not self:get_context().environment[source.value] then
-				error "TODO: fix this error"
-			end
-		end
+	elseif self.stream:skip( TOKEN_KEYWORD, "parent" ) then
+		return { type = DVALUE_PARENT }
 
-		if self:get_context().enable_queries and self.stream:skip( TOKEN_SYMBOL, "$" ) then
-			local dynamic = not self.stream:skip( TOKEN_SYMBOL, "$" )
-			local query = self.query_parser:parse_term( true )
+	elseif self.stream:test( TOKEN_IDENTIFIER ) then
+		return { type = DVALUE_IDENTIFIER, value = parse_name( self.stream ) }
 
-			return { type = dynamic and DVALUE_DQUERY or DVALUE_QUERY, query = query, source = source }
-		end
-
-		return source
 	elseif self.stream:test( TOKEN_INTEGER ) then
 		local value = { type = DVALUE_INTEGER, value = self.stream:next().value }
 
@@ -125,7 +110,13 @@ function DynamicValueParser:parse_primary_expression()
 		return { type = DVALUE_BOOLEAN, value = self.stream:next().value }
 	elseif self.stream:test( TOKEN_STRING ) then
 		return { type = DVALUE_STRING, value = self.stream:next().value }
-	elseif self:get_context().enable_queries and self.stream:skip( TOKEN_SYMBOL, "$" ) then
+	elseif self.stream:test( TOKEN_SYMBOL, "$" ) then
+		if self:get_context().enable_queries then
+			self.stream:next()
+		else
+			error "TODO: fix this error"
+		end
+
 		local dynamic = not self.stream:skip( TOKEN_SYMBOL, "$" )
 		local query = self.query_parser:parse_term( true )
 
@@ -154,6 +145,7 @@ function DynamicValueParser:parse_term()
 	while term do
 		if self.stream:skip( TOKEN_SYMBOL, "." ) then
 			term = { type = DVALUE_DOTINDEX, value = term, index = parse_name( self.stream ) or error "TODO: fix this error" }
+
 		elseif self.stream:skip( TOKEN_SYMBOL, "(" ) then
 			local parameters = {}
 
@@ -172,6 +164,7 @@ function DynamicValueParser:parse_term()
 			end
 
 			term = { type = DVALUE_CALL, value = term, parameters = parameters }
+
 		elseif self.stream:skip( TOKEN_SYMBOL, "[" ) then
 			while self.stream:skip( TOKEN_WHITESPACE ) do end
 			local index = self:parse_expression() or error "TODO: fix this error"
@@ -182,6 +175,18 @@ function DynamicValueParser:parse_term()
 			end
 
 			term = { type = DVALUE_INDEX, value = term, index = index }
+
+		elseif self.stream:test( TOKEN_SYMBOL, "$" ) then
+			if self:get_context().enable_queries then
+				self.stream:next()
+			else
+				error "TODO: fix this error"
+			end
+
+			local dynamic = not self.stream:skip( TOKEN_SYMBOL, "$" )
+			local query = self.query_parser:parse_term( true )
+
+			term = { type = dynamic and DVALUE_DQUERY or DVALUE_QUERY, query = query, source = term }
 		else
 			break
 		end

@@ -402,7 +402,12 @@ local function dynamic_value_internal( value, state )
 		local t = {
 			value = "n" .. n;
 			complex = false;
-			update = "n" .. n .. " = " .. lvalue.value .. " ~= nil and " .. rvalue.value .. " ~= nil and " .. lvalue.value .. " " .. value.operator .. " " .. rvalue.value;
+			update = "n" .. n .. " = " .. (
+				(value.operator == "or" or value.operator == "and") and lvalue.value .. " " .. value.operator .. " " .. rvalue.value
+				-- or value.operator == "==" and "" -- potentially $abc == $def == true if both are undefined
+				-- or value.operator == "~=" and "" -- potentially $abc != $def == true if one is undefined and false if both are undefined
+				or lvalue.value .. " ~= nil and " .. rvalue.value .. " ~= nil and " .. lvalue.value .. " " .. value.operator .. " " .. rvalue.value
+			);
 			initialise = nil;
 			dependants = {};
 			dependencies = { lvalue, rvalue };
