@@ -1,29 +1,9 @@
 
-local cache = {}
+local property_cache = {}
 
 local SELF_INDEX_UPDATER = [[function FUNC()
-	local object = self.INDEX
-
-	if object then
-		local function f0()
-			NAME = self.INDEX
-			DEPENDENCIES
-		end
-		local function f1()
-			self.values:unsubscribe( 'INDEX', f1 )
-			return FUNC()
-		end
-		self.values:subscribe( 'INDEX', lifetime, f1 )
-		return f0()
-	else
-		local function f()
-			if self.INDEX then
-				self.values:unsubscribe( 'INDEX', f )
-				return FUNC()
-			end
-		end
-		self.values:subscribe( 'INDEX', lifetime, f )
-	end
+	NAME = self.INDEX
+	DEPENDENCIES
 end]]
 
 local ARBITRARY_DOTINDEX_UPDATER = [[do
@@ -69,6 +49,46 @@ local ARBITRARY_INDEX_UPDATER = [[do
 		OLDVALUE = obj
 		OLDINDEX = idx
 		return f0()
+	end
+end]]
+
+local DYNAMIC_QUERY_UPDATER = [[do
+	local elems, ID
+
+	local function f0()
+		NAME = elems[1]
+		DEPENDENCIES
+	end
+
+	function FUNC()
+		local object = SOURCE
+
+		if PREVSOURCE then
+			PREVSOURCE.query_tracker:unsubscribe( ID, f0 )
+		end
+
+		if object then
+			elems, ID = object:preparsed_query_tracked( QDATA )
+			object.query_tracker:subscribe( ID, lifetime, f0 )
+		end
+
+		PREVSOURCE = object
+		return f0()
+	end
+end]]
+
+local QUERY_UPDATER = [[function FUNC()
+	local object = SOURCE
+
+	if object then
+		local elems = object:preparsed_query( QDATA )
+		NAME = elems[1]
+
+		if NAME then
+			FUNC = function()end
+
+			DEPENDENCIES
+		end
 	end
 end]]
 
@@ -211,7 +231,6 @@ local function node_query_internal( query, name )
 end
 
 local function dynamic_value_internal( value, state )
-	if not value then error( "here", 2 ) end
 	if value.type == DVALUE_INTEGER
 	or value.type == DVALUE_FLOAT
 	or value.type == DVALUE_BOOLEAN then
@@ -251,7 +270,7 @@ local function dynamic_value_internal( value, state )
 			value = "n" .. nr;
 			complex = true;
 			update = "f" .. nu .. "()";
-			initialise = nil;
+			initialise = "self.values:subscribe( 'parent', lifetime, f" .. nu .. " )\nf" .. nu .. "()";
 			dependants = {};
 			dependencies = {};
 		}
@@ -272,7 +291,7 @@ local function dynamic_value_internal( value, state )
 			value = "n" .. nr;
 			complex = true;
 			update = "f" .. nu .. "()";
-			initialise = nil;
+			initialise = "self.values:subscribe( 'application', lifetime, f" .. nu .. " )\nf" .. nu .. "()";
 			dependants = {};
 			dependencies = {};
 		}
@@ -411,7 +430,8 @@ local function dynamic_value_internal( value, state )
 		state.names[nr] = "n" .. nr
 		state.names[nu] = "f" .. nu
 		state.functions[#state.functions + 1] = {
-			code = ARBITRARY_DOTINDEX_UPDATER:gsub( "NAME", "n" .. nr )
+			code = ARBITRARY_DOTINDEX_UPDATER
+				:gsub( "NAME", "n" .. nr )
 				:gsub( "INDEX", value.index )
 				:gsub( "FUNC", "f" .. nu )
 				:gsub( "LVALUE", val.value );
@@ -423,24 +443,65 @@ local function dynamic_value_internal( value, state )
 		return t
 
 	elseif value.type == DVALUE_QUERY then
-		error "NYI"
-
-		local substate = {
-			lifetime = state.lifetime;
-			env = state.env;
-			obj = state.obj;
-			tracking = state.tracking;
-			names = state.names;
-			expressions = {};
-			updater = state.updater;
+		local val = dynamic_value_internal( value.source, state )
+		local nret = #state.names + 1
+		local npdt = #state.names + 2
+		local t = {
+			value = "n" .. nret;
+			complex = true;
+			update = "f" .. npdt .. "()";
+			initialise = nil;
+			dependants = {};
+			dependencies = { val };
 		}
 
-		state.tracking[#state.tracking + 1] = { type = "query", object = obj, query = value.query, source = dynamic_value_internal( value.source, substate ), expressions = substate.expressions }
-		state.expressions[#state.expressions + 1] = "node_list[" .. #state.tracking .. "]"
-		return #state.expressions
+		state.inputs[#state.inputs + 1] = value.query
+		state.names[nret] = "n" .. nret
+		state.names[npdt] = "f" .. npdt
+		state.functions[#state.functions + 1] = {
+			code = QUERY_UPDATER
+				:gsub( "NAME", "n" .. nret )
+				:gsub( "SOURCE", val.value )
+				:gsub( "QDATA", "i" .. #state.inputs )
+				:gsub( "FUNC", "f" .. npdt );
+			node = t;
+		}
+
+		val.dependants[#val.dependants + 1] = t
+
+		return t
 
 	elseif value.type == DVALUE_DQUERY then
-		error "NYI"
+		local val = dynamic_value_internal( value.source, state )
+		local nret = #state.names + 1
+		local nsrc = #state.names + 2
+		local npdt = #state.names + 3
+		local t = {
+			value = "n" .. nret;
+			complex = true;
+			update = "f" .. npdt .. "()";
+			initialise = nil;
+			dependants = {};
+			dependencies = { val };
+		}
+
+		state.inputs[#state.inputs + 1] = value.query
+		state.names[nret] = "n" .. nret
+		state.names[nsrc] = "n" .. nsrc
+		state.names[npdt] = "f" .. npdt
+		state.functions[#state.functions + 1] = {
+			code = DYNAMIC_QUERY_UPDATER
+				:gsub( "NAME", "n" .. nret )
+				:gsub( "PREVSOURCE", "n" .. nsrc )
+				:gsub( "SOURCE", val.value )
+				:gsub( "QDATA", "i" .. #state.inputs )
+				:gsub( "FUNC", "f" .. npdt );
+			node = t;
+		}
+
+		val.dependants[#val.dependants + 1] = t
+
+		return t
 
 	else
 		-- TODO: every other type of node
@@ -457,11 +518,13 @@ end
 function Codegen.dynamic_value( parsed_value, lifetime, env, obj, updater, default )
 	local names = {}
 	local functions = {}
+	local inputs = {}
 	local state = {
 		env = env;
 		object = obj;
 		names = names;
 		functions = functions;
+		inputs = inputs;
 		property_wait = false;
 	}
 	local return_value = dynamic_value_internal( parsed_value, state )
@@ -472,6 +535,11 @@ function Codegen.dynamic_value( parsed_value, lifetime, env, obj, updater, defau
 	local func_compiled = {}
 	local initialisers = {}
 	local initialise_function
+	local input_names = {}
+
+	for i = 1, #inputs do
+		input_names[i] = "i" .. i
+	end
 
 	while i <= #roots_tocheck do
 		local t = roots_tocheck[i]
@@ -542,12 +610,14 @@ function Codegen.dynamic_value( parsed_value, lifetime, env, obj, updater, defau
 	end
 
 	local code
-	     = "local self, lifetime, updater, default = ...\n"
+	     = "local self, lifetime, updater, default"
+			.. (#inputs > 0 and ", " .. table.concat( input_names, ", ") or "")
+			.. " = ...\n"
 	    .. "local " .. table.concat( names, ", " ) .. "\n"
 		.. (state.property_wait and PROPERTY_WAIT or "")
 		.. table.concat( func_compiled, "\n" ) .. "\n"
 		.. "return function() return " .. return_value.value .. " end, "
-		.. initialise_function or ("function()\n"
+		.. (initialise_function or "function()\n"
 			.. table.concat( initialisers, "\n" )
 			.. (#initialisers == 0 and "" or "\n") .. "end")
 
@@ -560,7 +630,7 @@ function Codegen.dynamic_value( parsed_value, lifetime, env, obj, updater, defau
 end
 
 function Codegen.dynamic_property_setter( property, options )
-	cache[property] = cache[property] or {}
+	property_cache[property] = property_cache[property] or {}
 	options = options or {}
 	options.parent_changed = options.parent_changed == nil or options.parent_changed
 
@@ -599,8 +669,8 @@ function Codegen.dynamic_property_setter( property, options )
 	local s2 = table.concat( t2, "\n" ) -- code to change the environment
 	local s1 = table.concat( t1, "\n" ) -- code to update the string value
 
-	for i = 1, #cache[property] do
-		local c = cache[property][i]
+	for i = 1, #property_cache[property] do
+		local c = property_cache[property][i]
 		if c[1] == s1 and c[2] == s2 and c[3] == s3 and c[4] == s4 then
 			return c.f
 		end
@@ -615,7 +685,7 @@ function Codegen.dynamic_property_setter( property, options )
 
 	local fr = f()
 
-	cache[property][#cache[property] + 1] = { s1, s2, s3, s4, f = fr }
+	property_cache[property][#property_cache[property] + 1] = { s1, s2, s3, s4, f = fr }
 
 	return fr
 end
