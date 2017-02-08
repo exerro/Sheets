@@ -13,10 +13,9 @@ local ARBITRARY_DOTINDEX_UPDATER = [[do
 
 	function FUNC()
 		local obj = LVALUE
-		local oldobj = NAME
 
-		if oldobj then
-			oldobj.values:unsubscribe( "INDEX", f0 )
+		if NAME then
+			NAME.values:unsubscribe( "INDEX", f0 )
 		end
 
 		if obj then
@@ -56,7 +55,7 @@ local DYNAMIC_QUERY_UPDATER = [[do
 	local elems, ID
 
 	local function f0()
-		NAME = elems[1]
+		NAME = elems and elems[1]
 		DEPENDENCIES
 	end
 
@@ -142,11 +141,15 @@ local GENERIC_SETTER = [[return function( self, value )
 	local setter_f, initialiser_f
 
 	local function update()
-		self[%q] = setter_f( self ) or default
+		local val = setter_f( self ) or default
 
-		%s
+		if val ~= self[%q] then
+			self[%q] = val
 
-		return self.values:trigger %q
+			%s
+
+			return self.values:trigger %q
+		end
 	end
 
 	if not parser.stream:is_EOF() then
@@ -701,7 +704,7 @@ function Codegen.dynamic_property_setter( property, options )
 		end
 	end
 
-	local str = GENERIC_SETTER:format( property, "raw_" .. property, property, s4, property, s1, s2, s3, property, property, property, s4, property )
+	local str = GENERIC_SETTER:format( property, "raw_" .. property, property, s4, property, s1, s2, s3, property, property, property, property, s4, property )
 	local f = assert( (load or loadstring)( str, "property '" .. property .. "'", nil, _ENV ) )
 
 	if setfenv then
