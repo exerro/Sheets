@@ -26,7 +26,7 @@ local SELF_INDEX_UPDATER = [[function FUNC()
 	end
 end]]
 
-local ARBITRARY_INDEX_UPDATER = [[do
+local ARBITRARY_DOTINDEX_UPDATER = [[do
 	local function f0()
 		DEPENDENCIES
 	end
@@ -44,6 +44,30 @@ local ARBITRARY_INDEX_UPDATER = [[do
 		end
 
 		NAME = obj
+		return f0()
+	end
+end]]
+
+local ARBITRARY_INDEX_UPDATER = [[do
+	local function f0()
+		NAME = OLDVALUE and OLDINDEX and OLDVALUE[OLDINDEX]
+		DEPENDENCIES
+	end
+
+	function FUNC()
+		local obj = LVALUE
+		local idx = INDEX
+
+		if OLDVALUE and type( OLDINDEX ) == "string" then
+			OLDVALUE.values:unsubscribe( OLDINDEX, f0 )
+		end
+
+		if obj and type( idx ) == "string" then
+			obj.values:subscribe( idx, lifetime, f0 )
+		end
+
+		OLDVALUE = obj
+		OLDINDEX = idx
 		return f0()
 	end
 end]]
@@ -187,6 +211,7 @@ local function node_query_internal( query, name )
 end
 
 local function dynamic_value_internal( value, state )
+	if not value then error( "here", 2 ) end
 	if value.type == DVALUE_INTEGER
 	or value.type == DVALUE_FLOAT
 	or value.type == DVALUE_BOOLEAN then
@@ -317,12 +342,39 @@ local function dynamic_value_internal( value, state )
 		return t
 
 	elseif value.type == DVALUE_INDEX then
-		error "NYI"
+		local val = dynamic_value_internal( value.value, state )
+		local idx = dynamic_value_internal( value.index, state )
+		local nval = #state.names + 1 -- copy of the value
+		local nidx = #state.names + 2 -- copy of the index
+		local nret = #state.names + 3 -- return value
+		local npdt = #state.names + 4 -- updater function
+		local t = {
+			value = "n" .. nret;
+			complex = true;
+			update = "f" .. npdt .. "()";
+			initialise = nil;
+			dependants = {};
+			dependencies = { val, idx };
+		}
 
-		local lidx = dynamic_value_internal( value.value, state )
-		local ridx = dynamic_value_internal( value.index, state )
-		state.expressions[#state.expressions + 1] = "n" .. lidx .. "~=nil and " .. "n" .. ridx .. "~=nil and " .. " n" .. lidx .. "[n" .. ridx .. "]"
-		return #state.expressions
+		val.dependants[#val.dependants + 1] = t;
+		idx.dependants[#idx.dependants + 1] = t;
+		state.names[nval] = "n" .. nval
+		state.names[nidx] = "n" .. nidx
+		state.names[nret] = "n" .. nret
+		state.names[npdt] = "f" .. npdt
+		state.functions[#state.functions + 1] = {
+			code = ARBITRARY_INDEX_UPDATER
+				:gsub( "NAME", "n" .. nret )
+				:gsub( "FUNC", "f" .. npdt )
+				:gsub( "OLDVALUE", "n" .. nval )
+				:gsub( "OLDINDEX", "n" .. nidx )
+				:gsub( "LVALUE", val.value )
+				:gsub( "INDEX", idx.value );
+			node = t;
+		}
+
+		return t
 
 	elseif value.type == DVALUE_BINEXPR then
 		local lvalue = dynamic_value_internal( value.lvalue, state )
@@ -359,7 +411,10 @@ local function dynamic_value_internal( value, state )
 		state.names[nr] = "n" .. nr
 		state.names[nu] = "f" .. nu
 		state.functions[#state.functions + 1] = {
-			code = ARBITRARY_INDEX_UPDATER:gsub( "NAME", "n" .. nr ):gsub( "INDEX", value.index ):gsub( "FUNC", "f" .. nu ):gsub( "LVALUE", val.value );
+			code = ARBITRARY_DOTINDEX_UPDATER:gsub( "NAME", "n" .. nr )
+				:gsub( "INDEX", value.index )
+				:gsub( "FUNC", "f" .. nu )
+				:gsub( "LVALUE", val.value );
 			node = t;
 		}
 

@@ -177,7 +177,7 @@ function DynamicValueParser:parse_term()
 			local index = self:parse_expression() or error "TODO: fix this error"
 			while self.stream:skip( TOKEN_WHITESPACE ) do end
 
-			if not self.stream:skip( TOKEN_SYMBOL, ")" ) then
+			if not self.stream:skip( TOKEN_SYMBOL, "]" ) then
 				error "TODO: fix this error"
 			end
 
@@ -188,7 +188,7 @@ function DynamicValueParser:parse_term()
 	end
 
 	for i = #operators, 1, -1 do
-		term = { type = DVALUE_UNEXPR, value = term, operator = operators[i] }
+		term = term and { type = DVALUE_UNEXPR, value = term, operator = operators[i] }
 	end
 
 	return term
