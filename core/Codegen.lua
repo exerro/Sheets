@@ -1,6 +1,70 @@
 
 local cache = {}
 
+local SELF_INDEX_UPDATER = [[function FUNC()
+	local object = self.INDEX
+
+	if object then
+		local function f0()
+			NAME = self.INDEX
+			DEPENDENCIES
+		end
+		local function f1()
+			self.values:unsubscribe( 'INDEX', f1 )
+			return FUNC()
+		end
+		self.values:subscribe( 'INDEX', lifetime, f1 )
+		return f0()
+	else
+		local function f()
+			if self.INDEX then
+				self.values:unsubscribe( 'INDEX', f )
+				return FUNC()
+			end
+		end
+		self.values:subscribe( 'INDEX', lifetime, f )
+	end
+end]]
+
+local ARBITRARY_INDEX_UPDATER = [[do
+	local function f0()
+		DEPENDENCIES
+	end
+
+	function FUNC()
+		local obj = LVALUE
+		local oldobj = NAME
+
+		if oldobj then
+			oldobj.values:unsubscribe( "INDEX", f0 )
+		end
+
+		if obj then
+			obj.values:subscribe( "INDEX", lifetime, f0 )
+		end
+
+		NAME = obj
+		return f0()
+	end
+end]]
+
+local PROPERTY_WAIT = [[
+local function wait_for_property( property, callback )
+	if self[property] then
+		return callback()
+	end
+
+	local function f()
+		if self[property] then
+			self.values:unsubscribe( property, f )
+			return callback()
+		end
+	end
+
+	self.values:subscribe( property, lifetime, f )
+end
+]]
+
 local GENERIC_SETTER = [[return function( self, value )
 	self.values:respawn %q
 	self[%q] = value
@@ -67,15 +131,9 @@ local GENERIC_SETTER = [[return function( self, value )
 end]]
 
 local GENERIC_GETTER_FUNCTION = [[
-local lifetime, updater, default, node_list, %s = ...
+local lifetime, updater, default = ...
 return function( self, i, value )
-	if self then
-		return %s or default
-	else
-		%s
-		node_list[i] = value
-		%s
-	end
+	return %s or default
 end]]
 
 local function node_query_internal( query, name )
@@ -132,26 +190,76 @@ local function dynamic_value_internal( value, state )
 	if value.type == DVALUE_INTEGER
 	or value.type == DVALUE_FLOAT
 	or value.type == DVALUE_BOOLEAN then
-		state.expressions[#state.expressions + 1] = tostring( value.value )
-		return #state.expressions
+		return {
+			value = tostring( value.value );
+			complex = false;
+			update = nil;
+			initialise = nil;
+			dependants = {};
+			dependencies = {};
+		}
 
 	elseif value.type == DVALUE_STRING then
-		state.expressions[#state.expressions + 1] = ("%q"):format( value.value )
-		return #state.expressions
+		return {
+			value = ("%q"):format( value.value );
+			complex = false;
+			update = nil;
+			initialise = nil;
+			dependants = {};
+			dependencies = {};
+		}
 
 	elseif value.type == DVALUE_SELF then
-		state.expressions[#state.expressions + 1] = "self"
-		return #state.expressions
+		return {
+			value = "self";
+			complex = false;
+			update = nil;
+			initialise = nil;
+			dependants = {};
+			dependencies = {};
+		}
 
 	elseif value.type == DVALUE_PARENT then
-		state.tracking[#state.tracking + 1] = { type = "parent", object = obj }
-		state.expressions[#state.expressions + 1] = "node_list[" .. #state.tracking .. "]"
-		return #state.expressions
+		local nr = #state.names + 1
+		local nu = #state.names + 2
+		local t = {
+			value = "n" .. nr;
+			complex = true;
+			update = "f" .. nu .. "()";
+			initialise = nil;
+			dependants = {};
+			dependencies = {};
+		}
+
+		state.names[nr] = "n" .. nr
+		state.names[nu] = "f" .. nu
+		state.functions[#state.functions + 1] = {
+			code = SELF_INDEX_UPDATER:gsub( "NAME", "n" .. nr ):gsub( "INDEX", "parent" ):gsub( "FUNC", "f" .. nu );
+			node = t;
+		}
+
+		return t
 
 	elseif value.type == DVALUE_APPLICATION then
-		state.tracking[#state.tracking + 1] = { type = "application", object = obj }
-		state.expressions[#state.expressions + 1] = "node_list[" .. #state.tracking .. "]"
-		return #state.expressions
+		local nr = #state.names + 1
+		local nu = #state.names + 2
+		local t = {
+			value = "n" .. nr;
+			complex = true;
+			update = "f" .. nu .. "()";
+			initialise = nil;
+			dependants = {};
+			dependencies = {};
+		}
+
+		state.names[nr] = "n" .. nr
+		state.names[nu] = "f" .. nu
+		state.functions[#state.functions + 1] = {
+			code = SELF_INDEX_UPDATER:gsub( "NAME", "n" .. nr ):gsub( "INDEX", "application" ):gsub( "FUNC", "f" .. nu );
+			node = t;
+		}
+
+		return t
 
 	elseif value.type == DVALUE_IDENTIFIER then
 		-- names[#names + 1] = env[value.value]
@@ -163,46 +271,105 @@ local function dynamic_value_internal( value, state )
 		error "NYI"
 
 	elseif value.type == DVALUE_UNEXPR then
-		local idx = dynamic_value_internal( value.value, state )
-		state.expressions[#state.expressions + 1] = "n" .. idx .. "~=nil and " .. value.operator .. " n" .. idx
-		return #state.expressions
+		local val = dynamic_value_internal( value.value, state )
+		local n = #state.names + 1
+		local t = {
+			value = "n" .. n;
+			complex = false;
+			update = "n" .. n .. " = " .. val.value .. " ~= nil and " .. value.operator .. " " .. val.value;
+			initialise = nil;
+			dependants = {};
+			dependencies = { val };
+		}
+
+		state.names[n] = "n" .. n
+		val.dependants[#val.dependants + 1] = t
+
+		return t
 
 	elseif value.type == DVALUE_CALL then
-		local params = { "n" .. dynamic_value_internal( value.value, state ) }
+		local val = dynamic_value_internal( value.value, state )
+		local params = {}
+		local params_strval = {}
+		local n = #state.names + 1
 
 		for i = 1, #value.parameters do
-			params[i + 1] = "n" .. dynamic_value_internal( value.parameters[i], state )
+			params[i] = dynamic_value_internal( value.parameters[i], state )
+			params_strval[i] = params[i].value
 		end
 
-		state.expressions[#state.expressions + 1] = table.concat( params, "~=nil and " ) .. "~=nil and " .. params[1] .. "(" .. table.concat( params, ", ", 2 ) .. ")"
+		local t = {
+			value = "n" .. n;
+			complex = false;
+			update = "n" .. n .. " = " .. val.value .. " ~= nil and " .. table.concat( params_strval, " ~= nil and " ) .. " ~= nil and " .. val.value .. "(" .. table.concat( params_strval, ", " ) .. ")";
+			initialise = nil;
+			dependants = {};
+			dependencies = { val, unpack( params ) };
+		}
 
-		return #state.expressions
+		state.names[n] = "n" .. n
+		val.dependants[#val.dependants + 1] = t
+
+		for i = 1, #params do
+			params[i].dependants[#params[i].dependants + 1] = t
+		end
+
+		return t
+
 	elseif value.type == DVALUE_INDEX then
+		error "NYI"
+
 		local lidx = dynamic_value_internal( value.value, state )
 		local ridx = dynamic_value_internal( value.index, state )
 		state.expressions[#state.expressions + 1] = "n" .. lidx .. "~=nil and " .. "n" .. ridx .. "~=nil and " .. " n" .. lidx .. "[n" .. ridx .. "]"
 		return #state.expressions
 
 	elseif value.type == DVALUE_BINEXPR then
-		local lidx = dynamic_value_internal( value.lvalue, state )
-		local ridx = dynamic_value_internal( value.rvalue, state )
+		local lvalue = dynamic_value_internal( value.lvalue, state )
+		local rvalue = dynamic_value_internal( value.rvalue, state )
+		local n = #state.names + 1
+		local t = {
+			value = "n" .. n;
+			complex = false;
+			update = "n" .. n .. " = " .. lvalue.value .. " ~= nil and " .. rvalue.value .. " ~= nil and " .. lvalue.value .. " " .. value.operator .. " " .. rvalue.value;
+			initialise = nil;
+			dependants = {};
+			dependencies = { lvalue, rvalue };
+		}
 
-		if value.operator == "or" or value.operator == "and" then
-			state.expressions[#state.expressions + 1] = "n" .. lidx .. " " .. value.operator .. " n" .. ridx
-		elseif value.operator == "==" or value.operator == "~=" then
-			state.expressions[#state.expressions + 1] = "n" .. lidx .. value.operator .. "n" .. ridx
-		else
-			state.expressions[#state.expressions + 1] = "n" .. lidx .. "~=nil and " .. "n" .. ridx .. "~=nil and " .. " n" .. lidx .. " " .. value.operator .. " n" .. ridx
-		end
+		state.names[n] = "n" .. n
+		lvalue.dependants[#lvalue.dependants + 1] = t
+		rvalue.dependants[#rvalue.dependants + 1] = t
 
-		return #state.expressions
+		return t
 
 	elseif value.type == DVALUE_DOTINDEX then
-		local idx = dynamic_value_internal( value.value, state )
-		state.expressions[#state.expressions + 1] = "n" .. idx .. "~=nil and " .. "n" .. idx .. "." .. value.index
-		return #state.expressions
+		local val = dynamic_value_internal( value.value, state )
+		local nr = #state.names + 1
+		local nu = #state.names + 2
+		local t = {
+			value = "n" .. nr .. " and n" .. nr .. "." .. value.index;
+			complex = true;
+			update = "f" .. nu .. "()";
+			initialise = nil;
+			dependants = {};
+			dependencies = { val };
+		}
+
+		state.names[nr] = "n" .. nr
+		state.names[nu] = "f" .. nu
+		state.functions[#state.functions + 1] = {
+			code = ARBITRARY_INDEX_UPDATER:gsub( "NAME", "n" .. nr ):gsub( "INDEX", value.index ):gsub( "FUNC", "f" .. nu ):gsub( "LVALUE", val.value );
+			node = t;
+		}
+
+		val.dependants[#val.dependants + 1] = t
+
+		return t
 
 	elseif value.type == DVALUE_QUERY then
+		error "NYI"
+
 		local substate = {
 			lifetime = state.lifetime;
 			env = state.env;
@@ -234,41 +401,107 @@ end
 
 function Codegen.dynamic_value( parsed_value, lifetime, env, obj, updater, default )
 	local names = {}
-	local tracking = {}
-	local expressions = {}
+	local functions = {}
 	local state = {
-		lifetime = lifetime;
 		env = env;
-		obj = obj;
-		tracking = tracking;
+		object = obj;
 		names = names;
-		expressions = expressions;
-		updater = updater;
+		functions = functions;
+		property_wait = false;
 	}
-	local return_index = dynamic_value_internal( parsed_value, state )
-	local names_n, names_v = { "self" }, { obj }
-	local node_list = {}
-	local index_count = 0
+	local return_value = dynamic_value_internal( parsed_value, state )
 
-	do return state end
+	local roots = {}
+	local roots_tocheck = { return_value }
+	local i = 1
+	local func_compiled = {}
+	local initialisers = {}
+	local initialise_function
 
-	for i = 1, #tracking do
-		if tracking[i].type == "dynamic query" then
-			node_list[i] = tracking[i].result[1]
+	while i <= #roots_tocheck do
+		local t = roots_tocheck[i]
+		if #t.dependencies == 0 then
+			roots[#roots + 1] = t
+		else
+			local idx = #roots_tocheck
+			local added = false
+			for n = 1, #t.dependencies do
+				if t.dependencies[n].update or t.dependencies[n].initialise then
+					roots_tocheck[idx + n] = t.dependencies[n]
+					added = true
+				end
+			end
+			if not added then
+				roots[#roots + 1] = t
+			end
+		end
+		i = i + 1
+	end
+
+	for i = 1, #functions do
+		local dependants = {}
+		local tocheck = { functions[i].node }
+		local index = 1
+		local update_root = false
+
+		while index <= #tocheck do
+			if index ~= 1 then
+				dependants[#dependants + 1] = tocheck[index].update
+			end
+
+			if index == 1 or not tocheck[index].complex then
+				update_root = update_root or tocheck[index] == return_value
+
+				local idx = #tocheck
+				for n = 1, #tocheck[index].dependants do
+					tocheck[idx + n] = tocheck[index].dependants[n]
+				end
+			end
+
+			index = index + 1
+		end
+
+		if update_root then
+			dependants[#dependants + 1] = "updater()"
+		end
+
+		if dependants[1] then
+			dependants[#dependants] = "return " .. dependants[#dependants]
+		end
+
+		func_compiled[i] = functions[i].code:gsub( "DEPENDENCIES", table.concat( dependants, "\n" ) )
+	end
+
+	for i = 1, #roots do
+		initialisers[#initialisers + 1] = roots[i].initialise or roots[i].update
+	end
+
+	local s = initialisers[#initialisers]
+
+	if s:find "^f%d+%(%)" then
+		if #initialisers == 1 then
+			initialise_function = s:match "^f%d+"
+		else
+			initialisers[#initialisers] = "return " .. s
 		end
 	end
 
-	for i = 1, #names do
-		names_n[i + 1] = "n" .. i
-		names_v[i] = names[i]
+	local code
+	     = "local self, lifetime, updater, default = ...\n"
+	    .. "local " .. table.concat( names, ", " ) .. "\n"
+		.. (state.property_wait and PROPERTY_WAIT or "")
+		.. table.concat( func_compiled, "\n" ) .. "\n"
+		.. "return function() return " .. return_value.value .. " end, "
+		.. initialise_function or ("function()\n"
+			.. table.concat( initialisers, "\n" )
+			.. (#initialisers == 0 and "" or "\n") .. "end")
+
+	do
+		local h = fs.open( "demo/log.txt", "w" )
+
+		h.write( code )
+		h.close()
 	end
-
-	local s1 = ""
-	local s2 = index_count == 0 and "" or "end" -- end if any dotindexes tracked
-
-	local f, err = assert( load( GENERIC_GETTER_FUNCTION:format( table.concat( names_n, ", " ), script_value, s1, s2 ), "dynamic value" ) )
-
-	return f( lifetime, updater, default, node_list, unpack( names_v ) ), tracking
 end
 
 function Codegen.dynamic_property_setter( property, options )
