@@ -660,7 +660,7 @@ end
 function Codegen.dynamic_property_setter( property, options )
 	property_cache[property] = property_cache[property] or {}
 	options = options or {}
-	options.parent_changed = options.parent_changed == nil or options.parent_changed
+	options.parent_changed = options.parent_changed == nil or options.parent_changed -- TODO: make this self_changed by default, more properties will update the element itself rather than just parent
 
 	local t1 = {}
 	local t2 = {}
