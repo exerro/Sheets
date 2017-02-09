@@ -19,6 +19,18 @@ local function setf( self, properties )
 	end
 end
 
+local function addtag( self, tag )
+	for i = 1, #self do
+		self[i]:add_tag( tag )
+	end
+end
+
+local function remtag( self, tag )
+	for i = 1, #self do
+		self[i]:remove_tag( tag )
+	end
+end
+
 local function query_raw( self, query, track, parsed )
 	if not parsed then
 		parameters.check( 1, "query", "string", query )
@@ -30,7 +42,7 @@ local function query_raw( self, query, track, parsed )
 
 	local query_f = Codegen.node_query( query )
 	local nodes = self.collated_children
-	local matches = { set = setf }
+	local matches = { set = setf, add_tag = addtag, remove_tag = remtag }
 
 	for i = 1, #nodes do
 		if query_f( nodes[i] ) then
