@@ -8,6 +8,7 @@ class "ValueHandler" {
 	values = {};
 	subscriptions = {};
 	defaults = {};
+	removed_lifetimes = {};
 
 	integer_type = "integer";
 	boolean_type = "boolean";
@@ -21,6 +22,7 @@ function ValueHandler:ValueHandler( object )
 	self.values = {}
 	self.subscriptions = {}
 	self.defaults = {}
+	self.removed_lifetimes = {}
 
 	function object:set( t )
 		for k, v in pairs( t ) do
@@ -99,4 +101,27 @@ function ValueHandler:unsubscribe( name, callback )
 			end
 		end
 	end
+end
+
+function ValueHandler:child_removed()
+	for k, v in pairs( self.lifetimes ) do
+		self.removed_lifetimes[k] = v
+		self:respawn( k )
+	end
+end
+
+function ValueHandler:child_inserted()
+	for k, v in pairs( self.removed_lifetimes ) do
+		local lifetime = self.lifetimes[k]
+
+		for i = 1, #v do
+			if v[i][1] == "value" then
+				v[i][2].values:subscribe( v[i][3], lifetime, v[i][4] )
+			elseif v[i][1] == "query" then
+				v[i][2]:subscribe( v[i][3], lifetime, v[i][4] )
+			end
+		end
+	end
+
+	self.removed_lifetimes = {}
 end
