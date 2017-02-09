@@ -5,6 +5,7 @@ class = {}
 local classobj = setmetatable( {}, { __index = class } )
 local names = {}
 local interfaces = {}
+local environment = _ENV or getfenv()
 local last_created
 
 local supported_meta_methods = { __add = true, __sub = true, __mul = true, __div = true, __mod = true, __pow = true, __unm = true, __len = true, __eq = true, __lt = true, __lte = true, __tostring = true, __concat = true }
@@ -134,7 +135,7 @@ function class:new( name )
 	names[name] = obj
 	last_created = obj
 
-	_ENV[name] = obj
+	environment[name] = obj
 
 	return function( t )
 		if not last_created then
@@ -179,6 +180,19 @@ function class.is_instance( object )
 	return pcall( function() if not getmetatable( object ).__INSTANCE then error() end end ), nil
 end
 
+function class.get( name )
+	return environment[name]
+end
+
+function class.set_environment( env )
+	environment = env
+	env.class = class
+	env.extends = extends
+	env.interface = interface
+	env.implements = implements
+	-- env.enum = enum -- TODO: enums would be cool
+end
+
 setmetatable( class, {
 	__call = class.new;
 } )
@@ -197,13 +211,13 @@ end
 
 function interface( name )
 	interfaces[name] = {}
-	_ENV[name] = interfaces[name]
+	environment[name] = interfaces[name]
 	last_created = interfaces[name]
 	return function( t )
 		if type( t ) ~= "table" then
 			return error( "expected table t, got " .. class.type( t ) )
 		end
-		_ENV[name] = t
+		environment[name] = t
 		interfaces[name] = t
 	end
 end

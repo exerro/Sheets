@@ -191,6 +191,7 @@ token = {
 	for k, v in pairs( env ) do
 		sheets[k] = v
 	end
+	env.class.set_environment( sheets )
  -- @endif
  -- @if SHEETS_EXTERNAL
  	return sheets
