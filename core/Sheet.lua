@@ -51,9 +51,9 @@ function Sheet:initialise()
 	self:ISize()
 	self.style = Style( self )
 
-	self.values:add( "x", ValueHandler.integer_type, 0, Codegen.dynamic_property_setter( "x" ) )
-	self.values:add( "y", ValueHandler.integer_type, 0, Codegen.dynamic_property_setter( "y" ) )
-	self.values:add( "z", ValueHandler.integer_type, 0, Codegen.dynamic_property_setter( "z", { custom_update_code = "if self.parent then self.parent:reposition_child_z_index( self ) end" } ) )
+	self.values:add( "x", ValueHandler.integer_type, 0, Codegen.dynamic_property_setter( "x", { self_changed = false, parent_changed = true } ) )
+	self.values:add( "y", ValueHandler.integer_type, 0, Codegen.dynamic_property_setter( "y", { self_changed = false, parent_changed = true } ) )
+	self.values:add( "z", ValueHandler.integer_type, 0, Codegen.dynamic_property_setter( "z", { custom_update_code = "if self.parent then self.parent:reposition_child_z_index( self ) end", self_changed = false, parent_changed = true } ) )
 	self.values:add( "parent", ValueHandler.optional_sheet_type, nil, function( self, parent )
 		if parent and not class.type_of( parent, Sheet ) and not class.type_of( parent, Screen ) then
 			Exception.throw( IncorrectParameterException( "expected Sheet or Screen parent, got " .. class.type( parent ), 2 ) )
@@ -91,7 +91,7 @@ function Sheet:has_tag( tag )
 	return self.tags[tag] or false
 end
 
-function Sheet:set_ID( id )
+function Sheet:set_ID( id ) -- TODO: make this a dynamic property
 	self.id = tostring( id )
 
 	if self.parent then
@@ -101,7 +101,7 @@ function Sheet:set_ID( id )
 	return self
 end
 
-function Sheet:set_style( style, children )
+function Sheet:set_style( style, children ) -- TODO: replace with application theming system
 	parameters.check( 1, "style", Style, style )
 
 	self.style = style:clone( self )
@@ -128,7 +128,7 @@ end
 
 function Sheet:bring_to_front()
 	if self.parent then
-		return self:set_parent( self.parent )
+		return self:set_parent( self.parent ) -- TODO: improve this
 	end
 	return self
 end

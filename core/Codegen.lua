@@ -109,46 +109,46 @@ end
 ]]
 
 local GENERIC_SETTER = [[return function( self, value )
-	self.values:respawn %q
-	self[%q] = value
+	self.values:respawn PROPERTY_QUOTED
+	self[RAW_PROPERTY] = value
 
 	if type( value ) ~= "string" then
 		-- do type check
-		self[%q] = value
+		self[PROPERTY_QUOTED] = value
 
-		%s
+		ONCHANGE
 
-		self.values:trigger %q
+		self.values:trigger PROPERTY_QUOTED
 
 		return self
 	end
 
-	%s
+	VALUE_MODIFICATION
 
 	local parser = DynamicValueParser( Stream( value ) )
 
 	parser:set_context( "enable_queries", true )
 
-	%s
+	ENV_MODIFICATION
 
 	local value_parsed = parser:parse_expression()
 		or error "TODO: fix this error"
 
-	%s
+	AST_MODIFICATION
 
-	local lifetime = self.values.lifetimes[%q]
-	local default  = self.values.defaults[%q]
+	local lifetime = self.values.lifetimes[PROPERTY_QUOTED]
+	local default  = self.values.defaults[PROPERTY_QUOTED]
 	local setter_f, initialiser_f
 
 	local function update()
 		local val = setter_f( self ) or default
 
-		if val ~= self[%q] then
-			self[%q] = val
+		if val ~= self[PROPERTY_QUOTED] then
+			self[PROPERTY_QUOTED] = val
 
-			%s
+			ONCHANGE
 
-			return self.values:trigger %q
+			return self.values:trigger PROPERTY_QUOTED
 		end
 	end
 
@@ -660,7 +660,7 @@ end
 function Codegen.dynamic_property_setter( property, options )
 	property_cache[property] = property_cache[property] or {}
 	options = options or {}
-	options.parent_changed = options.parent_changed == nil or options.parent_changed -- TODO: make this self_changed by default, more properties will update the element itself rather than just parent
+	options.self_changed = options.self_changed == nil or options.self_changed
 
 	local t1 = {}
 	local t2 = {}
@@ -704,8 +704,15 @@ function Codegen.dynamic_property_setter( property, options )
 		end
 	end
 
-	local str = GENERIC_SETTER:format( property, "raw_" .. property, property, s4, property, s1, s2, s3, property, property, property, property, s4, property )
-	local f = assert( (load or loadstring)( str, "property '" .. property .. "'", nil, _ENV ) )
+	local prop_quoted = ("%q"):format( property )
+	local str = GENERIC_SETTER
+		:gsub( "PROPERTY_QUOTED", ("%q"):format( property ) )
+		:gsub( "RAW_PROPERTY", ("%q"):format( "raw_" .. property ) )
+		:gsub( "VALUE_MODIFICATION", function() return s1 end )
+		:gsub( "ENV_MODIFICATION", function() return s2 end )
+		:gsub( "AST_MODIFICATION", function() return s3 end )
+		:gsub( "ONCHANGE", function() return s4 end )
+	local f = assert( (load or loadstring)( str, "property setter '" .. property .. "'", nil, _ENV ) )
 
 	if setfenv then
 		setfenv( f, getfenv() )
