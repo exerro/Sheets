@@ -18,9 +18,23 @@ function KeyboardEvent:matches( hotkey )
 	local t
 
 	for segment in hotkey:gmatch "(.*)%-" do
+		if segment == "ctrl" or segment == "shift" or segment == "alt" then
+			local segment2 = "right" .. segment:sub( 1, 1 ):upper() .. segment:sub( 2 )
+			segment = "left" .. segment:sub( 1, 1 ):upper() .. segment:sub( 2 )
+
+			if self.held[segment2] then
+				if self.held[segment] then
+					segment = self.held[segment] < self.held[segment2] and segment or segment2
+				else
+					segment = segment2
+				end
+			end
+		end
+
 		if not self.held[segment] or ( t and self.held[segment] < t ) then
 			return false
 		end
+
 		t = self.held[segment]
 	end
 
