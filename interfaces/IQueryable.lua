@@ -15,6 +15,12 @@ local function query_raw( self, query, track, parsed )
 	local nodes = self.collated_children
 	local matches = {}
 
+	function matches:set( properties )
+		for i = 1, #self do
+			self[i]:set( properties )
+		end
+	end
+
 	for i = 1, #nodes do
 		if query_f( nodes[i] ) then
 			matches[#matches + 1] = nodes[i]
