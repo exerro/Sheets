@@ -16,7 +16,7 @@ function KeyHandler:KeyHandler()
 	return self:Sheet( 0, 0, 0, 0 )
 end
 
-function KeyHandler:add_action( name, callback )
+function KeyHandler:add_action( name, callback, ... )
 	for i = 1, #self.actions do
 		if self.actions[i].name == name then
 			Exception.throw( Exception, "cannot create new action '" .. name .. "': action already exists" )
@@ -26,7 +26,7 @@ function KeyHandler:add_action( name, callback )
 	self.actions[#self.actions + 1] = {
 		name = name;
 		callback = callback;
-		parameters = {};
+		parameters = { ... };
 		keybindings = {};
 	}
 end
@@ -34,6 +34,10 @@ end
 function KeyHandler:remove_action( name )
 	for i = 1, #self.actions do
 		if self.actions[i].name == name then
+			for j = 1, #self.actions[i].keybindings do
+				self:unbind_key( self.actions[i].keybindings[j] )
+			end
+
 			return table.remove( self.actions, i ).callback
 		end
 	end
@@ -118,7 +122,7 @@ function KeyHandler:on_keyboard_event( event )
 
 			for i = 1, #actions do
 				if actions[i].name == longest_match_action then
-					return actions[i].callback( self )
+					return actions[i].callback( unpack( actions[i].parameters ) )
 				end
 			end
 		end
