@@ -35,11 +35,8 @@ function IChildContainer:add_child( child )
 	local collated = self.collated_children
 
 	if child.parent then
-		child.parent:remove_child( child )
+		child.parent:remove_child( child, true )
 	end
-
-	child.parent = self
-	self:set_changed()
 
 	local index = #children + 1
 
@@ -50,36 +47,47 @@ function IChildContainer:add_child( child )
 		end
 	end
 
-	self:update_collated( "child-added", child, index <= #children and (children[index].collated_children[1] or children[index]) or self )
-	table.insert( children, index, child )
+	local c, l = children[index], index <= #children
 
-	child.application = self.application
+	table.insert( children, index, child )
+	self:update_collated( "child-added", child, l and (c.collated_children[1] or c) or self )
+	self:set_changed()
 
 	for i = 1, #child.collated_children do
 		child.collated_children[i].application = self.application
+		child.collated_children[i].values:trigger "application"
 	end
 
+	child.parent = self
+	child.application = self.application
 	child.values:trigger "parent"
 	child.values:trigger "application"
+	child.values:child_inserted()
 
 	return child
 end
 
-function IChildContainer:remove_child( child )
+function IChildContainer:remove_child( child, reinsert )
 	for i = 1, #self.children do
 		if self.children[i] == child then
 			child.parent = nil
 			child.application = nil
+
+			table.remove( self.children, i )
 			self:set_changed()
 			self:update_collated( "child-removed", child )
 
 			for i = 1, #child.collated_children do
 				child.collated_children[i].application = nil
+				child.collated_children[i].values:trigger "application"
 			end
 
-			table.remove( self.children, i )
 			child.values:trigger "parent"
 			child.values:trigger "application"
+
+			if not reinsert then
+				child.values:child_removed()
+			end
 
 			return child
 		end
