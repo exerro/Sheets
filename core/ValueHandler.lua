@@ -120,6 +120,7 @@ function ValueHandler:child_inserted()
 			elseif v[i][1] == "query" then
 				v[i][2]:subscribe( v[i][3], lifetime, v[i][4] )
 			end
+			v[i][4]()
 		end
 	end
 
