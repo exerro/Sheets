@@ -2,6 +2,23 @@
  -- @once
  -- @print Including sheets.interfaces.IQueryable
 
+local function setf( self, properties )
+	local prop_setters = {}
+
+	for k, v in pairs( properties ) do
+		prop_setters[#prop_setters + 1] = { k, "set_" .. k, v }
+	end
+
+	for i = 1, #self do
+		local vals = self[i].values
+		for n = 1, #prop_setters do
+			if vals:has( prop_setters[n][1] ) then
+				self[i][prop_setters[n][2]]( self[i], prop_setters[n][3] )
+			end
+		end
+	end
+end
+
 local function query_raw( self, query, track, parsed )
 	if not parsed then
 		parameters.check( 1, "query", "string", query )
@@ -13,13 +30,7 @@ local function query_raw( self, query, track, parsed )
 
 	local query_f = Codegen.node_query( query )
 	local nodes = self.collated_children
-	local matches = {}
-
-	function matches:set( properties )
-		for i = 1, #self do
-			self[i]:set( properties )
-		end
-	end
+	local matches = { set = setf }
 
 	for i = 1, #nodes do
 		if query_f( nodes[i] ) then
