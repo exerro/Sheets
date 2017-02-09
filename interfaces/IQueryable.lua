@@ -7,7 +7,7 @@ local function query_raw( self, query, track, parsed )
 		parameters.check( 1, "query", "string", query )
 
 		local parser = QueryParser( Stream( query ) )
-		
+
 		query = parser:parse_query()
 	end
 
@@ -34,6 +34,16 @@ interface "IQueryable" implements "ICollatedChildren" {
 
 function IQueryable:IQueryable()
 	self.query_tracker = QueryTracker( self )
+end
+
+function IQueryable:iquery( query )
+	local results = query_raw( self, query, false, false )
+	local i = 0
+
+	return function()
+		i = i + 1
+		return results[i], i
+	end
 end
 
 function IQueryable:query( query )
