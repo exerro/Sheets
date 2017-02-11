@@ -169,6 +169,12 @@ function ValueHandler:transition( property, final, transition, custom_update )
 		if self.object[property] ~= final then
 			self.object[property] = final
 
+			if ValueHandler.properties[property].change == "self" then
+				self.object:set_changed()
+			elseif ValueHandler.properties[property].change == "parent" and self.object.parent then
+				self.object.parent:set_changed()
+			end
+
 			if custom_update then
 				custom_update( self.object )
 			end
