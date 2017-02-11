@@ -89,7 +89,7 @@ end
 
 local v = parameters.path or parameters.exists or parameters.resolve or parameters.status or parameters.install or parameters.remove
 
-if v:find "^%w+$" then
+if v:find "^%w+$" and v ~= "develop" then
 	local h = http.get( NAMED_VERSION_URL )
 	if h then
 		local content = h.readAll()
@@ -105,7 +105,7 @@ if v:find "^%w+$" then
 	else
 		error( "unable to resolve version '" .. v .. "': failed to connect to github", 0 )
 	end
-elseif v:sub( 1, 1 ) ~= "v" then
+elseif v:sub( 1, 1 ) ~= "v" and v ~= "develop" then
 	v = "v" .. v
 end
 

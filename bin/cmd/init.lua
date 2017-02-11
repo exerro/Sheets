@@ -16,7 +16,7 @@ parser:set_param_modifier( function( v )
 end, "version" )
 
 parser:set_param_validator( function( v )
-	if not v:find "^v%d+%.%d+%.%d+$" then
+	if not v:find "^v%d+%.%d+%.%d+$" and v ~= "develop" then
 		return false, "expected version format of vMAJOR.MINOR.PATCH"
 	end
 	return true

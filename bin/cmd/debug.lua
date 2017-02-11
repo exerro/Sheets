@@ -15,6 +15,7 @@ parser:set_param_count( 0 )
 parser:add_section "parameters" :set_param_count( 0, nil, "parameters" )
 parser:add_section "rebuild" :set_param_count( 0, 0, "rebuild" )
 parser:add_section "silent" :set_param_count( 0, 0, "silent" )
+parser:add_section "nominify" :set_param_count( 0, 0, "nominify" )
 
 local parameters = parser:parse( ... )
 local rebuild = parameters.rebuild
@@ -86,7 +87,7 @@ if rebuild then
 	debug_conf:write( "version", v )
 	debug_conf:save()
 
-	flags.SHEETS_MINIFY = true
+	flags.SHEETS_MINIFY = not parameters.nominify
 
 	if not version( "--exists", v, "--silent" ) then
 		version( "--install", v, parameters.silent and "--silent" or nil )
@@ -113,7 +114,7 @@ if h then
 		print "Generating build file"
 	end
 
-	h.writeLine( " -- @include_raw /" .. project .. "/.sheets_debug/sheets" )
+	h.writeLine( " -- @include_raw /" .. version( "--path", v, "--silent" ) .. "/constants" )
 	h.writeLine( sheets_env_setter )
 
 	for i = 1, #to_include do
@@ -129,8 +130,17 @@ if not parameters.silent then
 	print "Executing build file"
 end
 
+local h, content = fs.open( project .. "/.sheets_debug/sheets.lua", "r" )
+
+if h then
+	content = h.readAll() .. "\n"
+	h.close()
+else
+	return error( "failed to read build file", 0 )
+end
+
 local build = builder( { project }, "/" .. project .. "/.sheets_debug/file_includer", flags )
-local f, err = (load or loadstring)( build, conf:read "name" .. " [DEBUG]", nil, _ENV or getfenv() )
+local f, err = (load or loadstring)( content .. build, conf:read "name" .. " [DEBUG]", nil, _ENV or getfenv() )
 
 if not f then
 	error( err, 0 )
