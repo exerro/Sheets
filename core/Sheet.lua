@@ -51,10 +51,10 @@ function Sheet:initialise()
 	self:ISize()
 	self.style = Style( self )
 
-	self.values:add( "x", ValueHandler.integer_type, 0, Codegen.dynamic_property_setter( "x", { self_changed = false, parent_changed = true } ) )
-	self.values:add( "y", ValueHandler.integer_type, 0, Codegen.dynamic_property_setter( "y", { self_changed = false, parent_changed = true } ) )
-	self.values:add( "z", ValueHandler.integer_type, 0, Codegen.dynamic_property_setter( "z", { custom_update_code = "if self.parent then self.parent:reposition_child_z_index( self ) end", self_changed = false, parent_changed = true } ) )
-	self.values:add( "parent", ValueHandler.optional_sheet_type, nil, function( self, parent )
+	self.values:add( "x", 0 )
+	self.values:add( "y", 0 )
+	self.values:add( "z", 0, { custom_update_code = "if self.parent then self.parent:reposition_child_z_index( self ) end" } )
+	self.values:add( "parent", nil, function( self, parent )
 		if parent and not class.type_of( parent, Sheet ) and not class.type_of( parent, Screen ) then
 			Exception.throw( IncorrectParameterException( "expected Sheet or Screen parent, got " .. class.type( parent ), 2 ) )
 		end

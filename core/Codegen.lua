@@ -1,6 +1,14 @@
 
 local property_cache = {}
 
+local CHANGECODE_NO_TRANSITION = [[
+self[PROPERTY_QUOTED] = value
+ONCHANGE
+self.values:trigger PROPERTY_QUOTED]]
+
+local CHANGECODE_TRANSITION = [[
+self.values:transition( PROPERTY_QUOTED, value, self[PROPERTY_TRANSITION_QUOTED]CUSTOM_UPDATE )]]
+
 local SELF_INDEX_UPDATER = [[function FUNC()
 	NAME = self.INDEX
 	DEPENDENCIES
@@ -115,11 +123,8 @@ return function( self, value )
 
 	if type( value ) ~= "string" then
 		-- do type check
-		self[PROPERTY_QUOTED] = value
 
-		ONCHANGE
-
-		self.values:trigger PROPERTY_QUOTED
+		CHANGECODE
 
 		return self
 	end
@@ -142,76 +147,10 @@ return function( self, value )
 	local setter_f, initialiser_f
 
 	local function update()
-		local val = setter_f( self ) or default
+		local value = setter_f( self ) or default
 
-		if val ~= self[PROPERTY_QUOTED] then
-			self[PROPERTY_QUOTED] = val
-
-			ONCHANGE
-
-			return self.values:trigger PROPERTY_QUOTED
-		end
-	end
-
-	if not parser.stream:is_EOF() then
-		error "TODO: fix this error"
-	end
-
-	setter_f, initialiser_f = Codegen.dynamic_value( value_parsed, lifetime, parser.environment, self, update )
-
-	initialiser_f()
-	update()
-
-	return self
-end]]
-
-local TRANSITIONED_SETTER = [[
-return function( self, value )
-	self.values:respawn PROPERTY_QUOTED
-	self[RAW_PROPERTY] = value
-
-	if type( value ) ~= "string" then
-		-- do type check
-
-		if self[TRANSITION_PROPERTY_QUOTED] ~= Transition.none then
-			ANIMATE!
-		else
-			self[PROPERTY_QUOTED] = value
-			ONCHANGE
-			self.values:trigger PROPERTY_QUOTED
-		end
-
-		return self
-	end
-
-	VALUE_MODIFICATION
-
-	local parser = DynamicValueParser( Stream( value ) )
-
-	parser:set_context( "enable_queries", true )
-
-	ENV_MODIFICATION
-
-	local value_parsed = parser:parse_expression()
-		or error "TODO: fix this error"
-
-	AST_MODIFICATION
-
-	local lifetime = self.values.lifetimes[PROPERTY_QUOTED]
-	local default  = self.values.defaults[PROPERTY_QUOTED]
-	local setter_f, initialiser_f
-
-	local function update()
-		local val = setter_f( self ) or default
-
-		if val ~= self[PROPERTY_QUOTED] then
-			if self[TRANSITION_PROPERTY_QUOTED] ~= Transition.none then
-				ANIMATE!
-			else
-				self[PROPERTY_QUOTED] = val
-				ONCHANGE
-				return self.values:trigger PROPERTY_QUOTED
-			end
+		if value ~= self[PROPERTY_QUOTED] then
+			CHANGECODE
 		end
 	end
 
@@ -723,7 +662,10 @@ end
 function Codegen.dynamic_property_setter( property, options )
 	property_cache[property] = property_cache[property] or {}
 	options = options or {}
-	options.self_changed = options.self_changed == nil or options.self_changed
+
+	local self_changed = ValueHandler.properties[property].change == "self"
+	local parent_changed = ValueHandler.properties[property].change == "parent"
+	local ptype = ValueHandler.properties[property].type
 
 	local t1 = {}
 	local t2 = {}
@@ -739,17 +681,17 @@ function Codegen.dynamic_property_setter( property, options )
 		options.self_changed = true
 	end
 
-	if options.self_changed then
+	if self_changed then
 		t4[#t4 + 1] = "if not self.changed then self:set_changed() end"
-	elseif options.parent_changed then
-		t4[#t4 + 1] = "if self.parent and not self.parent.changed then self.parent:set_changed() end"
+	elseif parent_changed then
+		t4[#t4 + 1] = "if self.parent then self.parent:set_changed() end"
 	end
 
-	if options.self_changed or options.parent_changed then
+	if self_changed or parent_changed then
 		t4[#t4 + 1] = "if self.parent then self.parent:child_value_changed( self ) end"
 	end
 
-	if options.text_value then
+	if ptype == ValueHandler.string_type then
 		t1[#t1 + 1] = "if value:sub( 1, 1 ) == '!' then value = value:sub( 2 ) else value = ('%q'):format( value ) end"
 	end
 
@@ -767,8 +709,30 @@ function Codegen.dynamic_property_setter( property, options )
 		end
 	end
 
+	--[[
+	function( self )
+		ONCHANGE
+	end
+	]]
+
+	local change_code
+
+	if ValueHandler.properties[property].transitionable then
+		change_code = CHANGECODE_TRANSITION
+
+		if s4 ~= "" then
+			change_code = change_code
+				:gsub( "CUSTOM_UPDATE", ", function( self )\n" .. s4 .. "\nend" )
+				:gsub( "PROPERTY_TRANSITION_QUOTED", ("%q"):format( property .. "_transition" ) )
+		end
+	else
+		change_code = CHANGECODE_NO_TRANSITION
+			:gsub( "ONCHANGE", s4 )
+	end
+
 	local prop_quoted = ("%q"):format( property )
 	local str = GENERIC_SETTER
+		:gsub( "CHANGECODE", change_code )
 		:gsub( "PROPERTY_QUOTED", ("%q"):format( property ) )
 		:gsub( "RAW_PROPERTY", ("%q"):format( "raw_" .. property ) )
 		:gsub( "VALUE_MODIFICATION", function() return s1 end )

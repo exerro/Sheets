@@ -19,7 +19,7 @@ end
 function KeyHandler:add_action( name, callback, ... )
 	for i = 1, #self.actions do
 		if self.actions[i].name == name then
-			Exception.throw( Exception, "cannot create new action '" .. name .. "': action already exists" )
+			Exception.throw( Exception( "KeyHandlerAction", "cannot create new action '" .. name .. "': action already exists" ) ) -- TODO: create custom exception for this
 		end
 	end
 
@@ -74,14 +74,14 @@ function KeyHandler:bind_key( key, action )
 		end
 	end
 
-	Exception.throw( Exception, "cannot bind key '" .. key .. "' to action '" .. action .. "': action doesn't exist" )
+	Exception.throw( Exception( "KeyHandlerBindingException", "cannot bind key '" .. key .. "' to action '" .. action .. "': action doesn't exist" ) )
 end
 
 function KeyHandler:unbind_key( key )
 	local action = self.shortcuts[key]
 
 	if not action then
-		Exception.throw( Exception, "cannot unbind key '" .. key ..  "': key not bound" )
+		Exception.throw( Exception( "KeyHandlerBindingException", "cannot unbind key '" .. key ..  "': key not bound" ) )
 	end
 
 	for i = 1, #self.actions do

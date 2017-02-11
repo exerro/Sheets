@@ -8,12 +8,6 @@ interface "ISize" {
 }
 
 function ISize:ISize()
-	local wsetter = Codegen.dynamic_property_setter( "width", {
-		update_canvas_width = true
-	} )
-	local hsetter = Codegen.dynamic_property_setter( "height", {
-		update_canvas_height = true
-	} )
-	self.values:add( "width", ValueHandler.integer_type, 0, wsetter )
-	self.values:add( "height", ValueHandler.integer_type, 0, hsetter )
+	self.values:add( "width", 0, { update_canvas_width = true } )
+	self.values:add( "height", 0, { update_canvas_height = true } )
 end
