@@ -29,11 +29,12 @@ local files = {
 	"bin/sbs.lua";
 	"bin/cmd/add.lua";
 	"bin/cmd/close.lua";
+	"bin/cmd/conf.lua";
 	"bin/cmd/debug.lua";
 	"bin/cmd/init.lua";
-	"bin/cmd/install.lua";
 	"bin/cmd/open.lua";
 	"bin/cmd/remove.lua";
+	"bin/cmd/status.lua";
 	"bin/cmd/version.lua";
 	"lib/build.lua";
 	"lib/config.lua";
