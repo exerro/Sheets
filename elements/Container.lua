@@ -6,8 +6,8 @@
 
 class "Container" extends "Sheet" implements "IChildContainer" {
 	colour = 0;
-	offset_x = 0;
-	offset_y = 0;
+	x_offset = 0;
+	y_offset = 0;
 
 	on_pre_draw = nil;
 	on_post_draw = nil;
@@ -18,6 +18,9 @@ function Container:Container( x, y, w, h )
 	self:ICollatedChildren()
 	self:IQueryable()
 	self:IChildContainer()
+
+	self.values:add( "x_offset", 0 )
+	self.values:add( "y_offset", 0 )
 
 	return self:Sheet( x, y, w, h )
 end
@@ -39,7 +42,7 @@ end
 function Container:draw( surface, x, y )
 	local children = self.children
 	local cx, cy, cc
-	local offset_x, offset_y = self.offset_x, self.offset_y
+	local x_offset, y_offset = self.x_offset, self.y_offset
 
 	self:reset_cursor_blink()
 	surface:fillRect( x, y, self.width, self.height, self.colour )
@@ -51,7 +54,7 @@ function Container:draw( surface, x, y )
 	for i = 1, #children do
 		local child = children[i]
 		if child:is_visible() then
-			child:draw( surface, x + child.x + offset_x, y + child.y + offset_y )
+			child:draw( surface, x + child.x + x_offset, y + child.y + y_offset )
 
 			if child.cursor_active then
 				cx, cy, cc = child.x + child.cursor_x, child.y + child.cursor_y, child.cursor_colour
@@ -72,12 +75,12 @@ end
 
 function Container:handle( event )
 	local children = self:get_children()
-	local offset_x, offset_y = self.offset_x, self.offset_y
+	local x_offset, y_offset = self.x_offset, self.y_offset
 
 	if event:type_of( MouseEvent ) then
 		local within = event:is_within_area( 0, 0, self.width, self.height )
 		for i = #children, 1, -1 do
-			children[i]:handle( event:clone( children[i].x + offset_x, children[i].y + offset_y, within ) )
+			children[i]:handle( event:clone( children[i].x + x_offset, children[i].y + y_offset, within ) )
 		end
 	else
 		for i = #children, 1, -1 do

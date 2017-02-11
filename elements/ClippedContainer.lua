@@ -17,7 +17,7 @@ function ClippedContainer:draw( surface, x, y )
 	if self.changed then
 		local children = self.children
 		local cx, cy, cc
-		local offset_x, offset_y = self.offset_x, self.offset_y
+		local x_offset, y_offset = self.x_offset, self.y_offset
 
 		self:reset_cursor_blink()
 		self.surface:clear( self.colour )
@@ -29,7 +29,7 @@ function ClippedContainer:draw( surface, x, y )
 		for i = 1, #children do
 			local child = children[i]
 			if child:is_visible() then
-				child:draw( self.surface, child.x + offset_x, child.y + offset_y )
+				child:draw( self.surface, child.x + x_offset, child.y + y_offset )
 
 				if child.cursor_active then
 					cx, cy, cc = child.x + child.cursor_x, child.y + child.cursor_y, child.cursor_colour

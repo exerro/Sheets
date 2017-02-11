@@ -216,6 +216,9 @@ ValueHandler.properties.x = { type = ValueHandler.integer_type, change = "parent
 ValueHandler.properties.y = { type = ValueHandler.integer_type, change = "parent", transitionable = true }
 ValueHandler.properties.z = { type = ValueHandler.integer_type, change = "parent", transitionable = true }
 
+ValueHandler.properties.x_offset = { type = ValueHandler.integer_type, change = "self", transitionable = true }
+ValueHandler.properties.y_offset = { type = ValueHandler.integer_type, change = "self", transitionable = true }
+
 ValueHandler.properties.width = { type = ValueHandler.integer_type, change = "self", transitionable = true }
 ValueHandler.properties.height = { type = ValueHandler.integer_type, change = "self", transitionable = true }
 
