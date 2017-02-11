@@ -1,6 +1,6 @@
 
  -- @defineifndef SHEETS_LOWRES true
- -- @defineifndef SHEETS_MINIFY
+ -- @defineifndef SHEETS_MINIFY false
  -- @defineifndef SHEETS_SML false
  -- @defineifndef SHEETS_WRAP false
  -- @defineifndef SHEETS_EXTERNAL false
@@ -10,7 +10,7 @@
  -- @endif
 
  -- @once
- -- @print Including sheets (minify: $SHEETS_MINIFY, low resolution: $SHEETS_LOWRES, dynamic-values: $SHEETS_DYNAMIC (expressions: $SHEETS_DYNAMIC_PARSING), sml: $SHEETS_SML)
+ -- @print Including sheets (minify: $SHEETS_MINIFY, low resolution: $SHEETS_LOWRES, sml: $SHEETS_SML)
 
  -- @define SHEETS_EXCEPTION_ERROR "SHEETS_EXCEPTION\n_put code in a try block to catch the exception."
 
@@ -20,9 +20,7 @@
 	local env = setmetatable( {}, { __index = _ENV } )
 	local function f()
 		local _ENV = env
-		if setfenv then
-			setfenv( 1, env )
-		end
+		if setfenv then setfenv( 1, env ) end
  -- @endif
 
 event = {
@@ -122,6 +120,8 @@ token = {
  -- @require core.Transition
  -- @require core.ValueHandler
 
+ -- @require elements.Container
+
  -- @if SHEETS_BUTTON
 	 -- @require interfaces.IHasText
 	 -- @require elements.Button
@@ -129,8 +129,8 @@ token = {
  -- @if SHEETS_CHECKBOX
 	 -- @/require elements.Checkbox
  -- @endif
- -- @if SHEETS_CONTAINER
-	 -- @require elements.Container
+ -- @if SHEETS_CLIPPEDCONTAINER
+	 -- @require elements.ClippedContainer
  -- @endif
  -- @if SHEETS_DRAGGABLE
  	 -- @/require interfaces.IHasText

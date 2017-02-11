@@ -88,8 +88,8 @@
  -- @if SHEETS_CORE_ELEMENTS
 	 -- @define SHEETS_BUTTON
 	 -- @define SHEETS_CHECKBOX
+	 -- @define SHEETS_CLIPPEDCONTAINER
 	 -- @define SHEETS_COLOURSELECTOR
-	 -- @define SHEETS_CONTAINER
 	 -- @define SHEETS_DRAGGABLE
 	 -- @define SHEETS_IMAGE
 	 -- @define SHEETS_KEYHANDLER

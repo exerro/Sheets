@@ -42,6 +42,7 @@ function Container:draw( surface, x, y )
 	local offset_x, offset_y = self.offset_x, self.offset_y
 
 	self:reset_cursor_blink()
+	surface:fillRect( x, y, self.width, self.height, self.colour )
 
 	if self.on_pre_draw then
 		self:on_pre_draw()
@@ -71,11 +72,12 @@ end
 
 function Container:handle( event )
 	local children = self:get_children()
+	local offset_x, offset_y = self.offset_x, self.offset_y
 
 	if event:type_of( MouseEvent ) then
 		local within = event:is_within_area( 0, 0, self.width, self.height )
 		for i = #children, 1, -1 do
-			children[i]:handle( event:clone( children[i].x, children[i].y, within ) )
+			children[i]:handle( event:clone( children[i].x + offset_x, children[i].y + offset_y, within ) )
 		end
 	else
 		for i = #children, 1, -1 do

@@ -21,7 +21,7 @@ function Button:Button( x, y, width, height, text )
 end
 
 function Button:draw( surface, x, y )
-	surface:fillRect( x, y, self.width, self.height, self.down and self.colour_pressed or self.colour )
+	surface:fillRect( x, y, self.width, self.height, self.down and self.colour_pressed or self.colour, WHITE, " " )
 	self:draw_text( surface, x, y )
 	self.changed = false
 end

@@ -12,9 +12,5 @@ function Panel:Panel( x, y, w, h )
 end
 
 function Panel:draw( canvas, x, y )
-	if self.changed then
-		self:reset_cursor_blink()
-		self.canvas:clear( self.colour )
-		self.changed = false
-	end
+	canvas:fillRect( x, y, self.width, self.height, self.colour, WHITE, " " )
 end
