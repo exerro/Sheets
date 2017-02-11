@@ -4,11 +4,30 @@
 
 -- needs to update to new exception system
 
-class "Container" extends "Sheet" {}
+class "Container" extends "Sheet" implements "IChildContainer" {
+	colour = 0;
+}
 
 function Container:Container( x, y, w, h )
 	self:initialise()
+	self:ICollatedChildren()
+	self:IQueryable()
+	self:IChildContainer()
 	return self:Sheet( x, y, w, h )
+end
+
+function Container:update( dt )
+	local children = self:get_children()
+
+	self.values:update( dt )
+
+	if self.on_update then
+		self:on_update( dt )
+	end
+
+	for i = #children, 1, -1 do
+		children[i]:update( dt )
+	end
 end
 
 function Container:draw()
@@ -18,8 +37,7 @@ function Container:draw()
 		local cx, cy, cc
 
 		self:reset_cursor_blink()
-
-		self.canvas:clear( self.style:get "colour" )
+		self.canvas:clear( self.colour )
 
 		if self.on_pre_draw then
 			self:on_pre_draw()
@@ -49,6 +67,28 @@ function Container:draw()
 	end
 end
 
-Style.add_to_template( Container, {
-	["colour"] = WHITE;
-} )
+function Container:handle( event )
+	local children = self:get_children()
+
+	if event:type_of( MouseEvent ) then
+		local within = event:is_within_area( 0, 0, self.width, self.height )
+		for i = #children, 1, -1 do
+			children[i]:handle( event:clone( children[i].x, children[i].y, within ) )
+		end
+	else
+		for i = #children, 1, -1 do
+			children[i]:handle( event )
+		end
+	end
+
+	if event:type_of( MouseEvent ) then
+		if event:is( EVENT_MOUSE_PING ) and event:is_within_area( 0, 0, self.width, self.height ) and event.within then
+			event.button[#event.button + 1] = self
+		end
+		self:on_mouse_event( event )
+	elseif event:type_of( KeyboardEvent ) and self.handles_keyboard and self.on_keyboard_event then
+		self:on_keyboard_event( event )
+	elseif event:type_of( TextEvent ) and self.handles_text and self.on_text_event then
+		self:on_text_event( event )
+	end
+end

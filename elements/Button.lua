@@ -4,6 +4,10 @@
 
 class "Button" extends "Sheet" implements "IHasText" {
 	down = false;
+	colour = CYAN;
+	colour_pressed = LIGHTBLUE;
+	horizontal_alignment = ALIGNMENT_CENTRE;
+	vertical_alignment = ALIGNMENT_CENTRE;
 }
 
 function Button:Button( x, y, width, height, text )
@@ -17,7 +21,7 @@ function Button:Button( x, y, width, height, text )
 end
 
 function Button:on_pre_draw()
-	self.canvas:clear( self.down and self.style:get "colour.pressed" or self.style:get "colour" )
+	self.canvas:clear( self.down and self.colour_pressed or self.colour )
 	self:draw_text( self.down and "pressed" or "default" )
 end
 
@@ -47,14 +51,3 @@ function Button:on_mouse_event( event )
 		event:handle()
 	end
 end
-
-Style.add_to_template( Button, {
-	["colour"] = CYAN;
-	["colour.pressed"] = LIGHTBLUE;
-	["text-colour"] = WHITE;
-	["text-colour.pressed"] = WHITE;
-	["horizontal-alignment"] = ALIGNMENT_CENTRE;
-	["horizontal-alignment.pressed"] = ALIGNMENT_CENTRE;
-	["vertical-alignment"] = ALIGNMENT_CENTRE;
-	["vertical-alignment.pressed"] = ALIGNMENT_CENTRE;
-} )

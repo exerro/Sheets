@@ -138,11 +138,11 @@ function Codegen.dynamic_property_setter( property, options )
 
 	if options.update_canvas_width then
 		t4[#t4 + 1] = "self.canvas:set_width( self.width )"
-		options.self_changed = true
+		self_changed = true
 	end
 	if options.update_canvas_height then
 		t4[#t4 + 1] = "self.canvas:set_height( self.height )"
-		options.self_changed = true
+		self_changed = true
 	end
 
 	if self_changed then
@@ -209,6 +209,7 @@ function Codegen.dynamic_property_setter( property, options )
 
 	return fr
 end
+
 CHANGECODE_NO_TRANSITION = [[
 self[PROPERTY_QUOTED] = value
 ONCHANGE

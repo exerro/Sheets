@@ -2,7 +2,7 @@
  -- @once
  -- @print Including sheets.interfaces.IChildContainer
 
-interface "IChildContainer" implements "ICollatedChildren" {
+interface "IChildContainer" implements "ICollatedChildren" implements "IQueryable" {
 	children = {};
 	application = nil;
 }
@@ -19,9 +19,7 @@ function IChildContainer:IChildContainer()
 end
 
 function IChildContainer:child_value_changed( child )
-	if self.query_tracker then
-		self.query_tracker:update( "child-changed", child )
-	end
+	self.query_tracker:update( "child-changed", child )
 
 	if self.parent then
 		return self.parent:child_value_changed( child )
@@ -50,12 +48,14 @@ function IChildContainer:add_child( child )
 	local c, l = children[index], index <= #children
 
 	table.insert( children, index, child )
-	self:update_collated( "child-added", child, l and (c.collated_children[1] or c) or self )
+	self:update_collated( "child-added", child, l and (c:implements( ICollatedChildren ) and c.collated_children[1] or c) or self )
 	self:set_changed()
 
-	for i = 1, #child.collated_children do
-		child.collated_children[i].application = self.application
-		child.collated_children[i].values:trigger "application"
+	if child:implements( ICollatedChildren ) then
+		for i = 1, #child.collated_children do
+			child.collated_children[i].application = self.application
+			child.collated_children[i].values:trigger "application"
+		end
 	end
 
 	child.parent = self
@@ -77,9 +77,11 @@ function IChildContainer:remove_child( child, reinsert )
 			self:set_changed()
 			self:update_collated( "child-removed", child )
 
-			for i = 1, #child.collated_children do
-				child.collated_children[i].application = nil
-				child.collated_children[i].values:trigger "application"
+			if child:implements( ICollatedChildren ) then
+				for i = 1, #child.collated_children do
+					child.collated_children[i].application = nil
+					child.collated_children[i].values:trigger "application"
+				end
 			end
 
 			child.values:trigger "parent"
@@ -129,19 +131,26 @@ function IChildContainer:reposition_child_z_index( child )
 
 	for i = 1, #children do
 		if children[i] == child then
+			local moved = false
+
 			while children[i-1] and children[i-1].z > child.z do
 				children[i-1], children[i] = child, children[i-1]
+				moved = true
 				i = i - 1
 			end
+
 			while children[i+1] and children[i+1].z < child.z do
 				children[i+1], children[i] = child, children[i+1]
+				moved = true
 				i = i + 1
 			end
 
-			self:update_collated( "child-removed", child )
-			self:update_collated( "child-added", child, i + 1 > #children and self or children[i + 1].collated_children[1] or children[i + 1] )
+			if moved then
+				self:update_collated( "child-removed", child )
+				self:update_collated( "child-added", child, i + 1 > #children and self or children[i + 1]:implements( ICollatedChildren ) and children[i + 1].collated_children[1] or children[i + 1] )
+				self:set_changed()
+			end
 
-			self:set_changed()
 			break
 		end
 	end

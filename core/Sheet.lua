@@ -3,7 +3,6 @@
  -- @print Including sheets.core.Sheet
 
 class "Sheet"
-	implements "IChildContainer"
 	implements "ITagged"
 	implements "ISize"
 {
@@ -41,11 +40,8 @@ function Sheet:initialise()
 	self.values = ValueHandler( self )
 	self.canvas = DrawingCanvas( 1, 1 )
 
-	self:ICollatedChildren()
-	self:IChildContainer()
 	self:ITagged()
 	self:ISize()
-	self.style = Style( self )
 
 	self.values:add( "x", 0 )
 	self.values:add( "y", 0 )
@@ -61,21 +57,6 @@ function Sheet:initialise()
 			return self:remove()
 		end
 	end )
-end
-
-function Sheet:set_style( style, children ) -- TODO: replace with application theming system
-	parameters.check( 1, "style", Style, style )
-
-	self.style = style:clone( self )
-
-	if children and self.children then
-		for i = 1, #self.children do
-			self.children[i]:set_style( style, true )
-		end
-	end
-
-	self:set_changed( true )
-	return self
 end
 
 function Sheet:remove()
@@ -126,39 +107,21 @@ function Sheet:tostring()
 end
 
 function Sheet:update( dt )
-	local children = self:get_children()
-
 	self.values:update( dt )
 
 	if self.on_update then
 		self:on_update( dt )
 	end
-
-	for i = #children, 1, -1 do
-		children[i]:update( dt )
-	end
 end
 
 function Sheet:draw()
 	if self.changed then
-
-		local children = self:get_children()
 		local cx, cy, cc
 
 		self:reset_cursor_blink()
 
 		if self.on_pre_draw then
 			self:on_pre_draw()
-		end
-
-		for i = 1, #children do
-			local child = children[i]
-			child:draw()
-			child.canvas:draw_to( self.canvas, child.x, child.y )
-
-			if child.cursor_active then
-				cx, cy, cc = child.x + child.cursor_x, child.y + child.cursor_y, child.cursor_colour
-			end
 		end
 
 		if cx then
@@ -174,19 +137,6 @@ function Sheet:draw()
 end
 
 function Sheet:handle( event )
-	local children = self:get_children()
-
-	if event:type_of( MouseEvent ) then
-		local within = event:is_within_area( 0, 0, self.width, self.height )
-		for i = #children, 1, -1 do
-			children[i]:handle( event:clone( children[i].x, children[i].y, within ) )
-		end
-	else
-		for i = #children, 1, -1 do
-			children[i]:handle( event )
-		end
-	end
-
 	if event:type_of( MouseEvent ) then
 		if event:is( EVENT_MOUSE_PING ) and event:is_within_area( 0, 0, self.width, self.height ) and event.within then
 			event.button[#event.button + 1] = self
@@ -201,8 +151,8 @@ end
 
 function Sheet:on_mouse_event( event )
 	if not event.handled and event:is_within_area( 0, 0, self.width, self.height ) and event.within then
-		if not event:is( EVENT_MOUSE_DRAG ) and not event:is( EVENT_MOUSE_SCROLL ) then
-			event:handle( self )
+		if event:is( EVENT_MOUSE_DOWN ) then
+			return event:handle( self )
 		end
 	end
 end

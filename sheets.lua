@@ -111,6 +111,8 @@ token = {
 	GRAPHICS_DEFAULT_FONT = Font()
  -- @endif
 
+ -- @include surface2
+
  -- @include graphics.shader
  -- @require graphics.Canvas
  -- @require graphics.DrawingCanvas
@@ -126,8 +128,8 @@ token = {
  -- @require exceptions.ThreadRuntimeException
 
  -- @require interfaces.ICollatedChildren
- -- @require interfaces.IChildContainer
  -- @require interfaces.IQueryable
+ -- @require interfaces.IChildContainer
  -- @require interfaces.ITagged
  -- @require interfaces.ISize
 
@@ -147,7 +149,6 @@ token = {
  -- @require core.QueryTracker
  -- @require core.Screen
  -- @require core.Sheet
- -- @require core.Style
  -- @require core.Thread
  -- @require core.Transition
  -- @require core.ValueHandler

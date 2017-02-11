@@ -7,6 +7,9 @@ local wrapline, wrap
 interface "IHasText" {
 	text = "";
 	text_lines = nil;
+	horizontal_alignment = ALIGNMENT_LEFT;
+	vertical_alignment = ALIGNMENT_TOP;
+	text_colour = WHITE;
 }
 
 function IHasText:IHasText()
@@ -36,8 +39,8 @@ function IHasText:draw_text( mode )
 	local offset, lines = 0, self.text_lines
 	mode = mode or "default"
 
-	local horizontal_alignment = self.style:get( "horizontal-alignment." .. mode )
-	local vertical_alignment = self.style:get( "vertical-alignment." .. mode )
+	local horizontal_alignment = self.horizontal_alignment
+	local vertical_alignment = self.vertical_alignment
 
 	if not lines then
 		self:wrap_text()
@@ -61,7 +64,7 @@ function IHasText:draw_text( mode )
 
 		self.canvas:draw_text( x_offset, offset + i - 1, lines[i], {
 			colour = 0;
-			text_colour = self.style:get( "text-colour." .. mode );
+			text_colour = self.text_colour;
 		} )
 
 	end
