@@ -8,6 +8,6 @@ interface "ISize" {
 }
 
 function ISize:ISize()
-	self.values:add( "width", 0, { update_canvas_width = true } )
-	self.values:add( "height", 0, { update_canvas_height = true } )
+	self.values:add( "width", 0, { update_surface_size = true } )
+	self.values:add( "height", 0, { update_surface_size = true } )
 end

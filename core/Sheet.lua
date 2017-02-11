@@ -16,7 +16,6 @@ class "Sheet"
 
 	-- internal
 	changed = true;
-	canvas = nil;
 	cursor_x = 0;
 	cursor_y = 0;
 	cursor_colour = 0;
@@ -31,14 +30,10 @@ function Sheet:Sheet( x, y, width, height )
 	if y ~= nil then self:set_y( y ) end
 	if width ~= nil then self:set_width( width ) end
 	if height ~= nil then self:set_height( height ) end
-
-	self.canvas:set_width( self.width )
-	self.canvas:set_height( self.height )
 end
 
 function Sheet:initialise()
 	self.values = ValueHandler( self )
-	self.canvas = DrawingCanvas( 1, 1 )
 
 	self:ITagged()
 	self:ISize()
@@ -114,26 +109,8 @@ function Sheet:update( dt )
 	end
 end
 
-function Sheet:draw()
-	if self.changed then
-		local cx, cy, cc
-
-		self:reset_cursor_blink()
-
-		if self.on_pre_draw then
-			self:on_pre_draw()
-		end
-
-		if cx then
-			self:set_cursor_blink( cx, cy, cc )
-		end
-
-		if self.on_post_draw then
-			self:on_post_draw()
-		end
-
-		self.changed = false
-	end
+function Sheet:draw( surface, x, y )
+	self.changed = false
 end
 
 function Sheet:handle( event )

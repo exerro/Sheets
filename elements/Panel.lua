@@ -11,6 +11,10 @@ function Panel:Panel( x, y, w, h )
 	return self:Sheet( x, y, w, h )
 end
 
-function Panel:on_pre_draw()
-	self.canvas:clear( self.colour )
+function Panel:draw( canvas, x, y )
+	if self.changed then
+		self:reset_cursor_blink()
+		self.canvas:clear( self.colour )
+		self.changed = false
+	end
 end

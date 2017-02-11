@@ -20,9 +20,10 @@ function Button:Button( x, y, width, height, text )
 	end
 end
 
-function Button:on_pre_draw()
-	self.canvas:clear( self.down and self.colour_pressed or self.colour )
-	self:draw_text( self.down and "pressed" or "default" )
+function Button:draw( surface, x, y )
+	surface:fillRect( x, y, self.width, self.height, self.down and self.colour_pressed or self.colour )
+	self:draw_text( surface, x, y )
+	self.changed = false
 end
 
 function Button:on_mouse_event( event )

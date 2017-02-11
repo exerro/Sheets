@@ -1,18 +1,9 @@
 
  -- @defineifndef SHEETS_LOWRES true
- -- @defineifndef SHEETS_DEFAULT_TRANSITION_TIME .3
- -- @defineifndef SHEETS_DEFAULT_TRANSITION_EASING "transition"
  -- @defineifndef SHEETS_MINIFY
- -- @defineifndef SHEETS_PARSING
- -- @defineifndef SHEETS_DYNAMIC
- -- @defineifndef SHEETS_DYNAMIC_PARSING
  -- @defineifndef SHEETS_SML false
  -- @defineifndef SHEETS_WRAP false
  -- @defineifndef SHEETS_EXTERNAL false
-
- -- @if SHEETS_DYNAMIC_PARSING
-	-- @error "dynamic value parsing is not yet implemented"
- -- @endif
 
  -- @if SHEETS_SML
 	-- @error "SML is not yet implemented"
@@ -58,17 +49,6 @@ alignment = {
 	bottom = ALIGNMENT_BOTTOM;
 }
 
-area = {
-	box = GRAPHICS_AREA_BOX;
-	circle = GRAPHICS_AREA_CIRCLE;
-	line = GRAPHICS_AREA_LINE;
-	vline = GRAPHICS_AREA_VLINE;
-	hline = GRAPHICS_AREA_HLINE;
-	fill = GRAPHICS_AREA_FILL;
-	point = GRAPHICS_AREA_POINT;
-	ccircle = GRAPHICS_AREA_CCIRCLE;
-}
-
 colour = {
 	transparent = TRANSPARENT;
 	white = WHITE;
@@ -106,18 +86,7 @@ token = {
  -- @require lib.query_utils
  -- @require lib.timer
 
- -- @ifn SHEETS_LOWRES
-	 -- @require graphics.Font
-	GRAPHICS_DEFAULT_FONT = Font()
- -- @endif
-
  -- @include surface2
-
- -- @include graphics.shader
- -- @require graphics.Canvas
- -- @require graphics.DrawingCanvas
- -- @require graphics.ScreenCanvas
- -- @require graphics.image
 
  -- @require enum.Easing
 

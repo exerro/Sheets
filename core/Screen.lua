@@ -13,7 +13,7 @@ class "Screen"
 	terminals = {};
 	monitors = {};
 
-	canvas = nil;
+	surface = nil;
 	changed = true;
 	values = nil;
 }
@@ -22,7 +22,7 @@ function Screen:Screen( application, width, height )
 	self.parent = application
 	self.terminals = {}
 	self.monitors = {}
-	self.canvas = ScreenCanvas( width, height )
+	self.surface = surface.create( 0, 0 )
 	self.application = application
 	self.values = ValueHandler( self )
 
@@ -86,7 +86,7 @@ function Screen:add_terminal( t )
 	parameters.check( 1, "terminal", "table", t )
 
 	self.terminals[#self.terminals + 1] = t
-	self.canvas:reset()
+	self.surface:clear()
 
 	return self:set_changed()
 end
@@ -107,11 +107,11 @@ end
 function Screen:draw()
 	if self.changed then
 
-		local canvas = self.canvas
+		local surface = self.surface
 		local children = {}
 		local cx, cy, cc
 
-		canvas:clear()
+		surface:clear( WHITE )
 
 		for i = 1, #self.children do
 			children[i] = self.children[i]
@@ -121,8 +121,7 @@ function Screen:draw()
 			local child = children[i]
 
 			if child:is_visible() then
-				child:draw()
-				child.canvas:draw_to( canvas, child.x, child.y )
+				child:draw( self.surface, child.x, child.y )
 
 				if child.cursor_active then
 					cx, cy, cc = child.x + child.cursor_x, child.y + child.cursor_y, child.cursor_colour
@@ -130,7 +129,9 @@ function Screen:draw()
 			end
 		end
 
-		canvas:draw_to_terminals( self.terminals )
+		for i = 1, #self.terminals do
+			surface:output( self.terminals[i] )
+		end
 
 		self.changed = false
 		for i = 1, #self.terminals do

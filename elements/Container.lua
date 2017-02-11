@@ -6,6 +6,11 @@
 
 class "Container" extends "Sheet" implements "IChildContainer" {
 	colour = 0;
+	offset_x = 0;
+	offset_y = 0;
+
+	on_pre_draw = nil;
+	on_post_draw = nil;
 }
 
 function Container:Container( x, y, w, h )
@@ -13,6 +18,7 @@ function Container:Container( x, y, w, h )
 	self:ICollatedChildren()
 	self:IQueryable()
 	self:IChildContainer()
+
 	return self:Sheet( x, y, w, h )
 end
 
@@ -30,41 +36,37 @@ function Container:update( dt )
 	end
 end
 
-function Container:draw()
-	if self.changed then
+function Container:draw( surface, x, y )
+	local children = self.children
+	local cx, cy, cc
+	local offset_x, offset_y = self.offset_x, self.offset_y
 
-		local children = self.children
-		local cx, cy, cc
+	self:reset_cursor_blink()
 
-		self:reset_cursor_blink()
-		self.canvas:clear( self.colour )
+	if self.on_pre_draw then
+		self:on_pre_draw()
+	end
 
-		if self.on_pre_draw then
-			self:on_pre_draw()
-		end
+	for i = 1, #children do
+		local child = children[i]
+		if child:is_visible() then
+			child:draw( surface, x + child.x + offset_x, y + child.y + offset_y )
 
-		for i = 1, #children do
-			local child = children[i]
-			if child:is_visible() then
-				child:draw()
-				child.canvas:draw_to( self.canvas, child.x, child.y )
-
-				if child.cursor_active then
-					cx, cy, cc = child.x + child.cursor_x, child.y + child.cursor_y, child.cursor_colour
-				end
+			if child.cursor_active then
+				cx, cy, cc = child.x + child.cursor_x, child.y + child.cursor_y, child.cursor_colour
 			end
 		end
-
-		if cx then
-			self:set_cursor_blink( cx, cy, cc )
-		end
-
-		if self.on_post_draw then
-			self:on_post_draw()
-		end
-
-		self.changed = false
 	end
+
+	if cx then
+		self:set_cursor_blink( cx, cy, cc )
+	end
+
+	if self.on_post_draw then
+		self:on_post_draw()
+	end
+
+	self.changed = false
 end
 
 function Container:handle( event )

@@ -136,12 +136,8 @@ function Codegen.dynamic_property_setter( property, options )
 	local t3 = {}
 	local t4 = {}
 
-	if options.update_canvas_width then
-		t4[#t4 + 1] = "self.canvas:set_width( self.width )"
-		self_changed = true
-	end
-	if options.update_canvas_height then
-		t4[#t4 + 1] = "self.canvas:set_height( self.height )"
+	if options.update_surface_size then
+		t4[#t4 + 1] = "if self.surface then self.surface = surface.create( self.width, self.height ) end"
 		self_changed = true
 	end
 
