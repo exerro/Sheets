@@ -108,7 +108,8 @@ local function wait_for_property( property, callback )
 end
 ]]
 
-local GENERIC_SETTER = [[return function( self, value )
+local GENERIC_SETTER = [[
+return function( self, value )
 	self.values:respawn PROPERTY_QUOTED
 	self[RAW_PROPERTY] = value
 
@@ -149,6 +150,68 @@ local GENERIC_SETTER = [[return function( self, value )
 			ONCHANGE
 
 			return self.values:trigger PROPERTY_QUOTED
+		end
+	end
+
+	if not parser.stream:is_EOF() then
+		error "TODO: fix this error"
+	end
+
+	setter_f, initialiser_f = Codegen.dynamic_value( value_parsed, lifetime, parser.environment, self, update )
+
+	initialiser_f()
+	update()
+
+	return self
+end]]
+
+local TRANSITIONED_SETTER = [[
+return function( self, value )
+	self.values:respawn PROPERTY_QUOTED
+	self[RAW_PROPERTY] = value
+
+	if type( value ) ~= "string" then
+		-- do type check
+
+		if self[TRANSITION_PROPERTY_QUOTED] ~= Transition.none then
+			ANIMATE!
+		else
+			self[PROPERTY_QUOTED] = value
+			ONCHANGE
+			self.values:trigger PROPERTY_QUOTED
+		end
+
+		return self
+	end
+
+	VALUE_MODIFICATION
+
+	local parser = DynamicValueParser( Stream( value ) )
+
+	parser:set_context( "enable_queries", true )
+
+	ENV_MODIFICATION
+
+	local value_parsed = parser:parse_expression()
+		or error "TODO: fix this error"
+
+	AST_MODIFICATION
+
+	local lifetime = self.values.lifetimes[PROPERTY_QUOTED]
+	local default  = self.values.defaults[PROPERTY_QUOTED]
+	local setter_f, initialiser_f
+
+	local function update()
+		local val = setter_f( self ) or default
+
+		if val ~= self[PROPERTY_QUOTED] then
+			if self[TRANSITION_PROPERTY_QUOTED] ~= Transition.none then
+				ANIMATE!
+			else
+				self[PROPERTY_QUOTED] = val
+				ONCHANGE
+				return self.values:trigger PROPERTY_QUOTED
+			end
 		end
 	end
 

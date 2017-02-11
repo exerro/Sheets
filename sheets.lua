@@ -116,6 +116,8 @@ token = {
  -- @require graphics.DrawingCanvas
  -- @require graphics.ScreenCanvas
  -- @require graphics.image
+ 
+ -- @require enum.Easing
 
  -- @require exceptions.Exception
  -- @require exceptions.IncorrectParameterException
@@ -148,6 +150,7 @@ token = {
  -- @require core.Sheet
  -- @require core.Style
  -- @require core.Thread
+ -- @require core.Transition
  -- @require core.ValueHandler
 
  -- @if SHEETS_BUTTON
