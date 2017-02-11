@@ -4,13 +4,16 @@
 
 class "Screen"
 	implements "IChildContainer"
+	implements "ITagged"
 	implements "ISize"
 {
+	parent = nil;
+
+	-- internal
 	terminals = {};
 	monitors = {};
 
 	canvas = nil;
-	parent = nil;
 	changed = true;
 	values = nil;
 }
@@ -25,6 +28,7 @@ function Screen:Screen( application, width, height )
 
 	self:ICollatedChildren()
 	self:IChildContainer()
+	self:ITagged()
 	self:ISize()
 
 	self:set_width( width )

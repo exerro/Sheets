@@ -4,14 +4,13 @@
 
 class "Sheet"
 	implements "IChildContainer"
+	implements "ITagged"
 	implements "ISize"
 {
 	x = 0;
 	y = 0;
 	z = 0;
 
-	id = "ID";
-	tags = nil;
 	style = nil;
 
 	parent = nil;
@@ -29,10 +28,10 @@ class "Sheet"
 }
 
 function Sheet:Sheet( x, y, width, height )
-	self:set_x( x )
-	self:set_y( y )
-	self:set_width( width )
-	self:set_height( height )
+	if x ~= nil then self:set_x( x ) end
+	if y ~= nil then self:set_y( y ) end
+	if width ~= nil then self:set_width( width ) end
+	if height ~= nil then self:set_height( height ) end
 
 	self.canvas:set_width( self.width )
 	self.canvas:set_height( self.height )
@@ -41,10 +40,10 @@ end
 function Sheet:initialise()
 	self.values = ValueHandler( self )
 	self.canvas = DrawingCanvas( 1, 1 )
-	self.tags = {}
 
 	self:ICollatedChildren()
 	self:IChildContainer()
+	self:ITagged()
 	self:ISize()
 	self.style = Style( self )
 
@@ -62,40 +61,6 @@ function Sheet:initialise()
 			return self:remove()
 		end
 	end )
-end
-
-function Sheet:add_tag( tag )
-	self.tags[tag] = true
-
-	if self.parent then
-		self.parent:child_value_changed( self )
-	end
-
-	return self
-end
-
-function Sheet:remove_tag( tag )
-	self.tags[tag] = nil
-
-	if self.parent then
-		self.parent:child_value_changed( self )
-	end
-
-	return self
-end
-
-function Sheet:has_tag( tag )
-	return self.tags[tag] or false
-end
-
-function Sheet:set_ID( id ) -- TODO: make this a dynamic property
-	self.id = tostring( id )
-
-	if self.parent then
-		self.parent:child_value_changed( self )
-	end
-
-	return self
 end
 
 function Sheet:set_style( style, children ) -- TODO: replace with application theming system

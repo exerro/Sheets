@@ -128,6 +128,7 @@ token = {
  -- @require interfaces.ICollatedChildren
  -- @require interfaces.IChildContainer
  -- @require interfaces.IQueryable
+ -- @require interfaces.ITagged
  -- @require interfaces.ISize
 
  -- @require events.Event
