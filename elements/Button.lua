@@ -2,23 +2,34 @@
  -- @once
  -- @print Including sheets.elements.Button
 
-class "Button" extends "Sheet" implements "IHasText" {
+class "Button" extends "Sheet" implements "IHasText" implements "IColoured" {
 	down = false;
+	colour = CYAN;
+	active_colour = LIGHTBLUE;
+	horizontal_alignment = ALIGNMENT_CENTRE;
+	vertical_alignment = ALIGNMENT_CENTRE;
 }
 
 function Button:Button( x, y, width, height, text )
 	self:initialise()
 	self:IHasText()
+	self:IColoured()
+	self.values:add( "active_colour", LIGHTBLUE )
 	self:Sheet( x, y, width, height )
+
+	self:set_colour( CYAN )
+	self:set_horizontal_alignment( ALIGNMENT_CENTRE )
+	self:set_vertical_alignment( ALIGNMENT_CENTRE )
 
 	if text then
 		self:set_text( text )
 	end
 end
 
-function Button:on_pre_draw()
-	self.canvas:clear( self.down and self.style:get "colour.pressed" or self.style:get "colour" )
-	self:draw_text( self.down and "pressed" or "default" )
+function Button:draw( surface, x, y )
+	surface:fillRect( x, y, self.width, self.height, self.down and self.active_colour or self.colour, WHITE, " " )
+	self:draw_text( surface, x, y )
+	self.changed = false
 end
 
 function Button:on_mouse_event( event )
@@ -47,14 +58,3 @@ function Button:on_mouse_event( event )
 		event:handle()
 	end
 end
-
-Style.add_to_template( Button, {
-	["colour"] = CYAN;
-	["colour.pressed"] = LIGHTBLUE;
-	["text-colour"] = WHITE;
-	["text-colour.pressed"] = WHITE;
-	["horizontal-alignment"] = ALIGNMENT_CENTRE;
-	["horizontal-alignment.pressed"] = ALIGNMENT_CENTRE;
-	["vertical-alignment"] = ALIGNMENT_CENTRE;
-	["vertical-alignment.pressed"] = ALIGNMENT_CENTRE;
-} )

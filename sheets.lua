@@ -1,25 +1,16 @@
 
  -- @defineifndef SHEETS_LOWRES true
- -- @defineifndef SHEETS_DEFAULT_TRANSITION_TIME .3
- -- @defineifndef SHEETS_DEFAULT_TRANSITION_EASING "transition"
- -- @defineifndef SHEETS_MINIFY
- -- @defineifndef SHEETS_PARSING
- -- @defineifndef SHEETS_DYNAMIC
- -- @defineifndef SHEETS_DYNAMIC_PARSING
+ -- @defineifndef SHEETS_MINIFY false
  -- @defineifndef SHEETS_SML false
  -- @defineifndef SHEETS_WRAP false
  -- @defineifndef SHEETS_EXTERNAL false
-
- -- @if SHEETS_DYNAMIC_PARSING
-	-- @error "dynamic value parsing is not yet implemented"
- -- @endif
 
  -- @if SHEETS_SML
 	-- @error "SML is not yet implemented"
  -- @endif
 
  -- @once
- -- @print Including sheets (minify: $SHEETS_MINIFY, low resolution: $SHEETS_LOWRES, dynamic-values: $SHEETS_DYNAMIC (expressions: $SHEETS_DYNAMIC_PARSING), sml: $SHEETS_SML)
+ -- @print Including sheets (minify: $SHEETS_MINIFY, low resolution: $SHEETS_LOWRES, sml: $SHEETS_SML)
 
  -- @define SHEETS_EXCEPTION_ERROR "SHEETS_EXCEPTION\n_put code in a try block to catch the exception."
 
@@ -29,9 +20,7 @@
 	local env = setmetatable( {}, { __index = _ENV } )
 	local function f()
 		local _ENV = env
-		if setfenv then
-			setfenv( 1, env )
-		end
+		if setfenv then setfenv( 1, env ) end
  -- @endif
 
 event = {
@@ -56,17 +45,6 @@ alignment = {
 	right = ALIGNMENT_RIGHT;
 	top = ALIGNMENT_TOP;
 	bottom = ALIGNMENT_BOTTOM;
-}
-
-area = {
-	box = GRAPHICS_AREA_BOX;
-	circle = GRAPHICS_AREA_CIRCLE;
-	line = GRAPHICS_AREA_LINE;
-	vline = GRAPHICS_AREA_VLINE;
-	hline = GRAPHICS_AREA_HLINE;
-	fill = GRAPHICS_AREA_FILL;
-	point = GRAPHICS_AREA_POINT;
-	ccircle = GRAPHICS_AREA_CCIRCLE;
 }
 
 colour = {
@@ -106,16 +84,7 @@ token = {
  -- @require lib.query_utils
  -- @require lib.timer
 
- -- @ifn SHEETS_LOWRES
-	 -- @require graphics.Font
-	GRAPHICS_DEFAULT_FONT = Font()
- -- @endif
-
- -- @include graphics.shader
- -- @require graphics.Canvas
- -- @require graphics.DrawingCanvas
- -- @require graphics.ScreenCanvas
- -- @require graphics.image
+ -- @include surface2
 
  -- @require enum.Easing
 
@@ -126,8 +95,9 @@ token = {
  -- @require exceptions.ThreadRuntimeException
 
  -- @require interfaces.ICollatedChildren
- -- @require interfaces.IChildContainer
+ -- @require interfaces.IColoured
  -- @require interfaces.IQueryable
+ -- @require interfaces.IChildContainer
  -- @require interfaces.ITagged
  -- @require interfaces.ISize
 
@@ -147,10 +117,11 @@ token = {
  -- @require core.QueryTracker
  -- @require core.Screen
  -- @require core.Sheet
- -- @require core.Style
  -- @require core.Thread
  -- @require core.Transition
  -- @require core.ValueHandler
+
+ -- @require elements.Container
 
  -- @if SHEETS_BUTTON
 	 -- @require interfaces.IHasText
@@ -159,8 +130,8 @@ token = {
  -- @if SHEETS_CHECKBOX
 	 -- @/require elements.Checkbox
  -- @endif
- -- @if SHEETS_CONTAINER
-	 -- @require elements.Container
+ -- @if SHEETS_CLIPPEDCONTAINER
+	 -- @require elements.ClippedContainer
  -- @endif
  -- @if SHEETS_DRAGGABLE
  	 -- @/require interfaces.IHasText

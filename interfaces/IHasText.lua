@@ -7,6 +7,9 @@ local wrapline, wrap
 interface "IHasText" {
 	text = "";
 	text_lines = nil;
+	horizontal_alignment = ALIGNMENT_LEFT;
+	vertical_alignment = ALIGNMENT_TOP;
+	text_colour = WHITE;
 }
 
 function IHasText:IHasText()
@@ -16,6 +19,9 @@ function IHasText:IHasText()
 	end
 
 	self.values:add( "text", "" )
+	self.values:add( "text_colour", WHITE )
+	self.values:add( "horizontal_alignment", ALIGNMENT_LEFT )
+	self.values:add( "vertical_alignment", ALIGNMENT_TOP )
 	self.values:subscribe( "width", {}, wrap )
 	self.values:subscribe( "text", {}, wrap )
 end
@@ -32,12 +38,11 @@ function IHasText:wrap_text( ignore_height )
 	self.text_lines = wrap( self.text, self.width, not ignore_height and self.height )
 end
 
-function IHasText:draw_text( mode )
+function IHasText:draw_text( surface, x, y )
 	local offset, lines = 0, self.text_lines
-	mode = mode or "default"
 
-	local horizontal_alignment = self.style:get( "horizontal-alignment." .. mode )
-	local vertical_alignment = self.style:get( "vertical-alignment." .. mode )
+	local horizontal_alignment = self.horizontal_alignment
+	local vertical_alignment = self.vertical_alignment
 
 	if not lines then
 		self:wrap_text()
@@ -59,10 +64,7 @@ function IHasText:draw_text( mode )
 			x_offset = self.width - #lines[i]
 		end
 
-		self.canvas:draw_text( x_offset, offset + i - 1, lines[i], {
-			colour = 0;
-			text_colour = self.style:get( "text-colour." .. mode );
-		} )
+		surface:drawString( x + x_offset, y + offset + i - 1, lines[i], TRANSPARENT, self.text_colour )
 
 	end
 end

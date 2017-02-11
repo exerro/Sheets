@@ -19,16 +19,7 @@
  -- @define ALIGNMENT_TOP 3
  -- @define ALIGNMENT_BOTTOM 4
 
- -- @define GRAPHICS_AREA_BOX 0
- -- @define GRAPHICS_AREA_CIRCLE 1
- -- @define GRAPHICS_AREA_LINE 2
- -- @define GRAPHICS_AREA_VLINE 3
- -- @define GRAPHICS_AREA_HLINE 4
- -- @define GRAPHICS_AREA_FILL 5
- -- @define GRAPHICS_AREA_POINT 6
- -- @define GRAPHICS_AREA_CCIRCLE 7
-
- -- @define TRANSPARENT 0
+ -- @define TRANSPARENT nil
  -- @define WHITE 1
  -- @define ORANGE 2
  -- @define MAGENTA 4
@@ -97,8 +88,8 @@
  -- @if SHEETS_CORE_ELEMENTS
 	 -- @define SHEETS_BUTTON
 	 -- @define SHEETS_CHECKBOX
+	 -- @define SHEETS_CLIPPEDCONTAINER
 	 -- @define SHEETS_COLOURSELECTOR
-	 -- @define SHEETS_CONTAINER
 	 -- @define SHEETS_DRAGGABLE
 	 -- @define SHEETS_IMAGE
 	 -- @define SHEETS_KEYHANDLER

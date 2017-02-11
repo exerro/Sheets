@@ -15,21 +15,27 @@ function ICollatedChildren:update_collated( mode, child, data )
 
 	if mode == "child-added" then
 		if data == self then
-			for i = 1, #child.collated_children do
-				collated[#collated + 1] = child.collated_children[i]
+			if child:implements( ICollatedChildren ) then
+				for i = 1, #child.collated_children do
+					collated[#collated + 1] = child.collated_children[i]
+				end
 			end
 
 			collated[#collated + 1] = child
 		else
 			for i = #collated, 1, -1 do
 				if collated[i] == data then
-					i = i - 1 -- so that i + n starts with just i
+					if child:implements( ICollatedChildren ) then
+						i = i - 1 -- so that i + n starts with just i
 
-					for n = 1, #child.collated_children do
-						table.insert( collated, i + n, child.collated_children[n] )
+						for n = 1, #child.collated_children do
+							table.insert( collated, i + n, child.collated_children[n] )
+						end
+
+						table.insert( collated, i + #child.collated_children + 1, child )
+					else
+						table.insert( collated, i, child )
 					end
-
-					table.insert( collated, i + #child.collated_children + 1, child )
 				end
 			end
 		end
@@ -38,7 +44,7 @@ function ICollatedChildren:update_collated( mode, child, data )
 			self.parent:update_collated( "child-added", child, data )
 		end
 	elseif mode == "child-removed" then
-		local open, close = child.collated_children[1] or child, child
+		local open, close = child:implements( ICollatedChildren ) and child.collated_children[1] or child, child
 		local removing = false
 
 		for i = #collated, 1, -1 do

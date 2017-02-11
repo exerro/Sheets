@@ -13,8 +13,13 @@ local supported_meta_methods = { __add = true, __sub = true, __mul = true, __div
 local function _tostring( self )
 	return "[Class] " .. self:type()
 end
+
 local function _concat( a, b )
 	return tostring( a ) .. tostring( b )
+end
+
+local function generic_instance_tostring( self )
+	return "[Instance] " .. self:type()
 end
 
 local function construct( t )
@@ -91,10 +96,12 @@ function classobj:new( ... )
 		return self.class:type_of( class )
 	end
 
+	function instance:implements( interface )
+		return self.class:implements( interface )
+	end
+
 	if not self.tostring then
-		function instance:tostring()
-			return "[Instance] " .. self:type()
-		end
+		instance.tostring = generic_instance_tostring
 	end
 
 	local ob = self
@@ -123,6 +130,10 @@ function classobj:type_of( super )
 	return super == self or ( self.super and self.super:type_of( super ) ) or false
 end
 
+function classobj:implements( interface )
+	return self.__interface_list[interface] == true
+end
+
 function class:new( name )
 
 	if type( name or self ) ~= "string" then
@@ -130,7 +141,7 @@ function class:new( name )
 	end
 
 	local mt = { __index = classobj, __CLASS = true, __tostring = _tostring, __concat = _concat, __call = classobj.new, __type = name or self }
-	local obj = setmetatable( { meta = mt }, mt )
+	local obj = setmetatable( { meta = mt, __interface_list = {} }, mt )
 
 	names[name] = obj
 	last_created = obj
@@ -210,7 +221,7 @@ function extends( name )
 end
 
 function interface( name )
-	interfaces[name] = {}
+	interfaces[name] = { __interface_list = {} }
 	environment[name] = interfaces[name]
 	last_created = interfaces[name]
 	return function( t )
@@ -219,6 +230,7 @@ function interface( name )
 		end
 		environment[name] = t
 		interfaces[name] = t
+		t.__interface_list = {}
 	end
 end
 
@@ -230,7 +242,24 @@ function implements( name )
 	end
 
 	for k, v in pairs( interfaces[name] ) do
-		last_created[k] = v
+		if k ~= "__interface_list" then
+			last_created[k] = v
+		end
+	end
+
+	local t = { interfaces[name] }
+	local i = 1
+	local __interface_list = last_created.__interface_list
+	while t[i] do
+		__interface_list[t[i]] = true
+
+		for k, v in pairs( t[i].__interface_list ) do
+			if not __interface_list[k] then
+				t[#t + 1] = k
+			end
+		end
+
+		i = i + 1
 	end
 
 	return construct
