@@ -167,6 +167,7 @@ function Sheet:update( dt )
 	local children = self:get_children()
 
 	self:update_animations( dt )
+	self.values:update( dt )
 
 	if self.on_update then
 		self:on_update( dt )

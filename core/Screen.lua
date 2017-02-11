@@ -163,9 +163,13 @@ end
 
 function Screen:update( dt )
 	local children = {}
+
+	self.values:update( dt )
+
 	for i = 1, #self.children do
 		children[i] = self.children[i]
 	end
+
 	for i = 1, #children do
 		children[i]:update( dt )
 	end

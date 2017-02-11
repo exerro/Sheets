@@ -2,6 +2,8 @@
  -- @once
  -- @print Including sheets.core.ValueHandler
 
+local floor = math.floor
+
 class "ValueHandler" {
 	object = nil;
 	lifetimes = {};
@@ -9,6 +11,8 @@ class "ValueHandler" {
 	subscriptions = {};
 	defaults = {};
 	removed_lifetimes = {};
+	transitions = {};
+	transitions_lookup = {};
 
 	integer_type = "integer";
 	boolean_type = "boolean";
@@ -23,6 +27,8 @@ function ValueHandler:ValueHandler( object )
 	self.subscriptions = {}
 	self.defaults = {}
 	self.removed_lifetimes = {}
+	self.transitions = {}
+	self.transitions_lookup = {}
 
 	function object:set( t )
 		for k, v in pairs( t ) do
@@ -125,4 +131,54 @@ function ValueHandler:child_inserted()
 	end
 
 	self.removed_lifetimes = {}
+end
+
+function ValueHandler:transition( property, final, transition )
+	local index = self.transitions_lookup[property] or #self.transitions + 1
+	local floored = false -- TODO: make this respect the property
+
+	if self.values[property] == ValueHandler.integer_type then
+		floored = true
+	elseif self.values[property] ~= ValueHandler.number_type then
+		Exception.throw( Exception, "Cannot animate non-number property '" .. property .. "'" )
+	end
+
+	final = floored and floor( final + 0.5 ) or final
+
+	if transition ~= Transition.none then
+		self.transitions_lookup[property] = index
+		self.transitions[index] = {
+			property = property;
+			initial = self.object[property];
+			final = final;
+			diff = final - self.object[property];
+			duration = transition.duration;
+			clock = 0;
+			easing = transition.easing_function;
+			floored = floored;
+		}
+	else
+		if self.object[property] ~= val then
+			self.object[property] = val
+			self:trigger( property )
+		end
+	end
+end
+
+function ValueHandler:update( dt )
+	for i = #self.transitions, 1, -1 do
+		local trans = self.transitions[i]
+		trans.clock = trans.clock + dt
+
+		if trans.clock >= trans.duration then
+			self.object[trans.property] = trans.final
+			table.remove( self.transitions, i )
+			self.transitions_lookup[trans.property] = nil
+		else
+			local eased = trans.easing( trans.initial, trans.diff, trans.clock / trans.duration )
+			self.object[trans.property] = trans.floored and floor( eased + 0.5 ) or eased
+		end
+
+		self:trigger( trans.property )
+	end
 end
