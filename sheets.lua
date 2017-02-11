@@ -116,7 +116,7 @@ token = {
  -- @require graphics.DrawingCanvas
  -- @require graphics.ScreenCanvas
  -- @require graphics.image
- 
+
  -- @require enum.Easing
 
  -- @require exceptions.Exception
@@ -125,8 +125,6 @@ token = {
  -- @require exceptions.ResourceLoadException
  -- @require exceptions.ThreadRuntimeException
 
- -- @require interfaces.IAnimation
- -- @require interfaces.IAttributeAnimator
  -- @require interfaces.ICollatedChildren
  -- @require interfaces.IChildContainer
  -- @require interfaces.IQueryable

@@ -10,7 +10,7 @@ local node_query_internal, dynamic_value_internal
 class "Codegen" {}
 
 function Codegen.node_query( parsed_query )
-	return load( "local n=...return " .. node_query_internal( parsed_query, "n" ), "query" )
+	return assert( load( "local n=...return " .. node_query_internal( parsed_query, "n" ), "query" ) )
 end
 
 function Codegen.dynamic_value( parsed_value, lifetime, env, obj, updater )
@@ -24,7 +24,6 @@ function Codegen.dynamic_value( parsed_value, lifetime, env, obj, updater )
 		functions = functions;
 		inputs = inputs;
 	}
-	if not parsed_value then return error "here" end
 	local return_value = dynamic_value_internal( parsed_value, state )
 
 	local roots = {}
@@ -117,13 +116,6 @@ function Codegen.dynamic_value( parsed_value, lifetime, env, obj, updater )
 			.. table.concat( initialisers, "\n" )
 			.. (#initialisers == 0 and "" or "\n") .. "end")
 
-	do
-		local h = fs.open( "demo/log.txt", "w" )
-
-		h.write( code .. "\n" .. #roots_tocheck[1].dependencies )
-		h.close()
-	end
-
 	local fenv = getfenv and getfenv() and _ENV
 	local f, err = assert( (load or loadstring)( code, "dynamic value", nil, fenv ) )
 	local getter, initialiser = (setfenv and setfenv( f, fenv ) or f)( obj, lifetime, updater, unpack( inputs ) )
@@ -180,12 +172,6 @@ function Codegen.dynamic_property_setter( property, options )
 			return c.f
 		end
 	end
-
-	--[[
-	function( self )
-		ONCHANGE
-	end
-	]]
 
 	local change_code
 

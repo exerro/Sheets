@@ -31,7 +31,7 @@ class "Application" implements "IQueryable" {
 function Application:Application( name, path )
 	self.name = name
 	self.path = path or name
-	
+
 	self.screens = {}
 	self.resource_loaders = {}
 	self.extensions = {}
@@ -153,6 +153,7 @@ function Application:update_collated( mode, child, data )
 					if self.screens[i] then
 						data = self.screens[i].collated_children[1]
 					end
+
 					break
 				end
 			end

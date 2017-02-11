@@ -3,8 +3,6 @@
  -- @print Including sheets.core.Sheet
 
 class "Sheet"
-	implements "IAnimation"
-	implements "IAttributeAnimator"
 	implements "IChildContainer"
 	implements "ISize"
 {
@@ -45,7 +43,6 @@ function Sheet:initialise()
 	self.canvas = DrawingCanvas( 1, 1 )
 	self.tags = {}
 
-	self:IAnimation()
 	self:ICollatedChildren()
 	self:IChildContainer()
 	self:ISize()
@@ -166,7 +163,6 @@ end
 function Sheet:update( dt )
 	local children = self:get_children()
 
-	self:update_animations( dt )
 	self.values:update( dt )
 
 	if self.on_update then
