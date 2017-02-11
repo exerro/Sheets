@@ -2,10 +2,10 @@
  -- @once
  -- @print Including sheets.elements.Button
 
-class "Button" extends "Sheet" implements "IHasText" {
+class "Button" extends "Sheet" implements "IHasText" implements "IColoured" {
 	down = false;
 	colour = CYAN;
-	colour_pressed = LIGHTBLUE;
+	active_colour = LIGHTBLUE;
 	horizontal_alignment = ALIGNMENT_CENTRE;
 	vertical_alignment = ALIGNMENT_CENTRE;
 }
@@ -13,7 +13,13 @@ class "Button" extends "Sheet" implements "IHasText" {
 function Button:Button( x, y, width, height, text )
 	self:initialise()
 	self:IHasText()
+	self:IColoured()
+	self.values:add( "active_colour", LIGHTBLUE )
 	self:Sheet( x, y, width, height )
+
+	self:set_colour( CYAN )
+	self:set_horizontal_alignment( ALIGNMENT_CENTRE )
+	self:set_vertical_alignment( ALIGNMENT_CENTRE )
 
 	if text then
 		self:set_text( text )
@@ -21,7 +27,7 @@ function Button:Button( x, y, width, height, text )
 end
 
 function Button:draw( surface, x, y )
-	surface:fillRect( x, y, self.width, self.height, self.down and self.colour_pressed or self.colour, WHITE, " " )
+	surface:fillRect( x, y, self.width, self.height, self.down and self.active_colour or self.colour, WHITE, " " )
 	self:draw_text( surface, x, y )
 	self.changed = false
 end

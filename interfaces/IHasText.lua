@@ -19,6 +19,9 @@ function IHasText:IHasText()
 	end
 
 	self.values:add( "text", "" )
+	self.values:add( "text_colour", WHITE )
+	self.values:add( "horizontal_alignment", ALIGNMENT_LEFT )
+	self.values:add( "vertical_alignment", ALIGNMENT_TOP )
 	self.values:subscribe( "width", {}, wrap )
 	self.values:subscribe( "text", {}, wrap )
 end

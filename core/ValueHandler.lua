@@ -24,6 +24,8 @@ ValueHandler.integer_type = "integer";
 ValueHandler.boolean_type = "boolean";
 ValueHandler.number_type = "number";
 ValueHandler.string_type = "string";
+ValueHandler.colour_type = "colour";
+ValueHandler.alignment_type = "alignment";
 ValueHandler.optional_sheet_type = "sheet?";
 
 function ValueHandler:ValueHandler( object )
@@ -223,6 +225,13 @@ ValueHandler.properties.width = { type = ValueHandler.integer_type, change = "se
 ValueHandler.properties.height = { type = ValueHandler.integer_type, change = "self", transitionable = true }
 
 ValueHandler.properties.text = { type = ValueHandler.string_type, change = "self", transitionable = false }
+
+ValueHandler.properties.horizontal_alignment = { type = ValueHandler.alignment_type, change = "self", transitionable = false }
+ValueHandler.properties.vertical_alignment = { type = ValueHandler.alignment_type, change = "self", transitionable = false }
+
+ValueHandler.properties.colour = { type = ValueHandler.colour_type, change = "self", transitionable = false }
+ValueHandler.properties.text_colour = { type = ValueHandler.colour_type, change = "self", transitionable = false }
+ValueHandler.properties.active_colour = { type = ValueHandler.colour_type, change = "self", transitionable = false }
 
 ValueHandler.properties.parent = { type = ValueHandler.optional_sheet_type, change = "parent", transitionable = false }
 

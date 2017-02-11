@@ -95,6 +95,7 @@ token = {
  -- @require exceptions.ThreadRuntimeException
 
  -- @require interfaces.ICollatedChildren
+ -- @require interfaces.IColoured
  -- @require interfaces.IQueryable
  -- @require interfaces.IChildContainer
  -- @require interfaces.ITagged
