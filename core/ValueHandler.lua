@@ -4,6 +4,9 @@
 
 local floor = math.floor
 local get_transition_function
+local TRANSITION_FUNCTION_CODE
+local tfcache = {}
+local setf
 
 class "ValueHandler" {
 	object = nil;
@@ -33,17 +36,7 @@ function ValueHandler:ValueHandler( object )
 	self.transitions = {}
 	self.transitions_lookup = {}
 
-	function object:set( t )
-		for k, v in pairs( t ) do
-			if self["set_" .. k] then
-				self["set_" .. k]( self, v )
-			else
-				-- TODO: error or just ignore?
-			end
-		end
-
-		return self
-	end
+	object.set = setf
 end
 
 function ValueHandler:add( name, default, options )
@@ -59,7 +52,7 @@ function ValueHandler:add( name, default, options )
 	self.lifetimes[name] = {}
 
 	if ValueHandler.properties[name].transitionable then
-		self.object["set_" .. name .. "_transition"] = get_transition_function( property ) -- TODO: is this really needed?
+		self.object["set_" .. name .. "_transition"] = get_transition_function( name )
 		self.object[name .. "_transition"] = Transition.none
 	end
 end
@@ -158,7 +151,7 @@ function ValueHandler:transition( property, final, transition, custom_update )
 
 	final = floored and floor( final + 0.5 ) or final
 
-	if transition ~= Transition.none then
+	if transition ~= Transition.none and self.object.application then
 		self.transitions_lookup[property] = index
 		self.transitions[index] = {
 			property = property;
@@ -225,5 +218,27 @@ ValueHandler.properties.text = { type = ValueHandler.string_type, change = "self
 ValueHandler.properties.parent = { type = ValueHandler.optional_sheet_type, change = "parent", transitionable = false }
 
 function get_transition_function( name )
-	return nil
+	if not tfcache[name] then
+		tfcache[name] = (load or loadstring)( TRANSITION_FUNCTION_CODE:gsub( "PROPERTY", name ) )()
+	end
+
+	return tfcache[name]
 end
+
+function setf( self, t )
+	for k, v in pairs( t ) do
+		if self["set_" .. k] then
+			self["set_" .. k]( self, v )
+		else
+			-- TODO: error or just ignore?
+		end
+	end
+
+	return self
+end
+
+TRANSITION_FUNCTION_CODE = [[
+return function( self, value )
+	self.PROPERTY_transition = value
+	return self
+end]]
