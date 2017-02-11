@@ -117,14 +117,14 @@ token = {
  -- @require graphics.ScreenCanvas
  -- @require graphics.image
 
+ -- @require enum.Easing
+
  -- @require exceptions.Exception
  -- @require exceptions.IncorrectParameterException
  -- @require exceptions.IncorrectConstructorException
  -- @require exceptions.ResourceLoadException
  -- @require exceptions.ThreadRuntimeException
 
- -- @require interfaces.IAnimation
- -- @require interfaces.IAttributeAnimator
  -- @require interfaces.ICollatedChildren
  -- @require interfaces.IChildContainer
  -- @require interfaces.IQueryable
@@ -148,6 +148,7 @@ token = {
  -- @require core.Sheet
  -- @require core.Style
  -- @require core.Thread
+ -- @require core.Transition
  -- @require core.ValueHandler
 
  -- @if SHEETS_BUTTON

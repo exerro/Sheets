@@ -235,3 +235,12 @@ function implements( name )
 
 	return construct
 end
+
+function enum( name )
+	last_created = nil
+	return function( t )
+		environment[name] = setmetatable( {}, { __index = t, __newindex = function( t, k, v )
+			return error( "attempt to set enum index '" .. tostring( k ) .. "'" )
+		end } )
+	end
+end

@@ -57,7 +57,7 @@ function QueryTracker:untrack( ID )
 			end
 
 			self.lifetimes[ID] = nil
-			self.subscriptions[ID] = nil -- TODO: really?
+			self.subscriptions[ID] = nil
 
 			return table.remove( self.queries, i )
 		end

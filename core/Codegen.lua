@@ -1,12 +1,228 @@
 
 local property_cache = {}
 
-local SELF_INDEX_UPDATER = [[function FUNC()
+local CHANGECODE_NO_TRANSITION, CHANGECODE_TRANSITION, SELF_INDEX_UPDATER,
+      ARBITRARY_DOTINDEX_UPDATER, ARBITRARY_INDEX_UPDATER, DYNAMIC_QUERY_UPDATER,
+	  QUERY_UPDATER, GENERIC_SETTER
+
+local node_query_internal, dynamic_value_internal
+
+class "Codegen" {}
+
+function Codegen.node_query( parsed_query )
+	return assert( load( "local n=...return " .. node_query_internal( parsed_query, "n" ), "query" ) )
+end
+
+function Codegen.dynamic_value( parsed_value, lifetime, env, obj, updater )
+	local names = {}
+	local functions = {}
+	local inputs = {}
+	local state = {
+		environment = env;
+		object = obj;
+		names = names;
+		functions = functions;
+		inputs = inputs;
+	}
+	local return_value = dynamic_value_internal( parsed_value, state )
+
+	local roots = {}
+	local roots_tocheck = { return_value }
+	local i = 1
+	local func_compiled = {}
+	local initialisers = {}
+	local initialise_function
+	local input_names = {}
+
+	for i = 1, #inputs do
+		input_names[i] = "i" .. i
+	end
+
+	while i <= #roots_tocheck do
+		local t = roots_tocheck[i]
+		if #t.dependencies == 0 then
+			roots[#roots + 1] = t
+		else
+			local added = false
+			for n = 1, #t.dependencies do
+				if t.dependencies[n].update or t.dependencies[n].initialise then
+					roots_tocheck[#roots_tocheck + 1] = t.dependencies[n]
+					added = true
+				end
+			end
+			if not added then
+				roots[#roots + 1] = t
+			end
+		end
+		i = i + 1
+	end
+
+	for i = 1, #functions do
+		local dependants = {}
+		local tocheck = { functions[i].node }
+		local index = 1
+		local update_root = false
+
+		while index <= #tocheck do
+			if index ~= 1 then
+				dependants[#dependants + 1] = tocheck[index].update
+			end
+
+			if index == 1 or not tocheck[index].complex then
+				update_root = update_root or tocheck[index] == return_value
+
+				local idx = #tocheck
+				for n = 1, #tocheck[index].dependants do
+					tocheck[idx + n] = tocheck[index].dependants[n]
+				end
+			end
+
+			index = index + 1
+		end
+
+		if update_root then
+			dependants[#dependants + 1] = "updater()"
+		end
+
+		if dependants[1] then
+			dependants[#dependants] = "return " .. dependants[#dependants]
+		end
+
+		func_compiled[i] = functions[i].code:gsub( "DEPENDENCIES", table.concat( dependants, "\n" ) )
+	end
+
+	for i = 1, #roots do
+		initialisers[#initialisers + 1] = roots[i].initialise or roots[i].update
+	end
+
+	local s = initialisers[#initialisers]
+
+	if s and s:find "^f%d+%(%)" then
+		if #initialisers == 1 then
+			initialise_function = s:match "^f%d+"
+		else
+			initialisers[#initialisers] = "return " .. s
+		end
+	end
+
+	local code
+	     = "local self, lifetime, updater"
+			.. (#inputs > 0 and ", " .. table.concat( input_names, ", ") or "")
+			.. " = ...\n"
+	    .. (#names > 0 and "local " .. table.concat( names, ", " ) .. "\n" or "")
+		.. table.concat( func_compiled, "\n" ) .. "\n"
+		.. "return function() return " .. return_value.value .. " end, "
+		.. (initialise_function or "function()\n"
+			.. table.concat( initialisers, "\n" )
+			.. (#initialisers == 0 and "" or "\n") .. "end")
+
+	local fenv = getfenv and getfenv() and _ENV
+	local f, err = assert( (load or loadstring)( code, "dynamic value", nil, fenv ) )
+	local getter, initialiser = (setfenv and setfenv( f, fenv ) or f)( obj, lifetime, updater, unpack( inputs ) )
+
+	return getter, initialiser
+end
+
+function Codegen.dynamic_property_setter( property, options )
+	property_cache[property] = property_cache[property] or {}
+	options = options or {}
+
+	local self_changed = ValueHandler.properties[property].change == "self"
+	local parent_changed = ValueHandler.properties[property].change == "parent"
+	local ptype = ValueHandler.properties[property].type
+
+	local t1 = {}
+	local t2 = {}
+	local t3 = {}
+	local t4 = {}
+
+	if options.update_canvas_width then
+		t4[#t4 + 1] = "self.canvas:set_width( self.width )"
+		options.self_changed = true
+	end
+	if options.update_canvas_height then
+		t4[#t4 + 1] = "self.canvas:set_height( self.height )"
+		options.self_changed = true
+	end
+
+	if self_changed then
+		t4[#t4 + 1] = "if not self.changed then self:set_changed() end"
+	elseif parent_changed then
+		t4[#t4 + 1] = "if self.parent then self.parent:set_changed() end"
+	end
+
+	if self_changed or parent_changed then
+		t4[#t4 + 1] = "if self.parent then self.parent:child_value_changed( self ) end"
+	end
+
+	if ptype == ValueHandler.string_type then
+		t1[#t1 + 1] = "if value:sub( 1, 1 ) == '!' then value = value:sub( 2 ) else value = ('%q'):format( value ) end"
+	end
+
+	t4[#t4 + 1] = options.custom_update_code
+
+	local s4 = table.concat( t4, "\n" ) -- code to run on value update
+	local s3 = table.concat( t3, "\n" ) -- code to update the AST
+	local s2 = table.concat( t2, "\n" ) -- code to change the environment
+	local s1 = table.concat( t1, "\n" ) -- code to update the string value
+
+	for i = 1, #property_cache[property] do
+		local c = property_cache[property][i]
+		if c[1] == s1 and c[2] == s2 and c[3] == s3 and c[4] == s4 then
+			return c.f
+		end
+	end
+
+	local change_code
+
+	if ValueHandler.properties[property].transitionable then
+		change_code = CHANGECODE_TRANSITION
+
+		if s4 ~= "" then
+			change_code = change_code
+				:gsub( "CUSTOM_UPDATE", ", function( self )\n" .. s4 .. "\nend" )
+				:gsub( "PROPERTY_TRANSITION_QUOTED", ("%q"):format( property .. "_transition" ) )
+		end
+	else
+		change_code = CHANGECODE_NO_TRANSITION
+			:gsub( "ONCHANGE", s4 )
+	end
+
+	local prop_quoted = ("%q"):format( property )
+	local str = GENERIC_SETTER
+		:gsub( "CHANGECODE", change_code )
+		:gsub( "PROPERTY_QUOTED", ("%q"):format( property ) )
+		:gsub( "RAW_PROPERTY", ("%q"):format( "raw_" .. property ) )
+		:gsub( "VALUE_MODIFICATION", function() return s1 end )
+		:gsub( "ENV_MODIFICATION", function() return s2 end )
+		:gsub( "AST_MODIFICATION", function() return s3 end )
+		:gsub( "ONCHANGE", function() return s4 end )
+	local f = assert( (load or loadstring)( str, "property setter '" .. property .. "'", nil, _ENV ) )
+
+	if setfenv then
+		setfenv( f, getfenv() )
+	end
+
+	local fr = f()
+
+	property_cache[property][#property_cache[property] + 1] = { s1, s2, s3, s4, f = fr }
+
+	return fr
+end
+CHANGECODE_NO_TRANSITION = [[
+self[PROPERTY_QUOTED] = value
+ONCHANGE
+self.values:trigger PROPERTY_QUOTED]]
+
+CHANGECODE_TRANSITION = [[
+self.values:transition( PROPERTY_QUOTED, value, self[PROPERTY_TRANSITION_QUOTED]CUSTOM_UPDATE )]]
+
+SELF_INDEX_UPDATER = [[function FUNC()
 	NAME = self.INDEX
 	DEPENDENCIES
 end]]
 
-local ARBITRARY_DOTINDEX_UPDATER = [[do
+ARBITRARY_DOTINDEX_UPDATER = [[do
 	local function f0()
 		DEPENDENCIES
 	end
@@ -27,7 +243,7 @@ local ARBITRARY_DOTINDEX_UPDATER = [[do
 	end
 end]]
 
-local ARBITRARY_INDEX_UPDATER = [[do
+ARBITRARY_INDEX_UPDATER = [[do
 	local function f0()
 		NAME = OLDVALUE and OLDINDEX and OLDVALUE[OLDINDEX]
 		DEPENDENCIES
@@ -51,7 +267,7 @@ local ARBITRARY_INDEX_UPDATER = [[do
 	end
 end]]
 
-local DYNAMIC_QUERY_UPDATER = [[do
+DYNAMIC_QUERY_UPDATER = [[do
 	local elems, ID
 
 	local function f0()
@@ -76,7 +292,7 @@ local DYNAMIC_QUERY_UPDATER = [[do
 	end
 end]]
 
-local QUERY_UPDATER = [[function FUNC()
+QUERY_UPDATER = [[function FUNC()
 	local object = SOURCE
 
 	if object then
@@ -91,64 +307,41 @@ local QUERY_UPDATER = [[function FUNC()
 	end
 end]]
 
-local PROPERTY_WAIT = [[
-local function wait_for_property( property, callback )
-	if self[property] then
-		return callback()
-	end
-
-	local function f()
-		if self[property] then
-			self.values:unsubscribe( property, f )
-			return callback()
-		end
-	end
-
-	self.values:subscribe( property, lifetime, f )
-end
-]]
-
-local GENERIC_SETTER = [[return function( self, value )
-	self.values:respawn %q
-	self[%q] = value
+GENERIC_SETTER = [[
+return function( self, value )
+	self.values:respawn PROPERTY_QUOTED
+	self[RAW_PROPERTY] = value
 
 	if type( value ) ~= "string" then
 		-- do type check
-		self[%q] = value
 
-		%s
-
-		self.values:trigger %q
+		CHANGECODE
 
 		return self
 	end
 
-	%s
+	VALUE_MODIFICATION
 
 	local parser = DynamicValueParser( Stream( value ) )
 
 	parser:set_context( "enable_queries", true )
 
-	%s
+	ENV_MODIFICATION
 
 	local value_parsed = parser:parse_expression()
 		or error "TODO: fix this error"
 
-	%s
+	AST_MODIFICATION
 
-	local lifetime = self.values.lifetimes[%q]
-	local default  = self.values.defaults[%q]
+	local lifetime = self.values.lifetimes[PROPERTY_QUOTED]
+	local default  = self.values.defaults[PROPERTY_QUOTED]
 	local setter_f, initialiser_f
 
 	local function update()
-		local val = setter_f( self ) or default
+		local value = setter_f( self ) or default
 
-		if val ~= self[%q] then
-			self[%q] = val
-
-			%s
-
-			return self.values:trigger %q
+		if value ~= self[PROPERTY_QUOTED] then
+			CHANGECODE
 		end
 	end
 
@@ -164,7 +357,7 @@ local GENERIC_SETTER = [[return function( self, value )
 	return self
 end]]
 
-local function node_query_internal( query, name )
+function node_query_internal( query, name )
 	if query.type == QUERY_ID then
 		return ("%s.id=='%s'"):format( name, query.value )
 	elseif query.type == QUERY_TAG then
@@ -214,7 +407,7 @@ local function node_query_internal( query, name )
 	end
 end
 
-local function dynamic_value_internal( value, state )
+function dynamic_value_internal( value, state )
 	if not value then return error "here" end
 	if value.type == DVALUE_INTEGER
 	or value.type == DVALUE_FLOAT
@@ -529,191 +722,4 @@ local function dynamic_value_internal( value, state )
 		-- TODO: every other type of node
 		error "TODO: fix this error"
 	end
-end
-
-class "Codegen" {}
-
-function Codegen.node_query( parsed_query )
-	return load( "local n=...return " .. node_query_internal( parsed_query, "n" ), "query" )
-end
-
-function Codegen.dynamic_value( parsed_value, lifetime, env, obj, updater )
-	local names = {}
-	local functions = {}
-	local inputs = {}
-	local state = {
-		environment = env;
-		object = obj;
-		names = names;
-		functions = functions;
-		inputs = inputs;
-		property_wait = false;
-	}
-	if not parsed_value then return error "here" end
-	local return_value = dynamic_value_internal( parsed_value, state )
-
-	local roots = {}
-	local roots_tocheck = { return_value }
-	local i = 1
-	local func_compiled = {}
-	local initialisers = {}
-	local initialise_function
-	local input_names = {}
-
-	for i = 1, #inputs do
-		input_names[i] = "i" .. i
-	end
-
-	while i <= #roots_tocheck do
-		local t = roots_tocheck[i]
-		if #t.dependencies == 0 then
-			roots[#roots + 1] = t
-		else
-			local added = false
-			for n = 1, #t.dependencies do
-				if t.dependencies[n].update or t.dependencies[n].initialise then
-					roots_tocheck[#roots_tocheck + 1] = t.dependencies[n]
-					added = true
-				end
-			end
-			if not added then
-				roots[#roots + 1] = t
-			end
-		end
-		i = i + 1
-	end
-
-	for i = 1, #functions do
-		local dependants = {}
-		local tocheck = { functions[i].node }
-		local index = 1
-		local update_root = false
-
-		while index <= #tocheck do
-			if index ~= 1 then
-				dependants[#dependants + 1] = tocheck[index].update
-			end
-
-			if index == 1 or not tocheck[index].complex then
-				update_root = update_root or tocheck[index] == return_value
-
-				local idx = #tocheck
-				for n = 1, #tocheck[index].dependants do
-					tocheck[idx + n] = tocheck[index].dependants[n]
-				end
-			end
-
-			index = index + 1
-		end
-
-		if update_root then
-			dependants[#dependants + 1] = "updater()"
-		end
-
-		if dependants[1] then
-			dependants[#dependants] = "return " .. dependants[#dependants]
-		end
-
-		func_compiled[i] = functions[i].code:gsub( "DEPENDENCIES", table.concat( dependants, "\n" ) )
-	end
-
-	for i = 1, #roots do
-		initialisers[#initialisers + 1] = roots[i].initialise or roots[i].update
-	end
-
-	local s = initialisers[#initialisers]
-
-	if s and s:find "^f%d+%(%)" then
-		if #initialisers == 1 then
-			initialise_function = s:match "^f%d+"
-		else
-			initialisers[#initialisers] = "return " .. s
-		end
-	end
-
-	local code
-	     = "local self, lifetime, updater"
-			.. (#inputs > 0 and ", " .. table.concat( input_names, ", ") or "")
-			.. " = ...\n"
-	    .. (#names > 0 and "local " .. table.concat( names, ", " ) .. "\n" or "")
-		.. (state.property_wait and PROPERTY_WAIT or "")
-		.. table.concat( func_compiled, "\n" ) .. "\n"
-		.. "return function() return " .. return_value.value .. " end, "
-		.. (initialise_function or "function()\n"
-			.. table.concat( initialisers, "\n" )
-			.. (#initialisers == 0 and "" or "\n") .. "end")
-
-	do
-		local h = fs.open( "demo/log.txt", "w" )
-
-		h.write( code .. "\n" .. #roots_tocheck[1].dependencies )
-		h.close()
-	end
-
-	local fenv = getfenv and getfenv() and _ENV
-	local f, err = assert( (load or loadstring)( code, "dynamic value", nil, fenv ) )
-	local getter, initialiser = (setfenv and setfenv( f, fenv ) or f)( obj, lifetime, updater, unpack( inputs ) )
-
-	return getter, initialiser
-end
-
-function Codegen.dynamic_property_setter( property, options )
-	property_cache[property] = property_cache[property] or {}
-	options = options or {}
-	options.parent_changed = options.parent_changed == nil or options.parent_changed -- TODO: make this self_changed by default, more properties will update the element itself rather than just parent
-
-	local t1 = {}
-	local t2 = {}
-	local t3 = {}
-	local t4 = {}
-
-	if options.update_canvas_width then
-		t4[#t4 + 1] = "self.canvas:set_width( self.width )"
-		options.self_changed = true
-	end
-	if options.update_canvas_height then
-		t4[#t4 + 1] = "self.canvas:set_height( self.height )"
-		options.self_changed = true
-	end
-
-	if options.self_changed then
-		t4[#t4 + 1] = "if not self.changed then self:set_changed() end"
-	elseif options.parent_changed then
-		t4[#t4 + 1] = "if self.parent and not self.parent.changed then self.parent:set_changed() end"
-	end
-
-	if options.self_changed or options.parent_changed then
-		t4[#t4 + 1] = "if self.parent then self.parent:child_value_changed( self ) end"
-	end
-
-	if options.text_value then
-		t1[#t1 + 1] = "if value:sub( 1, 1 ) == '!' then value = value:sub( 2 ) else value = ('%q'):format( value ) end"
-	end
-
-	t4[#t4 + 1] = options.custom_update_code
-
-	local s4 = table.concat( t4, "\n" ) -- code to run on value update
-	local s3 = table.concat( t3, "\n" ) -- code to update the AST
-	local s2 = table.concat( t2, "\n" ) -- code to change the environment
-	local s1 = table.concat( t1, "\n" ) -- code to update the string value
-
-	for i = 1, #property_cache[property] do
-		local c = property_cache[property][i]
-		if c[1] == s1 and c[2] == s2 and c[3] == s3 and c[4] == s4 then
-			return c.f
-		end
-	end
-
-	local str = GENERIC_SETTER:format( property, "raw_" .. property, property, s4, property, s1, s2, s3, property, property, property, property, s4, property )
-	local f = assert( (load or loadstring)( str, "property '" .. property .. "'", nil, _ENV ) )
-
-	if setfenv then
-		setfenv( f, getfenv() )
-	end
-
-	local fr = f()
-
-	property_cache[property][#property_cache[property] + 1] = { s1, s2, s3, s4, f = fr }
-
-	return fr
 end

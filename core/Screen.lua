@@ -3,7 +3,6 @@
  -- @print Including sheets.core.Screen
 
 class "Screen"
-	implements "IAnimation"
 	implements "IChildContainer"
 	implements "ISize"
 {
@@ -24,7 +23,6 @@ function Screen:Screen( application, width, height )
 	self.application = application
 	self.values = ValueHandler( self )
 
-	self:IAnimation()
 	self:ICollatedChildren()
 	self:IChildContainer()
 	self:ISize()
@@ -163,9 +161,13 @@ end
 
 function Screen:update( dt )
 	local children = {}
+
+	self.values:update( dt )
+
 	for i = 1, #self.children do
 		children[i] = self.children[i]
 	end
+
 	for i = 1, #children do
 		children[i]:update( dt )
 	end

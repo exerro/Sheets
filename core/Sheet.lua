@@ -3,8 +3,6 @@
  -- @print Including sheets.core.Sheet
 
 class "Sheet"
-	implements "IAnimation"
-	implements "IAttributeAnimator"
 	implements "IChildContainer"
 	implements "ISize"
 {
@@ -45,16 +43,15 @@ function Sheet:initialise()
 	self.canvas = DrawingCanvas( 1, 1 )
 	self.tags = {}
 
-	self:IAnimation()
 	self:ICollatedChildren()
 	self:IChildContainer()
 	self:ISize()
 	self.style = Style( self )
 
-	self.values:add( "x", ValueHandler.integer_type, 0, Codegen.dynamic_property_setter( "x" ) )
-	self.values:add( "y", ValueHandler.integer_type, 0, Codegen.dynamic_property_setter( "y" ) )
-	self.values:add( "z", ValueHandler.integer_type, 0, Codegen.dynamic_property_setter( "z", { custom_update_code = "if self.parent then self.parent:reposition_child_z_index( self ) end" } ) )
-	self.values:add( "parent", ValueHandler.optional_sheet_type, nil, function( self, parent )
+	self.values:add( "x", 0 )
+	self.values:add( "y", 0 )
+	self.values:add( "z", 0, { custom_update_code = "if self.parent then self.parent:reposition_child_z_index( self ) end" } )
+	self.values:add( "parent", nil, function( self, parent )
 		if parent and not class.type_of( parent, Sheet ) and not class.type_of( parent, Screen ) then
 			Exception.throw( IncorrectParameterException( "expected Sheet or Screen parent, got " .. class.type( parent ), 2 ) )
 		end
@@ -91,7 +88,7 @@ function Sheet:has_tag( tag )
 	return self.tags[tag] or false
 end
 
-function Sheet:set_ID( id )
+function Sheet:set_ID( id ) -- TODO: make this a dynamic property
 	self.id = tostring( id )
 
 	if self.parent then
@@ -101,7 +98,7 @@ function Sheet:set_ID( id )
 	return self
 end
 
-function Sheet:set_style( style, children )
+function Sheet:set_style( style, children ) -- TODO: replace with application theming system
 	parameters.check( 1, "style", Style, style )
 
 	self.style = style:clone( self )
@@ -128,7 +125,7 @@ end
 
 function Sheet:bring_to_front()
 	if self.parent then
-		return self:set_parent( self.parent )
+		return self:set_parent( self.parent ) -- TODO: improve this
 	end
 	return self
 end
@@ -166,7 +163,7 @@ end
 function Sheet:update( dt )
 	local children = self:get_children()
 
-	self:update_animations( dt )
+	self.values:update( dt )
 
 	if self.on_update then
 		self:on_update( dt )

@@ -54,7 +54,7 @@ function Exception:get_data()
 	if type( self.data ) == "string" or class.is_class( self.data ) or class.is_instance( self.data ) then
 		return tostring( self.data )
 	else
-		return textutils.serialize( seld.data )
+		return textutils.serialize( self.data )
 	end
 end
 
