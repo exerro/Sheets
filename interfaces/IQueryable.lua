@@ -13,7 +13,7 @@ function IQueryable:IQueryable()
 end
 
 function IQueryable:iquery( query )
-	local results = query_raw( self, query, false, false )
+	local results = query_raw( self, query, nil, false, false )
 	local i = 0
 
 	return function()
@@ -23,19 +23,19 @@ function IQueryable:iquery( query )
 end
 
 function IQueryable:query( query )
-	return query_raw( self, query, false, false )
+	return query_raw( self, query, nil, false, false )
 end
 
 function IQueryable:query_tracked( query )
-	return query_raw( self, query, true, false )
+	return query_raw( self, query, nil, true, false )
 end
 
-function IQueryable:preparsed_query( query )
-	return query_raw( self, query, false, true )
+function IQueryable:preparsed_query( query, lifetime )
+	return query_raw( self, query, lifetime, false, true )
 end
 
-function IQueryable:preparsed_query_tracked( query )
-	return query_raw( self, query, true, true )
+function IQueryable:preparsed_query_tracked( query, lifetime )
+	return query_raw( self, query, lifetime, true, true )
 end
 
 function setf( self, properties )
@@ -67,15 +67,18 @@ function remtag( self, tag )
 	end
 end
 
-function query_raw( self, query, track, parsed )
+function query_raw( self, query, lifetime, track, parsed )
 	if not parsed then
+		lifetime = {}
 		parameters.check( 1, "query", "string", query )
 		query = DynamicValueParser( Stream( query ) ):parse_query()
 	end
 
-	local query_f = Codegen.node_query( query )
+	local query_f, init_f = Codegen.node_query( query )
 	local nodes = self.collated_children
 	local matches = { set = setf, add_tag = addtag, remove_tag = remtag }
+
+	init_f()
 
 	for i = 1, #nodes do
 		if query_f( nodes[i] ) then
@@ -84,8 +87,13 @@ function query_raw( self, query, track, parsed )
 	end
 
 	if track then
-		return matches, self.query_tracker:track( query_f, matches )
+		local ID = self.query_tracker:track( query_f, matches )
+
+		self.query_tracker.lifetimes[ID] = lifetime
+
+		return matches, ID
 	else
+		-- TODO: destroy lifetime
 		return matches
 	end
 end

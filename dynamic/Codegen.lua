@@ -9,8 +9,25 @@ local node_query_internal, dynamic_value_internal
 
 class "Codegen" {}
 
-function Codegen.node_query( parsed_query )
-	return assert( load( "local n=...return " .. node_query_internal( parsed_query, "n" ), "query" ) )
+function Codegen.node_query( parsed_query, lifetime )
+	local names = {}
+	local named_values = {}
+	local initialise_code = ""
+	local query_str = node_query_internal( parsed_query, "n" )
+	local str = "local lifetime" .. (#names == 0 and "" or ", " .. table.concat( names, ", " )) .. " = ...\n"
+	         .. "return function( n )\n"
+			 .. "\treturn " .. query_str
+			 .. "end, function( n )\n"
+			 .. initialise_code
+			 .. "end"
+	local f, err = assert( (load or loadstring)( str, "query", nil, _ENV ) )
+
+	if setfenv then
+		setfenv( f, getfenv() )
+	end
+
+	local getter, initialiser = f( lifetime, unpack( named_values ) )
+	return getter, initialiser
 end
 
 function Codegen.dynamic_value( parsed_value, lifetime, env, obj, updater )
@@ -116,10 +133,13 @@ function Codegen.dynamic_value( parsed_value, lifetime, env, obj, updater )
 			.. table.concat( initialisers, "\n" )
 			.. (#initialisers == 0 and "" or "\n") .. "end")
 
-	local fenv = getfenv and getfenv() and _ENV
-	local f, err = assert( (load or loadstring)( code, "dynamic value", nil, fenv ) )
-	local getter, initialiser = (setfenv and setfenv( f, fenv ) or f)( obj, lifetime, updater, unpack( inputs ) )
+	local f, err = assert( (load or loadstring)( code, "dynamic value", nil, _ENV ) )
 
+	if setfenv then
+		setfenv( f, getfenv() )
+	end
+
+	local getter, initialiser = f( obj, lifetime, updater, unpack( inputs ) )
 	return getter, initialiser
 end
 
@@ -280,7 +300,7 @@ DYNAMIC_QUERY_UPDATER = [[do
 		end
 
 		if object then
-			elems, ID = object:preparsed_query_tracked( QDATA )
+			elems, ID = object:preparsed_query_tracked( QDATA, lifetime )
 			object.query_tracker:subscribe( ID, lifetime, f0 )
 		end
 
@@ -293,7 +313,7 @@ QUERY_UPDATER = [[function FUNC()
 	local object = SOURCE
 
 	if object then
-		local elems = object:preparsed_query( QDATA )
+		local elems = object:preparsed_query( QDATA, lifetime )
 		NAME = elems[1]
 
 		if NAME then
