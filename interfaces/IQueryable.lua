@@ -70,10 +70,7 @@ end
 function query_raw( self, query, track, parsed )
 	if not parsed then
 		parameters.check( 1, "query", "string", query )
-
-		local parser = QueryParser( Stream( query ) )
-
-		query = parser:parse_query()
+		query = DynamicValueParser( Stream( query ) ):parse_query()
 	end
 
 	local query_f = Codegen.node_query( query )

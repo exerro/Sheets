@@ -107,17 +107,16 @@ token = {
  -- @require events.MouseEvent
  -- @require events.TextEvent
 
- -- @require parsing.Stream
- -- @require parsing.QueryParser
- -- @require parsing.DynamicValueParser
+ -- @require dynamic.Codegen
+ -- @require dynamic.DynamicValueParser
+ -- @require dynamic.QueryTracker
+ -- @require dynamic.Stream
+ -- @require dynamic.Transition
+ -- @require dynamic.ValueHandler
 
  -- @require core.Application
- -- @require core.Codegen
- -- @require core.QueryTracker
  -- @require core.Screen
  -- @require core.Sheet
- -- @require core.Transition
- -- @require core.ValueHandler
 
  -- @if SHEETS_THREADING
      -- @require core.Thread
