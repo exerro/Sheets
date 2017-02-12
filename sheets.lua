@@ -4,6 +4,7 @@
  -- @defineifndef SHEETS_SML false
  -- @defineifndef SHEETS_WRAP false
  -- @defineifndef SHEETS_EXTERNAL false
+ -- @defineifndef SHEETS_THREADING true
 
  -- @if SHEETS_SML
 	-- @error "SML is not yet implemented"
@@ -81,7 +82,6 @@ token = {
  -- @require lib.class
  -- @require lib.clipboard
  -- @require lib.parameters
- -- @require lib.query_utils
 
  -- @include surface2
 
@@ -116,9 +116,12 @@ token = {
  -- @require core.QueryTracker
  -- @require core.Screen
  -- @require core.Sheet
- -- @require core.Thread
  -- @require core.Transition
  -- @require core.ValueHandler
+
+ -- @if SHEETS_THREADING
+     -- @require core.Thread
+ -- @endif
 
  -- @require elements.Container
 

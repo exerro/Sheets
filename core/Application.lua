@@ -23,7 +23,9 @@ class "Application" implements "IQueryable" implements "ITimer" {
 	resource_loaders = {};
 	extensions = {};
 
+	 -- @if SHEETS_THREADING
 	threads = {};
+	 -- @endif
 
 	mouse = nil;
 	keys = {};
@@ -37,7 +39,9 @@ function Application:Application( name, path )
 	self.screens = {}
 	self.resource_loaders = {}
 	self.extensions = {}
+	 -- @if SHEETS_THREADING
 	self.threads = {}
+	 -- @endif
 	self.keys = {}
 
 	self:ICollatedChildren()
@@ -97,6 +101,7 @@ function Application:load_resource( resource, type, ... )
 	end
 end
 
+ -- @if SHEETS_THREADING
 function Application:add_thread( thread )
 	parameters.check( 1, "thread", Thread, thread )
 
@@ -104,6 +109,7 @@ function Application:add_thread( thread )
 
 	return thread
 end
+ -- @endif
 
 function Application:is_key_pressed( key )
 	parameters.check( 1, "key", "string", key )
@@ -410,6 +416,7 @@ function handle_event( self, event, params, ... )
 		handle( ev )
 
 		if not ev.handled then
+			-- @if SHEETS_THREADING
 			for i = #self.threads, 1, -1 do
 				if self.threads[i].running then
 					self.threads[i]:resume( event, ... )
@@ -417,6 +424,7 @@ function handle_event( self, event, params, ... )
 					table.remove( self.threads, i )
 				end
 			end
+			-- @endif
 		end
 	end
 end
