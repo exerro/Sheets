@@ -71,20 +71,35 @@ function query_raw( self, query, lifetime, track, parsed )
 	if not parsed then
 		lifetime = {}
 		parameters.check( 1, "query", "string", query )
-		query = DynamicValueParser( Stream( query ) ):parse_query()
+		local parser = DynamicValueParser( Stream( query ) )
+
+		parser:set_context( "enable_queries", true )
+		query = parser:parse_query()
 	end
 
-	local query_f, init_f = Codegen.node_query( query )
+	local query_f, init_f
 	local nodes = self.collated_children
 	local matches = { set = setf, add_tag = addtag, remove_tag = remtag }
 
-	init_f()
+	local function updater() -- this can definitely be optimised
+		local n = 0
 
-	for i = 1, #nodes do
-		if query_f( nodes[i] ) then
-			matches[#matches + 1] = nodes[i]
+		for i = #matches, 1, -1 do
+			matches[i] = nil
+		end
+
+		for i = 1, #nodes do
+			if query_f( nodes[i] ) then
+				n = n + 1
+				matches[n] = nodes[i]
+			end
 		end
 	end
+
+	query_f, init_f = Codegen.node_query( query, lifetime, updater )
+
+	init_f( self )
+	updater()
 
 	if track then
 		local ID = self.query_tracker:track( query_f, matches )
@@ -93,7 +108,18 @@ function query_raw( self, query, lifetime, track, parsed )
 
 		return matches, ID
 	else
-		-- TODO: destroy lifetime
+		if not parsed then
+			for i = #lifetime, 1, -1 do
+				local l = lifetime[i]
+				lifetime[i] = nil
+				if l[1] == "value" then
+					l[2].values:unsubscribe( l[3], l[4] )
+				elseif l[1] == "query" then
+					l[2]:unsubscribe( l[3], l[4] )
+				end
+			end
+		end
+
 		return matches
 	end
 end

@@ -47,8 +47,10 @@ function QueryTracker:untrack( ID )
 		if self.queries[i][3] == ID then
 			local t = self.lifetimes[ID]
 
-			for i = 1, #t do
+
+			for i = #t, 1, -1 do
 				local l = t[i]
+				t[i] = nil
 				if l[1] == "value" then
 					l[2].values:unsubscribe( l[3], l[4] )
 				elseif l[1] == "query" then

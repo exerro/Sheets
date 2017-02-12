@@ -9,24 +9,59 @@ local node_query_internal, dynamic_value_internal
 
 class "Codegen" {}
 
-function Codegen.node_query( parsed_query, lifetime )
+function Codegen.node_query( parsed_query, lifetime, updater )
 	local names = {}
 	local named_values = {}
-	local initialise_code = ""
-	local query_str = node_query_internal( parsed_query, "n" )
-	local str = "local lifetime" .. (#names == 0 and "" or ", " .. table.concat( names, ", " )) .. " = ...\n"
-	         .. "return function( n )\n"
-			 .. "\treturn " .. query_str
-			 .. "end, function( n )\n"
-			 .. initialise_code
-			 .. "end"
-	local f, err = assert( (load or loadstring)( str, "query", nil, _ENV ) )
+	local val_names = {}
+	local init_localised = {}
+	local initialise_code = {}
+	local tracked = {}
+	local query_str = node_query_internal( parsed_query, "n", tracked )
+	local tl = #tracked
+
+	for i = 1, tl do
+		names[i] = "n" .. i
+		named_values[i] = tracked[i].value
+		init_localised[i] = "f" .. i
+		init_localised[tl + i] = "i" .. i
+		val_names[i] = "v" .. i
+		initialise_code[i] = "f" .. i .. ", i" .. i .. " = Codegen.dynamic_value( n" .. i .. ", lifetime, env, n, function()\n"
+		                  .. "\tv" .. i .. " = f" .. i .. "()\n"
+						  .. "\treturn updater()\n"
+						  .. "end )"
+	end
+
+	for i = 1, tl do
+		initialise_code[i + tl] = "i" .. i .. "()"
+	end
+
+	for i = 1, tl do
+		initialise_code[i + tl + tl] = "v" .. i .. " = f" .. i .. "()"
+	end
+
+	local code = "local lifetime, updater" .. (#names == 0 and "" or ", " .. table.concat( names, ", " )) .. " = ...\n"
+	          .. (#val_names == 0 and "" or "local " .. table.concat( val_names, ", " ) .. "\n")
+	          .. "return function( n )\n"
+			  .. "\treturn " .. query_str
+			  .. "\nend, function( n )\n"
+		      .. "\tlocal env = {}\n"
+			  .. (#init_localised == 0 and "" or "\tlocal " .. table.concat( init_localised, ", " ) .. "\n")
+			  .. table.concat( initialise_code, "\n" )
+			  .. "\nend"
+
+	if tl > 0 then
+	  	local h = fs.open( "demo/log.txt", "w" )
+	  	h.write( code )
+  		h.close()
+	end
+
+	local f, err = assert( (load or loadstring)( code, "query", nil, _ENV ) )
 
 	if setfenv then
 		setfenv( f, getfenv() )
 	end
 
-	local getter, initialiser = f( lifetime, unpack( named_values ) )
+	local getter, initialiser = f( lifetime, updater, unpack( named_values ) )
 	return getter, initialiser
 end
 
@@ -374,7 +409,7 @@ return function( self, value )
 	return self
 end]]
 
-function node_query_internal( query, name )
+function node_query_internal( query, name, tracked )
 	if query.type == QUERY_ID then
 		return ("%s.id=='%s'"):format( name, query.value )
 	elseif query.type == QUERY_TAG then
@@ -384,15 +419,30 @@ function node_query_internal( query, name )
 	elseif query.type == QUERY_CLASS then
 		return ("%s:type():lower()=='%s'"):format( name, query.value:lower() )
 	elseif query.type == QUERY_NEGATE then
-		local i = node_query_internal( query.value, name )
+		local i = node_query_internal( query.value, name, tracked )
 		return i == "true" and "false" or i == "false" and "true" or "not (" .. i .. ")"
 	elseif query.type == QUERY_ATTRIBUTES then
-		-- TODO: implement this
-		error "NYI"
+		local t = {}
+		local idx = #tracked + 1
+
+		for i = 1, #query.attributes do
+			local attr = query.attributes[i]
+			local op = attr.comparison
+
+			if op == "=" then
+				op = "=="
+			end
+
+			tracked[idx] = { value = attr.value }
+			t[i] = "v" .. idx .. " and " .. name .. "." .. attr.name .. " " .. op .. " v" .. idx
+			idx = idx + 1
+		end
+
+		return table.concat( t, " and " )
 	elseif query.type == QUERY_OPERATOR then
 		if query.operator == "&" then
-			local lvalue = node_query_internal( query.lvalue, name )
-			local rvalue = node_query_internal( query.rvalue, name )
+			local lvalue = node_query_internal( query.lvalue, name, tracked )
+			local rvalue = node_query_internal( query.rvalue, name, tracked )
 
 			if lvalue == "true" then return rvalue end
 			if rvalue == "true" then return lvalue end
@@ -401,8 +451,8 @@ function node_query_internal( query, name )
 
 			return lvalue .. " and " .. rvalue
 		elseif query.operator == "|" then
-			local lvalue = node_query_internal( query.lvalue, name )
-			local rvalue = node_query_internal( query.rvalue, name )
+			local lvalue = node_query_internal( query.lvalue, name, tracked )
+			local rvalue = node_query_internal( query.rvalue, name, tracked )
 
 			if lvalue == "true" then return lvalue end
 			if rvalue == "true" then return rvalue end
@@ -411,8 +461,8 @@ function node_query_internal( query, name )
 
 			return "(" .. lvalue .. " or " .. rvalue .. ")"
 		elseif query.operator == ">" then
-			local lvalue = node_query_internal( query.lvalue, name .. ".parent" )
-			local rvalue = node_query_internal( query.rvalue, name )
+			local lvalue = node_query_internal( query.lvalue, name .. ".parent", tracked )
+			local rvalue = node_query_internal( query.rvalue, name, tracked )
 
 			if lvalue == "true" then return name .. ".parent and " .. rvalue end
 			if rvalue == "true" then return name .. ".parent and " .. lvalue end
@@ -459,46 +509,62 @@ function dynamic_value_internal( value, state )
 		}
 
 	elseif value.type == DVALUE_PARENT then
-		local nr = #state.names + 1
-		local nu = #state.names + 2
-		local t = {
-			value = "n" .. nr;
-			complex = true;
-			update = "f" .. nu .. "()";
-			initialise = "self.values:subscribe( 'parent', lifetime, f" .. nu .. " )\nf" .. nu .. "()";
-			dependants = {};
-			dependencies = {};
-		}
+		if state.object:type_of( Application ) then
+			error "TODO: fix this error"
+		else
+			local nr = #state.names + 1
+			local nu = #state.names + 2
+			local t = {
+				value = "n" .. nr;
+				complex = true;
+				update = "f" .. nu .. "()";
+				initialise = "self.values:subscribe( 'parent', lifetime, f" .. nu .. " )\nf" .. nu .. "()";
+				dependants = {};
+				dependencies = {};
+			}
 
-		state.names[nr] = "n" .. nr
-		state.names[nu] = "f" .. nu
-		state.functions[#state.functions + 1] = {
-			code = SELF_INDEX_UPDATER:gsub( "NAME", "n" .. nr ):gsub( "INDEX", "parent" ):gsub( "FUNC", "f" .. nu );
-			node = t;
-		}
+			state.names[nr] = "n" .. nr
+			state.names[nu] = "f" .. nu
+			state.functions[#state.functions + 1] = {
+				code = SELF_INDEX_UPDATER:gsub( "NAME", "n" .. nr ):gsub( "INDEX", "parent" ):gsub( "FUNC", "f" .. nu );
+				node = t;
+			}
 
-		return t
+			return t
+		end
 
 	elseif value.type == DVALUE_APPLICATION then
-		local nr = #state.names + 1
-		local nu = #state.names + 2
-		local t = {
-			value = "n" .. nr;
-			complex = true;
-			update = "f" .. nu .. "()";
-			initialise = "self.values:subscribe( 'application', lifetime, f" .. nu .. " )\nf" .. nu .. "()";
-			dependants = {};
-			dependencies = {};
-		}
+		if state.object:type_of( Application ) then
+			return {
+				value = "self";
+				complex = false;
+				update = nil;
+				initialise = nil;
+				dependants = {};
+				dependencies = {};
+			}
 
-		state.names[nr] = "n" .. nr
-		state.names[nu] = "f" .. nu
-		state.functions[#state.functions + 1] = {
-			code = SELF_INDEX_UPDATER:gsub( "NAME", "n" .. nr ):gsub( "INDEX", "application" ):gsub( "FUNC", "f" .. nu );
-			node = t;
-		}
+		else
+			local nr = #state.names + 1
+			local nu = #state.names + 2
+			local t = {
+				value = "n" .. nr;
+				complex = true;
+				update = "f" .. nu .. "()";
+				initialise = "self.values:subscribe( 'application', lifetime, f" .. nu .. " )\nf" .. nu .. "()";
+				dependants = {};
+				dependencies = {};
+			}
 
-		return t
+			state.names[nr] = "n" .. nr
+			state.names[nu] = "f" .. nu
+			state.functions[#state.functions + 1] = {
+				code = SELF_INDEX_UPDATER:gsub( "NAME", "n" .. nr ):gsub( "INDEX", "application" ):gsub( "FUNC", "f" .. nu );
+				node = t;
+			}
+
+			return t
+		end
 
 	elseif value.type == DVALUE_IDENTIFIER then
 		if state.environment[value.value] ~= nil then
