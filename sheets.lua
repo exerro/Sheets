@@ -82,7 +82,6 @@ token = {
  -- @require lib.clipboard
  -- @require lib.parameters
  -- @require lib.query_utils
- -- @require lib.timer
 
  -- @include surface2
 
@@ -100,6 +99,7 @@ token = {
  -- @require interfaces.IChildContainer
  -- @require interfaces.ITagged
  -- @require interfaces.ISize
+ -- @require interfaces.ITimer
 
  -- @require events.Event
  -- @require events.KeyboardEvent
@@ -111,7 +111,6 @@ token = {
  -- @require parsing.QueryParser
  -- @require parsing.DynamicValueParser
 
- -- @require core.Animation
  -- @require core.Application
  -- @require core.Codegen
  -- @require core.QueryTracker

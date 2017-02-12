@@ -8,15 +8,17 @@ end
 
 local handle_event
 
-class "Application" implements "IQueryable" {
+class "Application" implements "IQueryable" implements "ITimer" {
 	name = "UnNamed Application";
 	path = "";
 
 	terminateable = true;
 	running = true;
 
-	screens = {};
 	screen = nil;
+
+	-- internal
+	screens = {};
 
 	resource_loaders = {};
 	extensions = {};
@@ -40,6 +42,7 @@ function Application:Application( name, path )
 
 	self:ICollatedChildren()
 	self:IQueryable()
+	self:ITimer()
 
 	self.screens[1] = Screen( self, term.getSize() ):add_terminal( term )
 	self.screen = self.screens[1]
@@ -202,7 +205,7 @@ end
 function Application:event( event, ... )
 	local params = { ... }
 
-	if event == "timer" and timer.update( ... ) then
+	if event == "timer" and self:update_timer( ... ) then
 		return
 	end
 
@@ -221,9 +224,7 @@ function Application:draw()
 end
 
 function Application:update()
-
-	local dt = timer.get_delta()
-	timer.step()
+	local dt = self:step_timer():get_timer_delta()
 
 	for i = 1, #self.screens do
 		self.screens[i]:update( dt )
@@ -232,7 +233,6 @@ function Application:update()
 	if self.on_update then
 		self:on_update( dt )
 	end
-
 end
 
 function Application:load()
@@ -247,12 +247,11 @@ function Application:run()
 
 	Exception.try (function()
 		self:load()
-		local t = timer.new( 0 ) -- updating timer
+		local t = os.startTimer( 0 ) -- updating timer
 		while self.running do
 			local event = { coroutine.yield() }
 			if event[1] == "timer" and event[2] == t then
-				t = timer.new( .05 )
-				timer.update( event[2] )
+				t = os.startTimer( .05 )
 			elseif event[1] == "terminate" and self.terminateable then
 				self:stop()
 			else
