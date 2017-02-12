@@ -259,12 +259,12 @@ function DynamicValueParser:parse_query_term( in_dynamic_value )
 	end
 
 	if self.stream:test( TOKEN_IDENTIFIER ) or self.stream:skip( TOKEN_SYMBOL, "#" ) then -- ID
-		obj = { type = QUERY_ID, value = parse_name( self.stream ) }
+		obj = { type = QUERY_ID, value = parse_name( self.stream ) or error "TODO: fix this error" }
 		ID_parsed = true
 	elseif self.stream:skip( TOKEN_SYMBOL, "*" ) then
 		obj = { type = QUERY_ANY }
 	elseif self.stream:skip( TOKEN_SYMBOL, "?" ) then
-		obj = { type = QUERY_CLASS, value = parse_name( self.stream ) }
+		obj = { type = QUERY_CLASS, value = parse_name( self.stream ) or error "TODO: fix this error" }
 	elseif self.stream:skip( TOKEN_SYMBOL, "(" ) then
 		print( self.stream:peek().value )
 		obj = self:parse_query()
@@ -277,7 +277,7 @@ function DynamicValueParser:parse_query_term( in_dynamic_value )
 	local tags = {}
 
 	while (not in_dynamic_value or not obj) and self.stream:skip( TOKEN_SYMBOL, "." ) do -- tags
-		local tag = { type = QUERY_TAG, value = parse_name( self.stream ) }
+		local tag = { type = QUERY_TAG, value = parse_name( self.stream ) or error "TODO: fix this error" }
 
 		if obj then
 			obj = { type = QUERY_OPERATOR, operator = "&", lvalue = obj, rvalue = tag }
@@ -286,16 +286,48 @@ function DynamicValueParser:parse_query_term( in_dynamic_value )
 		end
 	end
 
-	if not obj then
-		error "TODO: fix this error"
-	end
-
 	if self.stream:skip( TOKEN_SYMBOL, "[" ) then
 		local attributes = {}
 
-		error "NYI"
+		repeat
+			local name = parse_name( self.stream ) or error "TODO: fix this error"
 
-		obj = { type = QUERY_ATTRIBUTES, attributes = attributes }
+			while self.stream:skip( TOKEN_WHITESPACE ) do end
+
+			local comparison
+			    = self.stream:skip_value( TOKEN_SYMBOL, "=" )
+			   or self.stream:skip_value( TOKEN_SYMBOL, ">" )
+			   or self.stream:skip_value( TOKEN_SYMBOL, "<" )
+			   or self.stream:skip_value( TOKEN_SYMBOL, ">=" )
+			   or self.stream:skip_value( TOKEN_SYMBOL, "<=" )
+			   or self.stream:skip_value( TOKEN_SYMBOL, "!=" )
+			   or error "TODO: fix this"
+
+			while self.stream:skip( TOKEN_WHITESPACE ) do end
+
+			local value = self:parse_expression() or error "TODO: fix this error"
+
+			attributes[#attributes + 1] = {
+				name = name;
+				comparison = comparison;
+				value = value;
+			}
+		until not self.stream:skip( TOKEN_SYMBOL, "," )
+
+		if not self.stream:skip( TOKEN_SYMBOL, "]" ) then
+			error "TODO: fix this error"
+		end
+
+		obj = obj and {
+			type = QUERY_OPERATOR;
+			rvalue = obj;
+			lvalue = { type = QUERY_ATTRIBUTES, attributes = attributes };
+			operator = "&";
+		} or { type = QUERY_ATTRIBUTES, attributes = attributes }
+	end
+
+	if not obj then
+		error "TODO: fix this error"
 	end
 
 	if negation_count % 2 == 1 then
