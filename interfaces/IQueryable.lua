@@ -80,18 +80,21 @@ function query_raw( self, query, lifetime, track, parsed )
 	local query_f, init_f
 	local nodes = self.collated_children
 	local matches = { set = setf, add_tag = addtag, remove_tag = remtag }
+	local n, ID = 0
 
 	local function updater() -- this can definitely be optimised
-		local n = 0
-
-		for i = #matches, 1, -1 do
-			matches[i] = nil
-		end
+		local n = 1
 
 		for i = 1, #nodes do
 			if query_f( nodes[i] ) then
+				if matches[n] ~= nodes[i] then
+					table.insert( matches, n, nodes[i] )
+					self.query_tracker:invoke_child_change( ID, nodes[i], "child-added" )
+				end
 				n = n + 1
-				matches[n] = nodes[i]
+			elseif matches[n] == nodes[i] then
+				table.remove( matches, n )
+				self.query_tracker:invoke_child_change( ID, nodes[i], "child-removed" )
 			end
 		end
 	end
@@ -99,10 +102,16 @@ function query_raw( self, query, lifetime, track, parsed )
 	query_f, init_f = Codegen.node_query( query, lifetime, updater )
 
 	init_f( self )
-	updater()
+
+	for i = 1, #nodes do
+		if query_f( nodes[i] ) then
+			n = n + 1
+			matches[n] = nodes[i]
+		end
+	end
 
 	if track then
-		local ID = self.query_tracker:track( query_f, matches )
+		ID = self.query_tracker:track( query_f, matches )
 
 		self.query_tracker.lifetimes[ID] = lifetime
 
