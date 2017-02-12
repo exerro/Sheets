@@ -47,8 +47,10 @@ function QueryTracker:untrack( ID )
 		if self.queries[i][3] == ID then
 			local t = self.lifetimes[ID]
 
-			for i = 1, #t do
+
+			for i = #t, 1, -1 do
 				local l = t[i]
+				t[i] = nil
 				if l[1] == "value" then
 					l[2].values:unsubscribe( l[3], l[4] )
 				elseif l[1] == "query" then
@@ -111,35 +113,29 @@ function QueryTracker:update( mode, child )
 
 			if nodes[n] ~= child then -- if it's not already in the query
 				table.insert( nodes, n, child )
-
-				local callbacks = self.subscriptions[self.queries[i][3]] or {}
-
-				for n = 1, #callbacks do
-					callbacks[n]( "child-added", child )
-				end
+				self:invoke_child_change( self.queries[i][3], child, "child-added" )
 			else
-				local callbacks = self.subscriptions[self.queries[i][3]]
-
-				for n = 1, #callbacks do
-					callbacks[n]( "child-changed", child )
-				end
+				self:invoke_child_change( self.queries[i][3], child, "child-changed" )
 			end
 		elseif remove then
 			local t = self.queries[i][2]
 
 			for n = 1, #t do
 				if t[n] == child then
-					local callbacks = self.subscriptions[self.queries[i][3]]
-
 					table.remove( t, n )
-
-					for n = 1, #callbacks do
-						callbacks[n]( "child-removed", child )
-					end
+					self:invoke_child_change( self.queries[i][3], child, "child-removed" )
 
 					break
 				end
 			end
 		end
+	end
+end
+
+function QueryTracker:invoke_child_change( query_ID, child, mode )
+	local callbacks = self.subscriptions[query_ID] or {}
+
+	for i = 1, #callbacks do
+		callbacks[i]( mode, child )
 	end
 end

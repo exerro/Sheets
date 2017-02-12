@@ -13,7 +13,7 @@ function IQueryable:IQueryable()
 end
 
 function IQueryable:iquery( query )
-	local results = query_raw( self, query, false, false )
+	local results = query_raw( self, query, nil, false, false )
 	local i = 0
 
 	return function()
@@ -23,19 +23,19 @@ function IQueryable:iquery( query )
 end
 
 function IQueryable:query( query )
-	return query_raw( self, query, false, false )
+	return query_raw( self, query, nil, false, false )
 end
 
 function IQueryable:query_tracked( query )
-	return query_raw( self, query, true, false )
+	return query_raw( self, query, nil, true, false )
 end
 
-function IQueryable:preparsed_query( query )
-	return query_raw( self, query, false, true )
+function IQueryable:preparsed_query( query, lifetime )
+	return query_raw( self, query, lifetime, false, true )
 end
 
-function IQueryable:preparsed_query_tracked( query )
-	return query_raw( self, query, true, true )
+function IQueryable:preparsed_query_tracked( query, lifetime )
+	return query_raw( self, query, lifetime, true, true )
 end
 
 function setf( self, properties )
@@ -67,28 +67,68 @@ function remtag( self, tag )
 	end
 end
 
-function query_raw( self, query, track, parsed )
+function query_raw( self, query, lifetime, track, parsed )
 	if not parsed then
+		lifetime = {}
 		parameters.check( 1, "query", "string", query )
+		local parser = DynamicValueParser( Stream( query ) )
 
-		local parser = QueryParser( Stream( query ) )
-
+		parser:set_context( "enable_queries", true )
 		query = parser:parse_query()
 	end
 
-	local query_f = Codegen.node_query( query )
+	local query_f, init_f
 	local nodes = self.collated_children
 	local matches = { set = setf, add_tag = addtag, remove_tag = remtag }
+	local n, ID = 0
+
+	local function updater() -- this can definitely be optimised
+		local n = 1
+
+		for i = 1, #nodes do
+			if query_f( nodes[i] ) then
+				if matches[n] ~= nodes[i] then
+					table.insert( matches, n, nodes[i] )
+					self.query_tracker:invoke_child_change( ID, nodes[i], "child-added" )
+				end
+				n = n + 1
+			elseif matches[n] == nodes[i] then
+				table.remove( matches, n )
+				self.query_tracker:invoke_child_change( ID, nodes[i], "child-removed" )
+			end
+		end
+	end
+
+	query_f, init_f = Codegen.node_query( query, lifetime, updater )
+
+	init_f( self )
 
 	for i = 1, #nodes do
 		if query_f( nodes[i] ) then
-			matches[#matches + 1] = nodes[i]
+			n = n + 1
+			matches[n] = nodes[i]
 		end
 	end
 
 	if track then
-		return matches, self.query_tracker:track( query_f, matches )
+		ID = self.query_tracker:track( query_f, matches )
+
+		self.query_tracker.lifetimes[ID] = lifetime
+
+		return matches, ID
 	else
+		if not parsed then
+			for i = #lifetime, 1, -1 do
+				local l = lifetime[i]
+				lifetime[i] = nil
+				if l[1] == "value" then
+					l[2].values:unsubscribe( l[3], l[4] )
+				elseif l[1] == "query" then
+					l[2]:unsubscribe( l[3], l[4] )
+				end
+			end
+		end
+
 		return matches
 	end
 end
