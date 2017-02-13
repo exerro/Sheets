@@ -1,4 +1,7 @@
 
+ -- @once
+ -- @print Including sheets.dynamic.Codegen
+
 local property_cache = {}
 
 local CHANGECODE_NO_TRANSITION, CHANGECODE_TRANSITION, SELF_INDEX_UPDATER,
@@ -48,12 +51,6 @@ function Codegen.node_query( parsed_query, lifetime, updater )
 			  .. (#init_localised == 0 and "" or "\tlocal " .. table.concat( init_localised, ", " ) .. "\n")
 			  .. table.concat( initialise_code, "\n" )
 			  .. "\nend"
-
-	if tl > 0 then
-	  	local h = fs.open( "demo/log.txt", "w" )
-	  	h.write( code )
-  		h.close()
-	end
 
 	local f, err = assert( (load or loadstring)( code, "query", nil, _ENV ) )
 

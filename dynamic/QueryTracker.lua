@@ -1,4 +1,7 @@
 
+ -- @once
+ -- @print Including sheets.dynamic.QueryTracker
+
 class "QueryTracker" {
 parent = nil;
 	queries = {};

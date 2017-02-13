@@ -112,6 +112,7 @@ token = {
  -- @require dynamic.QueryTracker
  -- @require dynamic.Stream
  -- @require dynamic.Transition
+ -- @require dynamic.Type
  -- @require dynamic.ValueHandler
 
  -- @require core.Application

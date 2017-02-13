@@ -1,6 +1,6 @@
 
  -- @once
- -- @print Including sheets.core.ValueHandler
+ -- @print Including sheets.dynamic.ValueHandler
 
 local floor = math.floor
 local get_transition_function
@@ -81,7 +81,7 @@ end
 
 function ValueHandler:respawn( name )
 	local t = self.lifetimes[name]
-	
+
 	for i = #t, 1, -1 do
 		local l = t[i]
 		t[i] = nil
