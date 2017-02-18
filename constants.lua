@@ -72,6 +72,8 @@
  -- @define DVALUE_INDEX "index"
  -- @define DVALUE_UNEXPR "unary operator expression"
  -- @define DVALUE_BINEXPR "binary operator expression"
+ -- @define DVALUE_FLOOR "floor"
+ -- @define DVALUE_TOSTRING "tostring"
 
  -- @if SHEETS_LOWRES
 	 -- @define BLANK_PIXEL { WHITE, WHITE, " " }

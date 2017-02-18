@@ -6,11 +6,6 @@ class "Type" {
 	name = "";
 }
 
-class "IntersectionType" extends "Type" {
-	lvalue = nil;
-	rvalue = nil;
-}
-
 class "UnionType" extends "Type" {
 	lvalue = nil;
 	rvalue = nil;
@@ -27,16 +22,8 @@ class "TableType" extends "Type" {
 
 function Type:Type( name )
 	self.name = name
-	self.meta.__add = self.both
 	self.meta.__div = self.either
 	self.meta.__eq = self.matches
-end
-
-function IntersectionType:IntersectionType( lvalue, rvalue )
-	self.lvalue = lvalue
-	self.rvalue = rvalue
-
-	return self:Type "Intersection"
 end
 
 function UnionType:UnionType( lvalue, rvalue )
@@ -63,10 +50,6 @@ function Type:tostring()
 	return self.name
 end
 
-function IntersectionType:tostring()
-	return self.lvalue:tostring() .. " & " .. self.rvalue:tostring()
-end
-
 function UnionType:tostring()
 	return self.lvalue:tostring() .. " | " .. self.rvalue:tostring()
 end
@@ -79,26 +62,30 @@ function TableType:tostring()
 	return self.value:tostring() .. "{" .. self.index:tostring() .. "}"
 end
 
-function Type:both( other )
-	return IntersectionType( self, other )
-end
-
 function Type:either( other )
 	return UnionType( self, other )
 end
 
 function Type:matches( type )
+	if self:type_of( UnionType ) then
+		return self.lvalue:matches( type ) and self.rvalue:matches( type )
+	end
+
 	if type:type_of( UnionType ) then
 		return self:matches( type.lvalue ) or self:matches( type.rvalue )
-	elseif type:type_of( IntersectionType ) then
-		return self:matches( type.lvalue ) and self:matches( type.rvalue )
 	elseif type:type_of( ListType ) then
 		return self.name == "List" and self.value:matches( type.value )
 	elseif type:type_of( TableType ) then
 		return self.name == "Table" and self.value:matches( type.value ) and self.index:matches( type.index )
+	elseif type.name == "Any" then
+		return true
 	else
 		return self.name == type.name
 	end
+end
+
+function Type:casts_to( type )
+	
 end
 
 Type.primitive = {}
@@ -111,3 +98,14 @@ Type.primitive.optional_integer = Type.primitive.integer / Type.primitive.null
 Type.primitive.optional_number = Type.primitive.number / Type.primitive.null
 Type.primitive.optional_string = Type.primitive.string / Type.primitive.null
 Type.primitive.optional_boolean = Type.primitive.boolean / Type.primitive.null
+
+Type.any = Type "Any"
+
+Type.sheets = {}
+Type.sheets.colour = Type "colour"
+Type.sheets.alignment = Type "alignment"
+Type.sheets.Sheet = Type "Sheet"
+Type.sheets.optional_Sheet = Type "Sheet" / Type.primitive.null
+Type.sheets.Screen = Type "Screen"
+Type.sheets.Application = Type "Application"
+Type.sheets.Sheet_or_Screen = Type.sheets.Sheet / Type.sheets.Screen

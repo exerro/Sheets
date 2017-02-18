@@ -13,7 +13,7 @@
  -- @once
  -- @print Including sheets (minify: $SHEETS_MINIFY, low resolution: $SHEETS_LOWRES, sml: $SHEETS_SML)
 
- -- @define SHEETS_EXCEPTION_ERROR "SHEETS_EXCEPTION\n_put code in a try block to catch the exception."
+ -- @define SHEETS_EXCEPTION_ERROR "SHEETS_EXCEPTION\nPut code in a try block to catch the exception."
 
  -- @include constants
 
@@ -113,6 +113,7 @@ token = {
  -- @require dynamic.Stream
  -- @require dynamic.Transition
  -- @require dynamic.Type
+ -- @require dynamic.Typechecking
  -- @require dynamic.ValueHandler
 
  -- @require core.Application
