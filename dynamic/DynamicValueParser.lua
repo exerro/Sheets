@@ -70,21 +70,11 @@ function DynamicValueParser:parse_primary_expression()
 		return { type = DVALUE_IDENTIFIER, value = parse_name( self.stream ) }
 
 	elseif self.stream:test( TOKEN_INTEGER ) then
-		local value = { type = DVALUE_INTEGER, value = self.stream:next().value }
+		return { type = DVALUE_INTEGER, value = self.stream:next().value }
 
-		if self.flags.enable_percentages and self.stream:skip( TOKEN_SYMBOL, "%" ) then
-			value.type = DVALUE_PERCENTAGE
-		end
-
-		return value
 	elseif self.stream:test( TOKEN_FLOAT ) then
-		local value = { type = DVALUE_FLOAT, value = self.stream:next().value }
+		return { type = DVALUE_FLOAT, value = self.stream:next().value }
 
-		if self.flags.enable_percentages and self.stream:skip( TOKEN_SYMBOL, "%" ) then
-			value.type = DVALUE_PERCENTAGE
-		end
-
-		return value
 	elseif self.stream:test( TOKEN_BOOLEAN ) then
 		return { type = DVALUE_BOOLEAN, value = self.stream:next().value }
 	elseif self.stream:test( TOKEN_STRING ) then
@@ -166,6 +156,14 @@ function DynamicValueParser:parse_term()
 			local query = self:parse_query_term( true )
 
 			term = { type = dynamic and DVALUE_DQUERY or DVALUE_QUERY, query = query, source = term }
+		elseif self.stream:test( TOKEN_SYMBOL, "%" ) then
+			if self.flags.enable_percentages then
+				self.stream:next()
+			else
+				error "TODO: fix this error"
+			end
+
+			term = { type = DVALUE_PERCENTAGE, value = term }
 		else
 			break
 		end
