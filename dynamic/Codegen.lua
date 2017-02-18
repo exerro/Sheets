@@ -283,12 +283,6 @@ function Codegen.dynamic_property_setter( property, options )
 		:gsub( "CASTING", function() return caster end )
 	local f = assert( (load or loadstring)( str, "property setter '" .. property .. "'", nil, _ENV ) )
 
-	if property == "colour" then
-		local h = fs.open( "demo/log.txt", "w" )
-		h.write( str )
-		h.close()
-	end
-
 	if setfenv then
 		setfenv( f, getfenv() )
 	end

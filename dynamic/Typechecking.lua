@@ -97,7 +97,7 @@ function Typechecking.check_type( ast, state )
 
 		if ValueHandler.properties[ast.index] then
 
-			if vtype == (Type.sheets.Sheet_or_Screen / Type.sheets.Application) then
+			if vtype == (Type.sheets.Sheet_or_Screen / Type.sheets.Application / Type.primitive.null) then
 				return ast, ValueHandler.properties[ast.index].type -- do a check for the index
 			else
 				error "TODO: fix this error"
