@@ -1,9 +1,15 @@
 
+ -- @once
+ -- @print Including sheets.dynamic.Codegen
+
 local property_cache = {}
 
 local CHANGECODE_NO_TRANSITION, CHANGECODE_TRANSITION, SELF_INDEX_UPDATER,
       ARBITRARY_DOTINDEX_UPDATER, ARBITRARY_INDEX_UPDATER, DYNAMIC_QUERY_UPDATER,
-	  QUERY_UPDATER, GENERIC_SETTER
+	  QUERY_UPDATER, GENERIC_SETTER, STRING_CASTING, RAW_STRING_CASTING,
+	  INTEGER_CASTING, RAW_INTEGER_CASTING, NUMBER_CASTING, RAW_NUMBER_CASTING,
+	  COLOUR_CASTING, RAW_COLOUR_CASTING, ALIGNMENT_CASTING,
+	  RAW_ALIGNMENT_CASTING, ERR_CASTING
 
 local node_query_internal, dynamic_value_internal
 
@@ -48,12 +54,6 @@ function Codegen.node_query( parsed_query, lifetime, updater )
 			  .. (#init_localised == 0 and "" or "\tlocal " .. table.concat( init_localised, ", " ) .. "\n")
 			  .. table.concat( initialise_code, "\n" )
 			  .. "\nend"
-
-	if tl > 0 then
-	  	local h = fs.open( "demo/log.txt", "w" )
-	  	h.write( code )
-  		h.close()
-	end
 
 	local f, err = assert( (load or loadstring)( code, "query", nil, _ENV ) )
 
@@ -161,6 +161,8 @@ function Codegen.dynamic_value( parsed_value, lifetime, env, obj, updater )
 	     = "local self, lifetime, updater"
 			.. (#inputs > 0 and ", " .. table.concat( input_names, ", ") or "")
 			.. " = ...\n"
+		.. (state.tostringed and "local tostring = tostring\n" or "")
+		.. (state.floored and "local floor = math.floor\n" or "")
 	    .. (#names > 0 and "local " .. table.concat( names, ", " ) .. "\n" or "")
 		.. table.concat( func_compiled, "\n" ) .. "\n"
 		.. "return function() return " .. return_value.value .. " end, "
@@ -190,6 +192,7 @@ function Codegen.dynamic_property_setter( property, options )
 	local t2 = {}
 	local t3 = {}
 	local t4 = {}
+	local t5 = {}
 
 	if options.update_surface_size then
 		t4[#t4 + 1] = "if self.surface then self.surface = surface.create( self.width, self.height ) end"
@@ -206,12 +209,27 @@ function Codegen.dynamic_property_setter( property, options )
 		t4[#t4 + 1] = "if self.parent then self.parent:child_value_changed( self ) end"
 	end
 
-	if ptype == ValueHandler.string_type then
+	if ptype == Type.primitive.string then
 		t1[#t1 + 1] = "if value:sub( 1, 1 ) == '!' then value = value:sub( 2 ) else value = ('%q'):format( value ) end"
+	end
+
+	if ptype == Type.sheets.colour then
+		for k, v in pairs( colour ) do
+			t2[#t2 + 1] = "environment." .. k .. " = { type = rtype, value = " .. v .. " }"
+		end
+
+		t5[#t5 + 1] = "if value == TRANSPARENT then value = nil end"
+	end
+
+	if ptype == Type.sheets.alignment then
+		for k, v in pairs( alignment ) do
+			t2[#t2 + 1] = "environment." .. k .. " = { type = rtype, value = " .. v .. " }"
+		end
 	end
 
 	t4[#t4 + 1] = options.custom_update_code
 
+	local s5 = table.concat( t5, "\n" ) -- code to update the value before assignment
 	local s4 = table.concat( t4, "\n" ) -- code to run on value update
 	local s3 = table.concat( t3, "\n" ) -- code to update the AST
 	local s2 = table.concat( t2, "\n" ) -- code to change the environment
@@ -219,7 +237,7 @@ function Codegen.dynamic_property_setter( property, options )
 
 	for i = 1, #property_cache[property] do
 		local c = property_cache[property][i]
-		if c[1] == s1 and c[2] == s2 and c[3] == s3 and c[4] == s4 then
+		if c[1] == s1 and c[2] == s2 and c[3] == s3 and c[4] == s4 and c[5] == s5 then
 			return c.f
 		end
 	end
@@ -233,13 +251,27 @@ function Codegen.dynamic_property_setter( property, options )
 			change_code = change_code
 				:gsub( "CUSTOM_UPDATE", ", function( self )\n" .. s4 .. "\nend" )
 				:gsub( "PROPERTY_TRANSITION_QUOTED", ("%q"):format( property .. "_transition" ) )
+				:gsub( "PROCESS_VALUE", s5 )
 		end
 	else
 		change_code = CHANGECODE_NO_TRANSITION
 			:gsub( "ONCHANGE", s4 )
+			:gsub( "PROCESS_VALUE", s5 )
 	end
 
 	local prop_quoted = ("%q"):format( property )
+	local caster = ptype == Type.primitive.string and STRING_CASTING
+	            or ptype == Type.primitive.integer and INTEGER_CASTING
+				or ptype == Type.primitive.number and NUMBER_CASTING
+				or ptype == Type.sheets.colour and COLOUR_CASTING
+				or ptype == Type.sheets.alignment and ALIGNMENT_CASTING
+				or ERR_CASTING
+	local rawcaster = ptype == Type.primitive.string and RAW_STRING_CASTING
+	               or ptype == Type.primitive.integer and RAW_INTEGER_CASTING
+				   or ptype == Type.primitive.number and RAW_NUMBER_CASTING
+				   or ptype == Type.sheets.colour and RAW_COLOUR_CASTING
+				   or ptype == Type.sheets.alignment and RAW_ALIGNMENT_CASTING
+				   or ERR_CASTING
 	local str = GENERIC_SETTER
 		:gsub( "CHANGECODE", change_code )
 		:gsub( "PROPERTY_QUOTED", ("%q"):format( property ) )
@@ -247,27 +279,116 @@ function Codegen.dynamic_property_setter( property, options )
 		:gsub( "VALUE_MODIFICATION", function() return s1 end )
 		:gsub( "ENV_MODIFICATION", function() return s2 end )
 		:gsub( "AST_MODIFICATION", function() return s3 end )
-		:gsub( "ONCHANGE", function() return s4 end )
+		:gsub( "CASTING_RAW", function() return rawcaster end )
+		:gsub( "CASTING", function() return caster end )
 	local f = assert( (load or loadstring)( str, "property setter '" .. property .. "'", nil, _ENV ) )
+
+	if property == "colour" then
+		local h = fs.open( "demo/log.txt", "w" )
+		h.write( str )
+		h.close()
+	end
 
 	if setfenv then
 		setfenv( f, getfenv() )
 	end
 
-	local fr = f()
+	local fr = f( ptype )
 
-	property_cache[property][#property_cache[property] + 1] = { s1, s2, s3, s4, f = fr }
+	property_cache[property][#property_cache[property] + 1] = { s1, s2, s3, s4, s5, f = fr }
 
 	return fr
 end
 
 CHANGECODE_NO_TRANSITION = [[
+PROCESS_VALUE
 self[PROPERTY_QUOTED] = value
 ONCHANGE
 self.values:trigger PROPERTY_QUOTED]]
 
 CHANGECODE_TRANSITION = [[
+PROCESS_VALUE
 self.values:transition( PROPERTY_QUOTED, value, self[PROPERTY_TRANSITION_QUOTED]CUSTOM_UPDATE )]]
+
+STRING_CASTING = [[
+if value_type == Type.primitive.integer or value_type == Type.primitive.number or value_type == Type.primitive.boolean then
+	value_parsed = {
+		type = DVALUE_TOSTRING;
+		value = value_parsed;
+	}
+else
+	error "TODO: fix this error"
+end
+]]
+
+RAW_STRING_CASTING = [[
+if value_type == Type.primitive.integer or value_type == Type.primitive.number or value_type == Type.primitive.boolean then
+	value = tostring( value )
+else
+	error "TODO: fix this error"
+end
+]]
+
+INTEGER_CASTING = [[
+if value_type == Type.primitive.number then
+	value_parsed = {
+		type = DVALUE_FLOOR;
+		value = value_parsed;
+	}
+else
+	error "TODO: fix this error"
+end
+]]
+
+
+
+RAW_INTEGER_CASTING = [[
+if value_type == Type.primitive.number then
+	value = math.floor( value )
+else
+	error "TODO: fix this error"
+end
+]]
+
+NUMBER_CASTING = [[
+if not (value_type == Type.primitive.integer) then
+	error "TODO: fix this error"
+end
+]]
+
+RAW_NUMBER_CASTING = NUMBER_CASTING
+
+COLOUR_CASTING = [[
+error "TODO: fix this error"
+]]
+
+RAW_COLOUR_CASTING = [[
+if value_type == Type.primitive.integer then
+	if value ~= TRANSPARENT and (math.log( value ) / math.log( 2 ) % 1 ~= 0 or value < 1 or value > 2 ^ 15) then
+		error "TODO: fix this error"
+	end
+else
+	error "TODO: fix this error"
+end
+]]
+
+ALIGNMENT_CASTING = [[
+error "TODO: fix this error"
+]]
+
+RAW_ALIGNMENT_CASTING = [[
+if value_type == Type.primitive.integer then
+	if value ~= ALIGNMENT_LEFT and value ~= ALIGNMENT_RIGHT and value ~= ALIGNMENT_TOP and value ~= ALIGNMENT_BOTTOM and value ~= ALIGNMENT_CENTRE then
+		error "TODO: fix this error"
+	end
+else
+	error "TODO: fix this error"
+end
+]]
+
+ERR_CASTING = [[
+error "TODO: fix this error"
+]]
 
 SELF_INDEX_UPDATER = [[function FUNC()
 	NAME = self.INDEX
@@ -360,12 +481,17 @@ QUERY_UPDATER = [[function FUNC()
 end]]
 
 GENERIC_SETTER = [[
+local rtype = ...
 return function( self, value )
 	self.values:respawn PROPERTY_QUOTED
 	self[RAW_PROPERTY] = value
 
 	if type( value ) ~= "string" then
-		-- do type check
+		local value_type = Typechecking.resolve_type( value )
+
+		if not (value_type == rtype) then
+			CASTING_RAW
+		end
 
 		CHANGECODE
 
@@ -375,19 +501,28 @@ return function( self, value )
 	VALUE_MODIFICATION
 
 	local parser = DynamicValueParser( Stream( value ) )
+	local environment = {}
 
-	parser:set_context( "enable_queries", true )
+	parser.flags.enable_queries = true
 
 	ENV_MODIFICATION
 
 	local value_parsed = parser:parse_expression()
-		or error "TODO: fix this error"
+		or "TODO: fix this error"
 
 	AST_MODIFICATION
 
+	local value_parsed, value_type = Typechecking.check_type( value_parsed, {
+		object = self;
+		environment = environment;
+	} )
 	local lifetime = self.values.lifetimes[PROPERTY_QUOTED]
-	local default  = self.values.defaults[PROPERTY_QUOTED]
+	local default  = self.values .defaults[PROPERTY_QUOTED]
 	local setter_f, initialiser_f
+
+	if not (value_type == rtype) then
+		CASTING
+	end
 
 	local function update()
 		local value = setter_f( self ) or default
@@ -401,7 +536,7 @@ return function( self, value )
 		error "TODO: fix this error"
 	end
 
-	setter_f, initialiser_f = Codegen.dynamic_value( value_parsed, lifetime, parser.environment, self, update )
+	setter_f, initialiser_f = Codegen.dynamic_value( value_parsed, lifetime, environment, self, update )
 
 	initialiser_f()
 	update()
@@ -568,7 +703,7 @@ function dynamic_value_internal( value, state )
 
 	elseif value.type == DVALUE_IDENTIFIER then
 		if state.environment[value.value] ~= nil then
-			state.inputs[#state.inputs + 1] = state.environment[value.value];
+			state.inputs[#state.inputs + 1] = state.environment[value.value].value;
 
 			return {
 				value = "i" .. #state.inputs;
@@ -578,27 +713,6 @@ function dynamic_value_internal( value, state )
 				dependants = {};
 				dependencies = {};
 			}
-
-		elseif state.object.values:has( value.value ) then
-			local nr = #state.names + 1
-			local nu = #state.names + 2
-			local t = {
-				value = "n" .. nr;
-				complex = true;
-				update = "f" .. nu .. "()";
-				initialise = "self.values:subscribe( '" .. value.value .. "', lifetime, f" .. nu .. " )\nf" .. nu .. "()";
-				dependants = {};
-				dependencies = {};
-			}
-
-			state.names[nr] = "n" .. nr
-			state.names[nu] = "f" .. nu
-			state.functions[#state.functions + 1] = {
-				code = SELF_INDEX_UPDATER:gsub( "NAME", "n" .. nr ):gsub( "INDEX", value.value ):gsub( "FUNC", "f" .. nu );
-				node = t;
-			}
-
-			return t
 
 		else
 			error "TODO: fix this error"
@@ -798,6 +912,42 @@ function dynamic_value_internal( value, state )
 		}
 
 		val.dependants[#val.dependants + 1] = t
+
+		return t
+
+	elseif value.type == DVALUE_FLOOR then
+		local val = dynamic_value_internal( value.value, state )
+		local n = #state.names + 1
+		local t = {
+			value = "n" .. n;
+			complex = false;
+			update = "n" .. n .. " = " .. val.value .. " ~= nil and floor( " .. val.value .. " ) or nil";
+			initialise = nil;
+			dependants = {};
+			dependencies = { val };
+		}
+
+		state.names[n] = "n" .. n
+		val.dependants[#val.dependants + 1] = t
+		state.floored = true
+
+		return t
+
+	elseif value.type == DVALUE_TOSTRING then
+		local val = dynamic_value_internal( value.value, state )
+		local n = #state.names + 1
+		local t = {
+			value = "n" .. n;
+			complex = false;
+			update = "n" .. n .. " = " .. val.value .. " ~= nil and tostring( " .. val.value .. " ) or nil";
+			initialise = nil;
+			dependants = {};
+			dependencies = { val };
+		}
+
+		state.names[n] = "n" .. n
+		val.dependants[#val.dependants + 1] = t
+		state.tostringed = true
 
 		return t
 

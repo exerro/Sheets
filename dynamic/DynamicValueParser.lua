@@ -1,4 +1,7 @@
 
+ -- @once
+ -- @print Including sheets.dynamic.DynamicValueParser
+
 local is_operator = {
 	["+"] = true;
 	["-"] = true;
@@ -45,35 +48,12 @@ end
 
 class "DynamicValueParser" {
 	stream = nil;
-	context = {};
+	flags = {};
 }
 
 function DynamicValueParser:DynamicValueParser( stream )
 	self.stream = stream
-	self.environment = {}
-	self.context = { { environment = self.environment } }
-end
-
-function DynamicValueParser:set_context( name, value )
-	self.context[#self.context][name] = value
-end
-
-function DynamicValueParser:push_context()
-	local t = {}
-
-	for k, v in pairs( self.context[#self.context] ) do
-		t[k] = v
-	end
-
-	self.context[#self.context + 1] = t
-end
-
-function DynamicValueParser:pop_context()
-	self.context[#self.context] = nil
-end
-
-function DynamicValueParser:get_context()
-	return self.context[#self.context] or {}
+	self.flags = {}
 end
 
 function DynamicValueParser:parse_primary_expression()
@@ -92,7 +72,7 @@ function DynamicValueParser:parse_primary_expression()
 	elseif self.stream:test( TOKEN_INTEGER ) then
 		local value = { type = DVALUE_INTEGER, value = self.stream:next().value }
 
-		if self:get_context().enable_percentages and self.stream:skip( TOKEN_SYMBOL, "%" ) then
+		if self.flags.enable_percentages and self.stream:skip( TOKEN_SYMBOL, "%" ) then
 			value.type = DVALUE_PERCENTAGE
 		end
 
@@ -100,7 +80,7 @@ function DynamicValueParser:parse_primary_expression()
 	elseif self.stream:test( TOKEN_FLOAT ) then
 		local value = { type = DVALUE_FLOAT, value = self.stream:next().value }
 
-		if self:get_context().enable_percentages and self.stream:skip( TOKEN_SYMBOL, "%" ) then
+		if self.flags.enable_percentages and self.stream:skip( TOKEN_SYMBOL, "%" ) then
 			value.type = DVALUE_PERCENTAGE
 		end
 
@@ -110,7 +90,7 @@ function DynamicValueParser:parse_primary_expression()
 	elseif self.stream:test( TOKEN_STRING ) then
 		return { type = DVALUE_STRING, value = self.stream:next().value }
 	elseif self.stream:test( TOKEN_SYMBOL, "$" ) then
-		if self:get_context().enable_queries then
+		if self.flags.enable_queries then
 			self.stream:next()
 		else
 			error "TODO: fix this error"
@@ -176,7 +156,7 @@ function DynamicValueParser:parse_term()
 			term = { type = DVALUE_INDEX, value = term, index = index }
 
 		elseif self.stream:test( TOKEN_SYMBOL, "$" ) then
-			if self:get_context().enable_queries then
+			if self.flags.enable_queries then
 				self.stream:next()
 			else
 				error "TODO: fix this error"

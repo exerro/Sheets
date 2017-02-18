@@ -64,7 +64,7 @@ function IHasText:draw_text( surface, x, y )
 			x_offset = self.width - #lines[i]
 		end
 
-		surface:drawString( x + x_offset, y + offset + i - 1, lines[i], TRANSPARENT, self.text_colour )
+		surface:drawString( x + x_offset, y + offset + i - 1, lines[i], nil, self.text_colour )
 
 	end
 end

@@ -1,4 +1,7 @@
 
+ -- @once
+ -- @print Including sheets.dynamic.Stream
+
 local escape_chars = {
 	["n"] = "\n";
 	["r"] = "\r";

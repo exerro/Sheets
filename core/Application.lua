@@ -413,7 +413,10 @@ function handle_event( self, event, params, ... )
 
 	else
 		local ev = MiscEvent( event, ... )
-		handle( ev )
+
+		for i = #screens, 1, -1 do
+			screens[i]:handle( ev )
+		end
 
 		if not ev.handled then
 			-- @if SHEETS_THREADING

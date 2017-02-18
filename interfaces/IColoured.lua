@@ -3,7 +3,7 @@
  -- @print Including sheets.interfaces.IColoured
 
 interface "IColoured" {
-	colour = WHITE;
+	colour = nil;
 }
 
 function IColoured:IColoured()

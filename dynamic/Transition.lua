@@ -1,4 +1,7 @@
 
+ -- @once
+ -- @print sheets.dynamic.Transition
+
 class "Transition" {
 	duration = 0.4;
 	easing_function = nil;

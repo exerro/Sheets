@@ -4,7 +4,7 @@
 
 class "ClippedContainer" extends "Container" {
 	surface = nil;
-	colour = WHITE;
+	colour = nil;
 }
 
 function ClippedContainer:ClippedContainer( ... )

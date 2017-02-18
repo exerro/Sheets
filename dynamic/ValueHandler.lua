@@ -1,6 +1,6 @@
 
  -- @once
- -- @print Including sheets.core.ValueHandler
+ -- @print Including sheets.dynamic.ValueHandler
 
 local floor = math.floor
 local get_transition_function
@@ -20,13 +20,6 @@ class "ValueHandler" {
 }
 
 ValueHandler.properties = {}
-ValueHandler.integer_type = "integer";
-ValueHandler.boolean_type = "boolean";
-ValueHandler.number_type = "number";
-ValueHandler.string_type = "string";
-ValueHandler.colour_type = "colour";
-ValueHandler.alignment_type = "alignment";
-ValueHandler.optional_sheet_type = "sheet?";
 
 function ValueHandler:ValueHandler( object )
 	self.object = object
@@ -81,7 +74,7 @@ end
 
 function ValueHandler:respawn( name )
 	local t = self.lifetimes[name]
-	
+
 	for i = #t, 1, -1 do
 		local l = t[i]
 		t[i] = nil
@@ -146,9 +139,9 @@ function ValueHandler:transition( property, final, transition, custom_update )
 	local floored = false -- TODO: make this respect the property
 	local ptype = ValueHandler.properties[property].type
 
-	if ptype == ValueHandler.integer_type then
+	if ptype == Type.primitive.integer then
 		floored = true
-	elseif ptype ~= ValueHandler.number_type then
+	elseif ptype ~= Type.primitive.number then
 		Exception.throw( Exception( "PropertyTransitionException", "Cannot animate non-number property '" .. property .. "'" ) ) -- TODO: make custom exception for this
 	end
 
@@ -215,26 +208,26 @@ function ValueHandler:update( dt )
 	end
 end
 
-ValueHandler.properties.x = { type = ValueHandler.integer_type, change = "parent", transitionable = true }
-ValueHandler.properties.y = { type = ValueHandler.integer_type, change = "parent", transitionable = true }
-ValueHandler.properties.z = { type = ValueHandler.integer_type, change = "parent", transitionable = true }
+ValueHandler.properties.x = { type = Type.primitive.integer, change = "parent", transitionable = true }
+ValueHandler.properties.y = { type = Type.primitive.integer, change = "parent", transitionable = true }
+ValueHandler.properties.z = { type = Type.primitive.integer, change = "parent", transitionable = true }
 
-ValueHandler.properties.x_offset = { type = ValueHandler.integer_type, change = "self", transitionable = true }
-ValueHandler.properties.y_offset = { type = ValueHandler.integer_type, change = "self", transitionable = true }
+ValueHandler.properties.x_offset = { type = Type.primitive.integer, change = "self", transitionable = true }
+ValueHandler.properties.y_offset = { type = Type.primitive.integer, change = "self", transitionable = true }
 
-ValueHandler.properties.width = { type = ValueHandler.integer_type, change = "self", transitionable = true }
-ValueHandler.properties.height = { type = ValueHandler.integer_type, change = "self", transitionable = true }
+ValueHandler.properties.width = { type = Type.primitive.integer, change = "self", transitionable = true }
+ValueHandler.properties.height = { type = Type.primitive.integer, change = "self", transitionable = true }
 
-ValueHandler.properties.text = { type = ValueHandler.string_type, change = "self", transitionable = false }
+ValueHandler.properties.text = { type = Type.primitive.string, change = "self", transitionable = false }
 
-ValueHandler.properties.horizontal_alignment = { type = ValueHandler.alignment_type, change = "self", transitionable = false }
-ValueHandler.properties.vertical_alignment = { type = ValueHandler.alignment_type, change = "self", transitionable = false }
+ValueHandler.properties.horizontal_alignment = { type = Type.sheets.alignment, change = "self", transitionable = false }
+ValueHandler.properties.vertical_alignment = { type = Type.sheets.alignment, change = "self", transitionable = false }
 
-ValueHandler.properties.colour = { type = ValueHandler.colour_type, change = "self", transitionable = false }
-ValueHandler.properties.text_colour = { type = ValueHandler.colour_type, change = "self", transitionable = false }
-ValueHandler.properties.active_colour = { type = ValueHandler.colour_type, change = "self", transitionable = false }
+ValueHandler.properties.colour = { type = Type.sheets.colour, change = "self", transitionable = false }
+ValueHandler.properties.text_colour = { type = Type.sheets.colour, change = "self", transitionable = false }
+ValueHandler.properties.active_colour = { type = Type.sheets.colour, change = "self", transitionable = false }
 
-ValueHandler.properties.parent = { type = ValueHandler.optional_sheet_type, change = "parent", transitionable = false }
+ValueHandler.properties.parent = { type = Type.sheets.optional_Sheet, change = "parent", transitionable = false }
 
 function get_transition_function( name )
 	if not tfcache[name] then

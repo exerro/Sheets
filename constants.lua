@@ -19,7 +19,7 @@
  -- @define ALIGNMENT_TOP 3
  -- @define ALIGNMENT_BOTTOM 4
 
- -- @define TRANSPARENT nil
+ -- @define TRANSPARENT 0
  -- @define WHITE 1
  -- @define ORANGE 2
  -- @define MAGENTA 4
@@ -72,6 +72,8 @@
  -- @define DVALUE_INDEX "index"
  -- @define DVALUE_UNEXPR "unary operator expression"
  -- @define DVALUE_BINEXPR "binary operator expression"
+ -- @define DVALUE_FLOOR "floor"
+ -- @define DVALUE_TOSTRING "tostring"
 
  -- @if SHEETS_LOWRES
 	 -- @define BLANK_PIXEL { WHITE, WHITE, " " }
