@@ -117,7 +117,15 @@ function DynamicValueParser:parse_term()
 			           or self.stream:skip_value( TOKEN_KEYWORD, "parent" )
 		   			   or self.stream:skip_value( TOKEN_KEYWORD, "application" )
 			           or error "TODO: fix this error"
+					   
 			term = { type = DVALUE_DOTINDEX, value = term, index = index }
+
+		elseif self.stream:skip( TOKEN_SYMBOL, "#" ) then
+			local tag = parse_name( self.stream )
+			         or self.stream:skip_value( TOKEN_KEYWORD )
+					 or error "TODO: fix this error"
+
+			term = { type = DVALUE_TAG_CHECK, value = term, tag = tag }
 
 		elseif self.stream:skip( TOKEN_SYMBOL, "(" ) then
 			local parameters = {}

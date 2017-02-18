@@ -66,7 +66,7 @@ end
 
 function ValueHandler:trigger( name )
 	if self.subscriptions[name] then
-		for i = 1, #self.subscriptions[name] do
+		for i = #self.subscriptions[name], 1, -1 do
 			self.subscriptions[name][i]()
 		end
 	end
@@ -82,6 +82,8 @@ function ValueHandler:respawn( name )
 			l[2].values:unsubscribe( l[3], l[4] )
 		elseif l[1] == "query" then
 			l[2]:unsubscribe( l[3], l[4] )
+		elseif l[1] == "tag" then
+			l[2]:unsubscribe_from_tag( l[3], l[4] )
 		end
 	end
 

@@ -125,6 +125,8 @@ function query_raw( self, query, lifetime, track, parsed )
 					l[2].values:unsubscribe( l[3], l[4] )
 				elseif l[1] == "query" then
 					l[2]:unsubscribe( l[3], l[4] )
+				elseif l[1] == "tag" then
+					l[2]:unsubscribe_from_tag( l[3], l[4] )
 				end
 			end
 		end

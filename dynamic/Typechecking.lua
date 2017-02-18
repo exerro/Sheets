@@ -188,7 +188,7 @@ function Typechecking.check_type( ast, state )
 			end
 
 		elseif ast.operator == "and" then
-			return ast, lvalue_type == Type.primitive.boolean and rvalue_type / Type.primitive.boolean or rvalue_type / Type.primitive.null
+			return ast, rvalue_type / Type.primitive.null
 
 		elseif ast.operator == "or" then
 			local tr = { lvalue_type }
@@ -236,6 +236,17 @@ function Typechecking.check_type( ast, state )
 		elseif ast.operator == "~=" or ast.operator == "==" then
 			return type.primitive.boolean
 
+		end
+
+	elseif ast.type == DVALUE_TAG_CHECK then
+		local obj, objtype = Typechecking.check_type( ast.value, state )
+
+		ast.value = obj
+
+		if objtype == Type.sheets.Sheet_or_Screen / Type.primitive.null then
+			return ast, Type.primitive.boolean
+		else
+			error "TODO: fix this error"
 		end
 
 	end

@@ -143,8 +143,17 @@ function Codegen.dynamic_value( parsed_value, lifetime, env, obj, updater )
 		func_compiled[i] = functions[i].code:gsub( "DEPENDENCIES", table.concat( dependants, "\n" ) )
 	end
 
-	for i = 1, #roots do
+	local i = 1
+	while i <= #roots do
 		initialisers[#initialisers + 1] = roots[i].initialise or roots[i].update
+
+		if not roots[i].complex then
+			for n = 1, #roots[i].dependants do
+				roots[#roots + 1] = roots[i].dependants[n]
+			end
+		end
+
+		i = i + 1
 	end
 
 	local s = initialisers[#initialisers]
@@ -169,6 +178,12 @@ function Codegen.dynamic_value( parsed_value, lifetime, env, obj, updater )
 		.. (initialise_function or "function()\n"
 			.. table.concat( initialisers, "\n" )
 			.. (#initialisers == 0 and "" or "\n") .. "end")
+
+	if parsed_value.type == DVALUE_BINEXPR and parsed_value.lvalue.lvalue and parsed_value.lvalue.lvalue.type == DVALUE_TAG_CHECK then
+		local h = fs.open( "demo/log.txt", "w" )
+		h.write( code )
+		h.close()
+	end
 
 	local f, err = assert( (load or loadstring)( code, "dynamic value", nil, _ENV ) )
 
@@ -403,6 +418,28 @@ ARBITRARY_DOTINDEX_UPDATER = [[do
 
 		if obj then
 			obj.values:subscribe( "INDEX", lifetime, f0 )
+		end
+
+		NAME = obj
+		return f0()
+	end
+end]]
+
+TAG_CHECK_UPDATER = [[do
+	local function f0()
+		VALUE = NAME and NAME:has_tag TAG
+		DEPENDENCIES
+	end
+
+	function FUNC()
+		local obj = LVALUE
+
+		if NAME then
+			NAME:unsubscribe_from_tag( TAG, f0 )
+		end
+
+		if obj then
+			obj:subscribe_to_tag( TAG, lifetime, f0 )
 		end
 
 		NAME = obj
@@ -804,10 +841,11 @@ function dynamic_value_internal( value, state )
 			value = "n" .. n;
 			complex = false;
 			update = "n" .. n .. " = " .. (
-				(value.operator == "or" or value.operator == "and") and lvalue.value .. " " .. value.operator .. " " .. rvalue.value
+				   (value.operator == "or" and lvalue.value .. " or " .. rvalue.value)
+				or (value.operator == "and" and lvalue.value .. " and " .. rvalue.value .. " or nil")
 				-- or value.operator == "==" and "" -- potentially $abc == $def == true if both are undefined
 				-- or value.operator == "~=" and "" -- potentially $abc != $def == true if one is undefined and false if both are undefined
-				or lvalue.value .. " ~= nil and " .. rvalue.value .. " ~= nil and " .. lvalue.value .. " " .. value.operator .. " " .. rvalue.value .. " or nil"
+				or (lvalue.value .. " ~= nil and " .. rvalue.value .. " ~= nil and " .. lvalue.value .. " " .. value.operator .. " " .. rvalue.value .. " or nil")
 			);
 			initialise = nil;
 			dependants = {};
@@ -942,6 +980,37 @@ function dynamic_value_internal( value, state )
 		state.names[n] = "n" .. n
 		val.dependants[#val.dependants + 1] = t
 		state.tostringed = true
+
+		return t
+
+	elseif value.type == DVALUE_TAG_CHECK then
+		local val = dynamic_value_internal( value.value, state )
+		local nidx = #state.names + 1
+		local nval = #state.names + 2
+		local npdt = #state.names + 3
+		local t = {
+			value = "n" .. nval;
+			complex = true;
+			update = "f" .. npdt .. "()";
+			initialise = nil;
+			dependants = {};
+			dependencies = { val };
+		}
+
+		state.names[nidx] = "n" .. nidx
+		state.names[nval] = "n" .. nval
+		state.names[npdt] = "f" .. npdt
+		state.functions[#state.functions + 1] = {
+			code = TAG_CHECK_UPDATER
+				:gsub( "NAME", "n" .. nidx )
+				:gsub( "TAG", ("%q"):format( value.tag ) )
+				:gsub( "FUNC", "f" .. npdt )
+				:gsub( "LVALUE", val.value )
+				:gsub( "VALUE", "n" .. nval );
+			node = t;
+		}
+
+		val.dependants[#val.dependants + 1] = t
 
 		return t
 

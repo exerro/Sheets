@@ -74,6 +74,7 @@
  -- @define DVALUE_BINEXPR "binary operator expression"
  -- @define DVALUE_FLOOR "floor"
  -- @define DVALUE_TOSTRING "tostring"
+ -- @define DVALUE_TAG_CHECK "tag"
 
  -- @if SHEETS_LOWRES
 	 -- @define BLANK_PIXEL { WHITE, WHITE, " " }
