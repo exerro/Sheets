@@ -210,6 +210,18 @@ function Codegen.dynamic_property_setter( property, options )
 		t1[#t1 + 1] = "if value:sub( 1, 1 ) == '!' then value = value:sub( 2 ) else value = ('%q'):format( value ) end"
 	end
 
+	if ptype == Type.sheets.colour then
+		for k, v in pairs( colour ) do
+			t2[#t2 + 1] = "environment." .. k .. " = { type = rtype, value = " .. v .. " }"
+		end
+	end
+
+	if ptype == Type.sheets.alignment then
+		for k, v in pairs( alignment ) do
+			t2[#t2 + 1] = "environment." .. k .. " = { type = rtype, value = " .. v .. " }"
+		end
+	end
+
 	t4[#t4 + 1] = options.custom_update_code
 
 	local s4 = table.concat( t4, "\n" ) -- code to run on value update
@@ -412,9 +424,9 @@ return function( self, value )
 	VALUE_MODIFICATION
 
 	local parser = DynamicValueParser( Stream( value ) )
-	local environment = parser.environment
+	local environment = {}
 
-	parser:set_context( "enable_queries", true )
+	parser.flags.enable_queries = true
 
 	ENV_MODIFICATION
 

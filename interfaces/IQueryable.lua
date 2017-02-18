@@ -73,7 +73,7 @@ function query_raw( self, query, lifetime, track, parsed )
 		parameters.check( 1, "query", "string", query )
 		local parser = DynamicValueParser( Stream( query ) )
 
-		parser:set_context( "enable_queries", true )
+		parser.enable_queries = true
 		query = parser:parse_query()
 	end
 
