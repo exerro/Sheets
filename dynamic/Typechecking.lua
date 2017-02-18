@@ -52,6 +52,20 @@ function Typechecking.check_type( ast, state )
 		return ast, Type.sheets.Application
 
 	elseif ast.type == DVALUE_IDENTIFIER then
+		if state.environment[ast.value] then
+			return ast, state.environment[ast.value].type
+
+		elseif state.object.values:has( ast.value ) then
+			return {
+				type = DVALUE_DOTINDEX;
+				value = {
+					type = DVALUE_SELF;
+				};
+				index = ast.value;
+			}, ValueHandler.properties[ast.value].type
+
+		end
+
 		return ast, Typechecking.resolve_type( state.environment[ast.value] )
 
 	elseif ast.type == DVALUE_UNEXPR then

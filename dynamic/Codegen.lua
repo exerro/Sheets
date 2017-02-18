@@ -614,7 +614,7 @@ function dynamic_value_internal( value, state )
 
 	elseif value.type == DVALUE_IDENTIFIER then
 		if state.environment[value.value] ~= nil then
-			state.inputs[#state.inputs + 1] = state.environment[value.value];
+			state.inputs[#state.inputs + 1] = state.environment[value.value].value;
 
 			return {
 				value = "i" .. #state.inputs;
@@ -624,27 +624,6 @@ function dynamic_value_internal( value, state )
 				dependants = {};
 				dependencies = {};
 			}
-
-		elseif state.object.values:has( value.value ) then
-			local nr = #state.names + 1
-			local nu = #state.names + 2
-			local t = {
-				value = "n" .. nr;
-				complex = true;
-				update = "f" .. nu .. "()";
-				initialise = "self.values:subscribe( '" .. value.value .. "', lifetime, f" .. nu .. " )\nf" .. nu .. "()";
-				dependants = {};
-				dependencies = {};
-			}
-
-			state.names[nr] = "n" .. nr
-			state.names[nu] = "f" .. nu
-			state.functions[#state.functions + 1] = {
-				code = SELF_INDEX_UPDATER:gsub( "NAME", "n" .. nr ):gsub( "INDEX", value.value ):gsub( "FUNC", "f" .. nu );
-				node = t;
-			}
-
-			return t
 
 		else
 			error "TODO: fix this error"
