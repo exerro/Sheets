@@ -64,9 +64,10 @@ function Typechecking.check_type( ast, state )
 				index = ast.value;
 			}, ValueHandler.properties[ast.value].type
 
-		end
+		else
+			error "TODO: fix this error"
 
-		return ast, Typechecking.resolve_type( state.environment[ast.value] )
+		end
 
 	elseif ast.type == DVALUE_UNEXPR then
 		local _ast, type = Typechecking.check_type( ast.value, state )
@@ -237,5 +238,20 @@ function Typechecking.check_type( ast, state )
 
 		end
 
+	end
+end
+
+function Typechecking.resolve_type( value )
+	local t = type( value )
+
+	if t == "number" then
+		return value % 1 == 0 and Type.primitive.integer or Type.primitive.number
+	elseif t == "boolean" or t == "string" then
+		return Type.primitive[t]
+	elseif t == "nil" then
+		return Type.primitive.null
+	-- potentially add tables here
+	else
+		return Type.any
 	end
 end

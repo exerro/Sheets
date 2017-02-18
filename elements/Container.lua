@@ -4,8 +4,8 @@
 
 -- needs to update to new exception system
 
-class "Container" extends "Sheet" implements "IChildContainer" {
-	colour = 0;
+class "Container" extends "Sheet" implements "IChildContainer" implements "IColoured" {
+	colour = nil;
 	x_offset = 0;
 	y_offset = 0;
 
@@ -18,6 +18,7 @@ function Container:Container( x, y, w, h )
 	self:ICollatedChildren()
 	self:IQueryable()
 	self:IChildContainer()
+	self:IColoured()
 
 	self.values:add( "x_offset", 0 )
 	self.values:add( "y_offset", 0 )

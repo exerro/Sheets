@@ -19,7 +19,7 @@
  -- @define ALIGNMENT_TOP 3
  -- @define ALIGNMENT_BOTTOM 4
 
- -- @define TRANSPARENT nil
+ -- @define TRANSPARENT 0
  -- @define WHITE 1
  -- @define ORANGE 2
  -- @define MAGENTA 4

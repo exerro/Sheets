@@ -4,8 +4,8 @@
 
 class "Button" extends "Sheet" implements "IHasText" implements "IColoured" {
 	down = false;
-	colour = CYAN;
-	active_colour = LIGHTBLUE;
+	colour = nil;
+	active_colour = nil;
 	horizontal_alignment = ALIGNMENT_CENTRE;
 	vertical_alignment = ALIGNMENT_CENTRE;
 }

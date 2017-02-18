@@ -6,8 +6,10 @@ local property_cache = {}
 
 local CHANGECODE_NO_TRANSITION, CHANGECODE_TRANSITION, SELF_INDEX_UPDATER,
       ARBITRARY_DOTINDEX_UPDATER, ARBITRARY_INDEX_UPDATER, DYNAMIC_QUERY_UPDATER,
-	  QUERY_UPDATER, GENERIC_SETTER, STRING_CASTING, INTEGER_CASTING,
-	  NUMBER_CASTING, ERR_CASTING
+	  QUERY_UPDATER, GENERIC_SETTER, STRING_CASTING, RAW_STRING_CASTING,
+	  INTEGER_CASTING, RAW_INTEGER_CASTING, NUMBER_CASTING, RAW_NUMBER_CASTING,
+	  COLOUR_CASTING, RAW_COLOUR_CASTING, ALIGNMENT_CASTING,
+	  RAW_ALIGNMENT_CASTING, ERR_CASTING
 
 local node_query_internal, dynamic_value_internal
 
@@ -190,6 +192,7 @@ function Codegen.dynamic_property_setter( property, options )
 	local t2 = {}
 	local t3 = {}
 	local t4 = {}
+	local t5 = {}
 
 	if options.update_surface_size then
 		t4[#t4 + 1] = "if self.surface then self.surface = surface.create( self.width, self.height ) end"
@@ -214,6 +217,8 @@ function Codegen.dynamic_property_setter( property, options )
 		for k, v in pairs( colour ) do
 			t2[#t2 + 1] = "environment." .. k .. " = { type = rtype, value = " .. v .. " }"
 		end
+
+		t5[#t5 + 1] = "if value == TRANSPARENT then value = nil end"
 	end
 
 	if ptype == Type.sheets.alignment then
@@ -224,6 +229,7 @@ function Codegen.dynamic_property_setter( property, options )
 
 	t4[#t4 + 1] = options.custom_update_code
 
+	local s5 = table.concat( t5, "\n" ) -- code to update the value before assignment
 	local s4 = table.concat( t4, "\n" ) -- code to run on value update
 	local s3 = table.concat( t3, "\n" ) -- code to update the AST
 	local s2 = table.concat( t2, "\n" ) -- code to change the environment
@@ -231,7 +237,7 @@ function Codegen.dynamic_property_setter( property, options )
 
 	for i = 1, #property_cache[property] do
 		local c = property_cache[property][i]
-		if c[1] == s1 and c[2] == s2 and c[3] == s3 and c[4] == s4 then
+		if c[1] == s1 and c[2] == s2 and c[3] == s3 and c[4] == s4 and c[5] == s5 then
 			return c.f
 		end
 	end
@@ -245,17 +251,27 @@ function Codegen.dynamic_property_setter( property, options )
 			change_code = change_code
 				:gsub( "CUSTOM_UPDATE", ", function( self )\n" .. s4 .. "\nend" )
 				:gsub( "PROPERTY_TRANSITION_QUOTED", ("%q"):format( property .. "_transition" ) )
+				:gsub( "PROCESS_VALUE", s5 )
 		end
 	else
 		change_code = CHANGECODE_NO_TRANSITION
 			:gsub( "ONCHANGE", s4 )
+			:gsub( "PROCESS_VALUE", s5 )
 	end
 
 	local prop_quoted = ("%q"):format( property )
 	local caster = ptype == Type.primitive.string and STRING_CASTING
 	            or ptype == Type.primitive.integer and INTEGER_CASTING
 				or ptype == Type.primitive.number and NUMBER_CASTING
+				or ptype == Type.sheets.colour and COLOUR_CASTING
+				or ptype == Type.sheets.alignment and ALIGNMENT_CASTING
 				or ERR_CASTING
+	local rawcaster = ptype == Type.primitive.string and RAW_STRING_CASTING
+	               or ptype == Type.primitive.integer and RAW_INTEGER_CASTING
+				   or ptype == Type.primitive.number and RAW_NUMBER_CASTING
+				   or ptype == Type.sheets.colour and RAW_COLOUR_CASTING
+				   or ptype == Type.sheets.alignment and RAW_ALIGNMENT_CASTING
+				   or ERR_CASTING
 	local str = GENERIC_SETTER
 		:gsub( "CHANGECODE", change_code )
 		:gsub( "PROPERTY_QUOTED", ("%q"):format( property ) )
@@ -263,8 +279,15 @@ function Codegen.dynamic_property_setter( property, options )
 		:gsub( "VALUE_MODIFICATION", function() return s1 end )
 		:gsub( "ENV_MODIFICATION", function() return s2 end )
 		:gsub( "AST_MODIFICATION", function() return s3 end )
+		:gsub( "CASTING_RAW", function() return rawcaster end )
 		:gsub( "CASTING", function() return caster end )
 	local f = assert( (load or loadstring)( str, "property setter '" .. property .. "'", nil, _ENV ) )
+
+	if property == "colour" then
+		local h = fs.open( "demo/log.txt", "w" )
+		h.write( str )
+		h.close()
+	end
 
 	if setfenv then
 		setfenv( f, getfenv() )
@@ -272,15 +295,20 @@ function Codegen.dynamic_property_setter( property, options )
 
 	local fr = f( ptype )
 
-	property_cache[property][#property_cache[property] + 1] = { s1, s2, s3, s4, f = fr }
+	property_cache[property][#property_cache[property] + 1] = { s1, s2, s3, s4, s5, f = fr }
 
 	return fr
 end
 
 CHANGECODE_NO_TRANSITION = [[
+PROCESS_VALUE
 self[PROPERTY_QUOTED] = value
 ONCHANGE
 self.values:trigger PROPERTY_QUOTED]]
+
+CHANGECODE_TRANSITION = [[
+PROCESS_VALUE
+self.values:transition( PROPERTY_QUOTED, value, self[PROPERTY_TRANSITION_QUOTED]CUSTOM_UPDATE )]]
 
 STRING_CASTING = [[
 if value_type == Type.primitive.integer or value_type == Type.primitive.number or value_type == Type.primitive.boolean then
@@ -288,6 +316,14 @@ if value_type == Type.primitive.integer or value_type == Type.primitive.number o
 		type = DVALUE_TOSTRING;
 		value = value_parsed;
 	}
+else
+	error "TODO: fix this error"
+end
+]]
+
+RAW_STRING_CASTING = [[
+if value_type == Type.primitive.integer or value_type == Type.primitive.number or value_type == Type.primitive.boolean then
+	value = tostring( value )
 else
 	error "TODO: fix this error"
 end
@@ -304,8 +340,48 @@ else
 end
 ]]
 
+
+
+RAW_INTEGER_CASTING = [[
+if value_type == Type.primitive.number then
+	value = math.floor( value )
+else
+	error "TODO: fix this error"
+end
+]]
+
 NUMBER_CASTING = [[
 if not (value_type == Type.primitive.integer) then
+	error "TODO: fix this error"
+end
+]]
+
+RAW_NUMBER_CASTING = NUMBER_CASTING
+
+COLOUR_CASTING = [[
+error "TODO: fix this error"
+]]
+
+RAW_COLOUR_CASTING = [[
+if value_type == Type.primitive.integer then
+	if value ~= TRANSPARENT and (math.log( value ) / math.log( 2 ) % 1 ~= 0 or value < 1 or value > 2 ^ 15) then
+		error "TODO: fix this error"
+	end
+else
+	error "TODO: fix this error"
+end
+]]
+
+ALIGNMENT_CASTING = [[
+error "TODO: fix this error"
+]]
+
+RAW_ALIGNMENT_CASTING = [[
+if value_type == Type.primitive.integer then
+	if value ~= ALIGNMENT_LEFT and value ~= ALIGNMENT_RIGHT and value ~= ALIGNMENT_TOP and value ~= ALIGNMENT_BOTTOM and value ~= ALIGNMENT_CENTRE then
+		error "TODO: fix this error"
+	end
+else
 	error "TODO: fix this error"
 end
 ]]
@@ -313,9 +389,6 @@ end
 ERR_CASTING = [[
 error "TODO: fix this error"
 ]]
-
-CHANGECODE_TRANSITION = [[
-self.values:transition( PROPERTY_QUOTED, value, self[PROPERTY_TRANSITION_QUOTED]CUSTOM_UPDATE )]]
 
 SELF_INDEX_UPDATER = [[function FUNC()
 	NAME = self.INDEX
@@ -414,7 +487,11 @@ return function( self, value )
 	self[RAW_PROPERTY] = value
 
 	if type( value ) ~= "string" then
-		-- do type check
+		local value_type = Typechecking.resolve_type( value )
+
+		if not (value_type == rtype) then
+			CASTING_RAW
+		end
 
 		CHANGECODE
 
