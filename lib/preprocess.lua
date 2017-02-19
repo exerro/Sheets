@@ -219,6 +219,7 @@ local function microminify( line, state )
 end
 
 local function apply_function_macros( str, state )
+	if not str then error( "here", 3 )end
 	return str:gsub( "([%w_]+)(%b())", function( func, params )
 		local lookup = {}
 
@@ -345,11 +346,15 @@ function preprocess.process_content( content, source, state )
 	return lines
 end
 
-function preprocess.process_file( file, state )
+function preprocess.process_file( file, state, raw )
 	local cwd = state.cwd[#state.cwd] or {}
 	local paths = splitpaths( tostring( state.environment.PATH ) )
-	local filepath = file:gsub( "%.", "/" )
+	local filepath = raw and file or file:gsub( "%.", "/" )
 	local filename = filepath:match ".+/(.*)" or filepath
+
+	if filepath:sub( 1, 1 ) == "/" or raw then
+		paths = { "" }
+	end
 
 	for i = 1, #paths do
 		for n = paths[i] == cwd.path and #cwd or 0, 0, -1 do
@@ -450,12 +455,14 @@ function preprocess.compile_lines( lines, state )
 		local space = not lines[i].content:find "%S"
 		local same_tracker = line_tracker[n] and lines[i].source == line_tracker[n][3] and lines[i].line == line_tracker[n][5] + 1
 
-		if same_tracker and not space then
-			line_tracker[n][2] = l
-			line_tracker[n][5] = lines[i].line
-		elseif not same_tracker and not space then
-			n = n + 1
-			line_tracker[n] = { l, l, lines[i].source, lines[i].line, lines[i].line }
+		if lines[i].source ~= "<preprocessor>" then
+			if same_tracker and not space then
+				line_tracker[n][2] = l
+				line_tracker[n][5] = lines[i].line
+			elseif not same_tracker and not space then
+				n = n + 1
+				line_tracker[n] = { l, l, lines[i].source, lines[i].line, lines[i].line }
+			end
 		end
 
 		if not space then
@@ -464,7 +471,7 @@ function preprocess.compile_lines( lines, state )
 		end
 	end
 
-	local offset = (#local_list > 0 and 1 or 0) + 1 + elength + 1 + (#errors > 0 and 0 or 2) + 1 + #error_data + 1 + 1 + n + 1 + countlines( DEBUG_TRACKER_FUNCTIONS ) + 1
+	local offset = (#local_list > 0 and 1 or 0) + 1 + elength + 1 + (#errors > 0 and 0 or 1) + (#error_data > 0 and 0 or 1) + 1 + #error_data + 1 + 1 + n + 1 + countlines( DEBUG_TRACKER_FUNCTIONS ) + 1
 
 	for i = 1, #line_tracker do
 		line_tracker[i][1] = line_tracker[i][1] + offset
@@ -865,7 +872,63 @@ commands["include"] = function( data, src, line, lines, state )
 end
 
 commands["import"] = function( data, src, line, lines, state )
-	error "TODO!"
+	local file, name = data:match "^([%w_%./]+)%s+as%s+([%w_]+)$"
+
+	if not file then
+		file = data:match "^[%w_%./]+/[%w_]+$" or data:match "^[%w_]+$"
+		       or error( "expected <path> [as <name>] after @import, got '" .. data .. "' on line " .. line .. " of '" .. src .. "'", 0 )
+		name = file:match ".+/(.*)$" or file
+	end
+
+	if state.ifstack_resultant then
+		local substate = preprocess.create_state( file:match "(.+)/" or "" )
+		local name_env_pat = "^" .. name:upper() .. "_"
+		local name_env_len = #name_env_pat
+		local name_env_add = name:upper() .. "_"
+		local name_err_add = name:lower() .. "_"
+		local localised_names = {}
+		local localised = {}
+
+		substate.microminify = state.microminify
+		substate.minify.active = state.minify.active
+		substate.errors = state.errors
+
+		for k, v in pairs( state.environment ) do
+			if k:find( name_env_pat ) then
+				substate.environment[k:sub( name_env_len )] = v
+			end
+		end
+
+		local sublines = preprocess.process_file( file, substate, true )
+			or error( "failed to find file '" .. file .. "' on line " .. line .. " of '" .. src .. "'", 0 )
+
+		for k, v in pairs( substate.environment ) do
+			state.environment[name_env_add .. k] = v
+		end
+
+		for k, v in pairs( substate.error_data ) do
+			state.error_data[name_err_add .. k] = v
+		end
+
+		for k, v in pairs( substate.localised ) do
+			localised[#localised + 1] = name .. "." .. k .. " = " .. k
+			localised_names[#localised_names + 1] = k
+		end
+
+		local len = #sublines + 1
+
+		state.localised[name] = true
+		lines[line].content = "do " .. name .. " = {}" .. (#localised_names > 0 and " local " .. table.concat( localised_names, ", " ) or "")
+		sublines[len] = { content = table.concat( localised, ";" ) .. " end", source = "<preprocessor>", line = 0 }
+
+		for i = #lines, line + 1, -1 do
+			lines[i + len] = lines[i]
+		end
+
+		for i = 1, len do
+			lines[line + i] = sublines[i]
+		end
+	end
 end
 
 commands["minifystr"] = function( data, src, line, lines, state )
