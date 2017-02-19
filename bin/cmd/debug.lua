@@ -87,7 +87,7 @@ if rebuild then
 	debug_conf:write( "version", v )
 	debug_conf:save()
 
-	flags.SHEETS_MINIFY = not parameters.nominify
+	flags.SHEETS_MINIFY = not parameters.nominify and false
 
 	if not version( "--exists", v, "--silent" ) then
 		version( "--install", v, parameters.silent and "--silent" or nil )
