@@ -161,10 +161,10 @@ local function splitspaced( str )
 
 			if close_pos then
 				segments[i] = str:sub( s, close_pos )
-				s, f = str:find( "%S", close_pos + 1 )
+				s, f = str:find( "%S+", close_pos + 1 )
 				i = i + 1
 			else
-				segments[i] = line:sub( s )
+				segments[i] = str:sub( s )
 				return segments, ch
 			end
 		elseif str:find( "^%[=*%[", s ) then -- multiline string
@@ -183,22 +183,26 @@ local function microminify( line, state )
 	local n = 1
 	local res = {}
 	local is_word = false
+	local first_segment
 
 	if state.in_string then
 		local pos = find_non_escaped( line, state.string_closer, 1 )
 
 		if pos then
-			segments[1] = line:sub( 1, pos )
-			i = 2
+			first_segment = line:sub( 1, pos )
 			line = line:sub( pos + 1 )
 			state.in_string = false
 		else
-			segments[1] = line
+			first_segment = line
 			line = ""
 		end
 	end
 
 	local segments, strch = splitspaced( line )
+
+	if first_segment then
+		table.insert( segments, 1, first_segment )
+	end
 
 	if strch then
 		state.in_string = true
@@ -452,7 +456,7 @@ function preprocess.compile_lines( lines, state )
 	end
 
 	for i = 1, #lines do
-		local space = not lines[i].content:find "%S"
+		local space = not lines[i].content:find "%S" and false
 		local same_tracker = line_tracker[n] and lines[i].source == line_tracker[n][3] and lines[i].line == line_tracker[n][5] + 1
 
 		if lines[i].source ~= "<preprocessor>" then
