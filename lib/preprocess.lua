@@ -29,21 +29,23 @@ local function __get_err_msg( src, line, err )
 end]]
 
 local PCALL_BEGIN = [[
-local ok, err = pcall( function()]]
+local __debug_ok, __debug_err = pcall( function()]]
 
 local PCALL_END = [[
 end )
-if not ok then
-	local e = select( 2, pcall( error, "@", 2 ) )
-	local src = e:match "^(.*):%d+: @$"
-	local line, msg = err:match( src .. ":(%d+): (.*)" )
+if not __debug_ok then
+	if type( __debug_err ) == "string" then
+		local e = select( 2, pcall( error, "@", 2 ) )
+		local src = e:match "^(.*):%d+: @$"
+		local line, msg = __debug_err:match( src .. ":(%d+): (.*)" )
 
-	if line then
-		local src, line = __get_src_and_line( tonumber( line ) )
-		error( src .. "[" .. line .. "]: " .. __get_err_msg( src, line, msg ), 0 )
-	else
-		error( err, 0 )
+		if line then
+			local src, line = __get_src_and_line( tonumber( line ) )
+			return error( src .. "[" .. line .. "]: " .. __get_err_msg( src, line, msg ), 0 )
+		end
 	end
+
+	return error( __debug_err, 0 )
 end]]
 
 local function normalise( path )
@@ -300,6 +302,8 @@ local function fmtline( line, state )
 end
 
 local function fmtlineout( data, state )
+	data = apply_function_macros( data, state )
+
 	return (data:gsub( "$([%w_]+)", function( word )
 		if state.environment[word] then
 			local lookup = {}
