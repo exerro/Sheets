@@ -1,32 +1,14 @@
 
 local args = { ... }
 local command = table.remove( args, 1 )
-
-local THIS_PATH = "sheets/bin"
-
-local h = fs.open( ".sheets_conf.txt", "r" )
-if h then
-	local content, data = h.readAll()
-
-	h.close()
-	data = textutils.unserialize( content )
-	THIS_PATH = type( data ) == "table" and type( data.install_path ) == "string" and data.install_path .. "/bin" or THIS_PATH
-elseif (shell.getRunningProgram():find "/sbs.lua$" or shell.getRunningProgram() == "sbs.lua")
-	and fs.isDir( (shell.getRunningProgram():match ".+/" or "/") .. "cmd" ) then
-	THIS_PATH = shell.getRunningProgram():match "(.+)/" or ""
-end
-
-if not fs.isDir( THIS_PATH ) or not fs.exists( THIS_PATH .. "/sbs.lua" ) then
-	return error( "Failed to find Sheets installation directory", 0 )
-end
-
-local LIB_PATH = THIS_PATH:gsub( "bin$", "lib" )
-
+local commands_lookup = {}
 local env = setmetatable( {}, { __index = _ENV or getfenv() } )
-local command_names = fs.list( THIS_PATH .. "/cmd" )
+local command_names
+local THIS_PATH, LIB_PATH
 
-local function load_cmd( name )
-	local h = fs.open( THIS_PATH .. "/cmd/" .. name .. ".lua", "r" )
+local function load_file( path, name )
+	local h = fs.open( path, "r" )
+
 	if h then
 		local content = h.readAll()
 		h.close()
@@ -35,40 +17,59 @@ local function load_cmd( name )
 
 		if not f then
 			error( err, 0 )
-		end
-
-		if setfenv then
+		elseif setfenv then
 			setfenv( f, env )
 		end
 
 		return f
-	else
-		return error( "command '" .. name .. "' cannot be opened and executed", 0 )
+	end
+
+	return error( "failed to open file '" .. path .. "'", 0 )
+end
+
+local function load_cmd( name )
+	return load_file( THIS_PATH .. "/cmd/" .. name .. ".lua", name )
+end
+
+do
+	local h = fs.open( ".sheets_conf.txt", "r" )
+	if h then
+		local content, data = h.readAll()
+
+		h.close()
+		data = textutils.unserialize( content )
+		THIS_PATH = type( data ) == "table"
+		        and type( data.install_path ) == "string"
+				and data.install_path .. "/bin"
+	end
+
+	if not THIS_PATH then
+		THIS_PATH = (shell.getRunningProgram():find "/sbs.lua$" or shell.getRunningProgram() == "sbs.lua")
+	            and fs.isDir( (shell.getRunningProgram():match ".+/" or "/") .. "cmd" )
+				and shell.getRunningProgram():match "(.+)/"
+				 or "sheets/bin"
+	end
+
+	if not fs.isDir( THIS_PATH ) or not fs.exists( THIS_PATH .. "/sbs.lua" ) then
+		return error( "Failed to find Sheets installation directory, please repair .sheets_conf.txt", 0 )
 	end
 end
 
-local h = fs.open( LIB_PATH .. "/param.lua", "r" )
-if h then
-	local content = h.readAll()
-	h.close()
+LIB_PATH = THIS_PATH:gsub( "bin$", "lib" )
+command_names = fs.list( THIS_PATH .. "/cmd" )
 
-	local ok, data = pcall( assert( (load or loadstring)( content, "param.lua" ) ) )
+do
+	local ok, data = pcall( load_file( LIB_PATH .. "/param.lua" ) )
 
 	if ok then
 		env["param"] = data
 	else
 		error( data, 0 )
 	end
-else
-	error( "failed to open parameter parser", 0 )
 end
 
-local h = fs.open( LIB_PATH .. "/config.lua", "r" )
-if h then
-	local content = h.readAll()
-	h.close()
-
-	local ok, data = pcall( assert( (load or loadstring)( content, "config.lua" ) ) )
+do
+	local ok, data = pcall( load_file( LIB_PATH .. "/config.lua" ) )
 
 	if ok then
 		env["config"] = data
@@ -76,19 +77,18 @@ if h then
 	else
 		error( data, 0 )
 	end
-else
-	error( "failed to open config manager", 0 )
 end
 
 for i = 1, #command_names do
 	local name = command_names[i]:gsub( "%.lua$", "" )
+	commands_lookup[name] = true
 	env[name] = function( ... )
 		env[name] = load_cmd( name )
 		return env[name]( ... )
 	end
 end
 
-if env[command] then
+if commands_lookup[command] then
 	env[command]( unpack( args ) )
 elseif type( command ) == "string" then
 	return error( "no such command '" .. command .. "'", 0 )

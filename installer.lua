@@ -31,21 +31,17 @@ local files = {
 	"bin/cmd/close.lua";
 	"bin/cmd/conf.lua";
 	"bin/cmd/debug.lua";
+	"bin/cmd/help.lua";
 	"bin/cmd/init.lua";
 	"bin/cmd/open.lua";
 	"bin/cmd/remove.lua";
 	"bin/cmd/status.lua";
 	"bin/cmd/version.lua";
-	"lib/build.lua";
+	"lib/class.lua";
 	"lib/config.lua";
 	"lib/json.lua";
-	"lib/minify.lua";
 	"lib/param.lua";
-	"lib/preprocessor.lua";
-	"res/instructions/conditional.lua";
-	"res/instructions/console.lua";
-	"res/instructions/define.lua";
-	"res/instructions/include.lua";
+	"lib/preprocess.lua";
 	"versions.txt";
 }
 
@@ -53,7 +49,7 @@ fs.makeDir( path )
 
 for i = 1, #files do
 	print( "Downloading file " .. files[i] )
-	
+
 	local h, content = http.get( URL .. files[i] )
 
 	if h then

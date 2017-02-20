@@ -1,5 +1,27 @@
 
+local h = ...
 local parser = param()
+local HELP = [[
+sbs open
+ - Opens a project or shows the open project
+
+Usage
+ > open <project name> [--silent]
+ --> open the project
+ --> '--silent' to hide terminal output
+ > open [--silent]
+ --> return information about the open project
+ --> '--silent' to hide terminal output
+ > open -h|help|--help
+ --> display help
+
+Project path format
+-------------------
+Should be a relative path e.g. `directory/project_folder`.]]
+
+if h == "-h" or h == "help" or h == "--help" then
+	return print( HELP )
+end
 
 parser:set_param_count( 0, 1 )
 parser:add_section "silent" :set_param_count( 0, 0, "silent" )
@@ -36,6 +58,6 @@ else
 			print( "Opened project '" .. name .. "'" )
 		end
 	else
-		error( "Failed to find project '" .. name .. "'", 0 )
+		return error( "Failed to find project '" .. name .. "'", 0 )
 	end
 end

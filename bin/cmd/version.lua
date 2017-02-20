@@ -2,42 +2,68 @@
 local API_URL = "https://api.github.com/repos/Exerro/Sheets/git/trees/%s?recursive=1"
 local RAW_URL = "https://raw.githubusercontent.com/Exerro/Sheets/%s/%s"
 local NAMED_VERSION_URL = "https://raw.githubusercontent.com/Exerro/Sheets/build-system/versions.txt"
+local mode = ...
+local HELP = [[
+sbs version
+ - Controls versions and returns information
 
-local json_decode = dofile( sheets_global_config:read "install_path" .. "/lib/json.lua" )
+Usage
+ > version -i|install <version> [--reinstall] [--silent]
+ --> install a version
+ --> `--reinstall` to overwrite preinstalled version
+ > version remove <version> [--silent]
+ --> remove a local version installation
+ > version -r|resolve <version> [--silent]
+ --> return the version in semantic version format
+ > version -l|list [--local] [--silent]
+ --> return a list of versions
+ --> `--local` to only list installed versions
+ > version -p|path <version> [--silent]
+ --> return the path to a version
+ > version -e|exists <version> [--silent]
+ --> return whether a version is installed
+ > version help|-h|--help
+ --> display help
 
-local parser = param()
+ -> `--silent` to hide terminal output]]
 
-local argdone
-
-local function validate( name )
-	return function()
-		if argdone then
-			return false, "unexpected --" .. name .. " after --" .. argdone
-		end
-		argdone = name
-		return true
-	end, name
+if mode == "-h" or mode == "help" or mode == "--help" then
+	return print( HELP )
+elseif mode == "-i" then
+	mode = "install"
+elseif mode == "-r" then
+	mode = "resolve"
+elseif mode == "-l" then
+	mode = "list"
+elseif mode == "-p" then
+	mode = "path"
+elseif mode == "-e" then
+	mode = "exists"
 end
 
-parser:set_param_count( 0, 0 )
-parser:add_section( "reinstall" ):set_param_count( 0, 0, "reinstall" ):set_param_validator( function()
-	return argdone == "install", "unexpected --reinstall" .. (argdone and " after --" .. argdone or " before --install")
-end, "reinstall" )
-parser:add_section( "local" ):set_param_count( 0, 0, "local" ):set_param_validator( function()
-	return argdone == "list", "unexpected --local" .. (argdone and " after --" .. argdone or " before --list")
-end, "local" )
+if mode ~= "install" and mode ~= "remove" and mode ~= "resolve" and mode ~= "list" and mode ~= "path" and mode ~= "exists" then
+	if mode then
+		return error( "Invalid mode '" .. mode .. "': use `sbs version -h` for help", 0 )
+	else
+		return error( "Expected mode: use `sbs version -h` for help", 0 )
+	end
+end
+
+local json_decode = dofile( sheets_global_config:read "install_path" .. "/lib/json.lua" )
+local parser = param()
+
+parser:set_param_count( mode == "list" and 0 or 1, mode == "list" and 0 or 1 )
 parser:add_section( "silent" ):set_param_count( 0, 0, "silent" )
-parser:add_section( "path" ):set_param_count( 0, 1, "path" ):set_param_validator( validate "path" )
-parser:add_section( "exists" ):set_param_count( 0, 1, "exists" ):set_param_validator( validate "exists" )
-parser:add_section( "status" ):set_param_count( 0, 1, "status" ):set_param_validator( validate "status" )
-parser:add_section( "install" ):set_param_count( 0, 1, "install" ):set_param_validator( validate "install" )
-parser:add_section( "remove" ):set_param_count( 0, 1, "remove" ):set_param_validator( validate "remove" )
-parser:add_section( "resolve" ):set_param_count( 0, 1, "resolve" ):set_param_validator( validate "resolve" )
-parser:add_section( "list" ):set_param_count( 0, 0, "list" ):set_param_validator( validate "list" )
 
-local parameters = parser:parse( ... )
+if mode == "install" then
+	parser:add_section( "reinstall" ):set_param_count( 0, 0, "reinstall" )
+elseif mode == "list" then
+	parser:add_section( "local" ):set_param_count( 0, 0, "local" )
+end
 
-if parameters.list then
+local parameters = parser:parse( select( 2, ... ) )
+
+if mode == "list" then
 	local files = fs.list( sheets_global_config:read "install_path" .. "/src" )
 
 	if not parameters["local"] then
@@ -87,7 +113,7 @@ if parameters.list then
 	end
 end
 
-local v = parameters.path or parameters.exists or parameters.resolve or parameters.status or parameters.install or parameters.remove
+local v = parameters[1]
 
 if v:find "^%w+$" and v ~= "develop" then
 	local h = http.get( NAMED_VERSION_URL )
@@ -100,10 +126,10 @@ if v:find "^%w+$" and v ~= "develop" then
 		if match then
 			v = match
 		else
-			error( "unable to resolve version '" .. v .. "': invalid version name", 0 )
+			error( "Unable to resolve version '" .. v .. "': invalid version name", 0 )
 		end
 	else
-		error( "unable to resolve version '" .. v .. "': failed to connect to github", 0 )
+		error( "Unable to resolve version '" .. v .. "': failed to connect to github", 0 )
 	end
 elseif v:sub( 1, 1 ) ~= "v" and v ~= "develop" then
 	v = "v" .. v
@@ -111,33 +137,25 @@ end
 
 local install_path = sheets_global_config:read "install_path" .. "/src/" .. v
 
-if parameters.path then
+if mode == "path" then
 	if parameters.silent then
 		return install_path
 	else
-		print( install_path )
+		return print( install_path )
 	end
-elseif parameters.exists then
+elseif mode == "exists" then
 	if parameters.silent then
 		return fs.isDir( install_path )
 	else
-		print( "Version " .. v .. " is " .. (fs.isDir( install_path ) and "" or "not ") .. "installed" )
+		return print( "Version " .. v .. " is " .. (fs.isDir( install_path ) and "" or "not ") .. "installed" )
 	end
-elseif parameters.resolve then
+elseif mode == "resolve" then
 	if parameters.silent then
 		return v
 	else
-		print( v )
+		return print( v )
 	end
-elseif parameters.status then
-	print( "Sheets version " .. v )
-
-	if fs.isDir( install_path ) then
-		print( "Installed at " .. install_path )
-	else
-		print "Not installed"
-	end
-elseif parameters.install then
+elseif mode == "install" then
 	if fs.isDir( install_path ) then
 		if parameters.reinstall then
 			if not parameters.silent then
@@ -198,12 +216,20 @@ elseif parameters.install then
 			end
 		end
 	end
-elseif parameters.remove then
-	fs.delete( install_path )
+elseif mode == "remove" then
+	if fs.isDir( install_path ) then
+		fs.delete( install_path )
 
-	if not parameters.silent then
-		print( "Version " .. v .. " removed" )
+		if not parameters.silent then
+			print( "Version " .. v .. " removed" )
+		end
+
+		return true
+	else
+		if not parameters.silent then
+			print( "Version " .. v .. " not installed" )
+		end
+
+		return false
 	end
-else
-	error( "unknown mode '" .. mode .. "'" )
 end

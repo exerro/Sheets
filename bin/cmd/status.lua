@@ -1,5 +1,20 @@
 
+local h = ...
 local parser = param()
+local HELP = [[
+sbs status
+ - Returns status about the current project and sheets installations
+
+Usage
+ > status [--silent]
+ --> return project and sheets status
+ --> `--silent` to hide terminal output
+ > status help|-h|--help
+ --> displays help]]
+
+if h == "-h" or h == "help" or h == "--help" then
+	return print( HELP )
+end
 
 parser:set_param_count( 0, 0 )
 parser:add_section "silent" :set_param_count( 0, 0, "silent" )
@@ -20,7 +35,7 @@ if parameters.silent then
 	data.project_name = project_name
 	data.project_path = project_path
 
-	data.installed_versions = version( "--list", "--local", "--silent" )
+	data.installed_versions = version( "list", "--local", "--silent" )
 
 	if  data.project_path then
 		data.project_version        = project_conf:read "version"
@@ -54,7 +69,7 @@ else
 		print "No project open\n"
 	end
 
-	local versions = version( "--list", "--local", "--silent" )
+	local versions = version( "list", "--local", "--silent" )
 
 	if #versions > 0 then
 		print "Installed Sheets versions:"
@@ -67,9 +82,3 @@ else
 		print "No installed Sheets versions"
 	end
 end
-
---[[
-sbs status
-
-	Project 'thing'
-]]
