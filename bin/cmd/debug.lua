@@ -102,12 +102,11 @@ end
 local to_include = conf:read "files"
 local lines = {}
 
-lines[1] = " -- @includeraw /" .. version( "path", v, "--silent" ) .. "/constants"
  -- lines[1] = " -- @import /" .. project .. "/.sheets_debug/sheets.out"
-lines[2] = " -- @import /" .. version( "path", v, "--silent" ) .. "/sheets"
+lines[1] = " -- @import /" .. version( "path", v, "--silent" ) .. "/sheets"
 
 for i = 1, #to_include do
-	lines[i + 2] = " -- @include " .. to_include[i]
+	lines[i + 1] = " -- @include " .. to_include[i]
 end
 
 local state = preprocess.create_state( project )

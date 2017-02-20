@@ -373,7 +373,8 @@ function preprocess.process_file( file, state, raw )
 			if h then
 				newcwd = getcwd( table.concat( cwd, "/", 1, n ) .. "/" .. filepath:sub( 1, -1 - #filename ), normalise( paths[i] ) )
 			else
-				h = io.open( path .. "/" .. filename .. ".lua", "r" )
+				path = path .. "/" .. filename
+				h = io.open( path .. ".lua", "r" )
 
 				if h then
 					newcwd = getcwd( table.concat( cwd, "/", 1, n ) .. "/" .. filepath, normalise( paths[i] ) )
@@ -381,6 +382,13 @@ function preprocess.process_file( file, state, raw )
 			end
 
 			if h then
+				if state.include_cache[path] then
+					h:close()
+					return {}
+				end
+
+				state.include_cache[path] = true
+
 				local content = h:read "*a"
 
 				h:close()
@@ -408,6 +416,7 @@ function preprocess.create_state( path )
 			next_string = false;
 		};
 		cwd = {};
+		include_cache = {};
 	}
 end
 
