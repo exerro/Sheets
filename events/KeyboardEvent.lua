@@ -1,8 +1,7 @@
 
- -- @once
- -- @print Including sheets.events.KeyboardEvent
+ -- @print including(events.KeyboardEvent)
 
-class "KeyboardEvent" extends "Event" {
+@class KeyboardEvent extends Event {
 	event = "KeyboardEvent";
 	key = 0;
 	held = {};

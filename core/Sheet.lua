@@ -1,11 +1,7 @@
 
- -- @once
- -- @print Including sheets.core.Sheet
+ -- @print including(core.Sheet)
 
-class "Sheet"
-	implements "ITagged"
-	implements "ISize"
-{
+@class Sheet implements ITagged, ISize {
 	x = 0;
 	y = 0;
 	z = 0;

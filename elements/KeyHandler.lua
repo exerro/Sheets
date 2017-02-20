@@ -1,9 +1,7 @@
 
- -- @once
- -- @print Including sheets.elements.KeyHandler
+ -- @print including(elements.KeyHandler)
 
-class "KeyHandler" extends "Sheet"
-{
+@class KeyHandler extends Sheet {
 	actions = {};
 	shortcuts = {};
 	handles_keyboard = true;
@@ -100,7 +98,7 @@ function KeyHandler:unbind_key( key )
 end
 
 function KeyHandler:on_keyboard_event( event )
-	if not event.handled and event:is( SHEETS_EVENT_KEY_DOWN ) then
+	if not event.handled and event:is( EVENT_KEY_DOWN ) then
 		local longest_match, longest_match_action
 		local actions = self.actions
 		local shortcuts = self.shortcuts

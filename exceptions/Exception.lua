@@ -1,6 +1,5 @@
 
- -- @once
- -- @print Including sheets.exceptions.Exception
+ -- @print including(exceptions.Exception)
 
 local thrown
 
@@ -13,7 +12,7 @@ local function handler( t )
 	return Exception.throw( thrown )
 end
 
-class "Exception" {
+@class Exception {
 	name = "undefined";
 	data = "undefined";
 	trace = {};
@@ -81,17 +80,17 @@ function Exception.throw( e, data, level )
 		return Exception.throw( "IncorrectParameterException", "expected class, string, or Exception e, got " .. class.type( e ) )
 	end
 	thrown = e
-	error( SHEETS_EXCEPTION_ERROR, 0 )
+	error( EXCEPTION_ERROR, 0 )
 end
 
 function Exception.try( func )
 	local ok, err = pcall( func )
 
-	if not ok and err == SHEETS_EXCEPTION_ERROR then
+	if not ok and err == EXCEPTION_ERROR then
 		return handler
 	end
 
-	return error( err, 0 )
+	return not ok and error( err, 0 ) or function() end
 end
 
 function Exception.catch( etype )

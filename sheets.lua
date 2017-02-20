@@ -1,42 +1,34 @@
 
- -- @defineifndef SHEETS_LOWRES true
- -- @defineifndef SHEETS_MINIFY false
- -- @defineifndef SHEETS_SML false
- -- @defineifndef SHEETS_WRAP false
- -- @defineifndef SHEETS_EXTERNAL false
- -- @defineifndef SHEETS_THREADING true
+ -- @defineifndef LOWRES true
+ -- @defineifndef MINIFY false
+ -- @defineifndef SML false
+ -- @defineifndef THREADING true
 
- -- @if SHEETS_SML
+ -- @define including(x) Including file sheets.x
+
+ -- @if SML
 	-- @error "SML is not yet implemented"
  -- @endif
 
- -- @once
- -- @print Including sheets (minify: $SHEETS_MINIFY, low resolution: $SHEETS_LOWRES, sml: $SHEETS_SML)
+ -- @print Including sheets (minify: $MINIFY, low resolution: $LOWRES, sml: $SML)
 
- -- @define SHEETS_EXCEPTION_ERROR "SHEETS_EXCEPTION\nPut code in a try block to catch the exception."
+ -- @define EXCEPTION_ERROR "EXCEPTION\nPut code in a try block to catch the exception."
 
  -- @include constants
 
- -- @if SHEETS_WRAP
-	local env = setmetatable( {}, { __index = _ENV } )
-	local function f()
-		local _ENV = env
-		if setfenv then setfenv( 1, env ) end
- -- @endif
-
 event = {
-	mouse_down = SHEETS_EVENT_MOUSE_DOWN;
-	mouse_up = SHEETS_EVENT_MOUSE_UP;
-	mouse_click = SHEETS_EVENT_MOUSE_CLICK;
-	mouse_hold = SHEETS_EVENT_MOUSE_HOLD;
-	mouse_drag = SHEETS_EVENT_MOUSE_DRAG;
-	mouse_scroll = SHEETS_EVENT_MOUSE_SCROLL;
-	mouse_ping = SHEETS_EVENT_MOUSE_PING;
-	key_down = SHEETS_EVENT_KEY_DOWN;
-	key_up = SHEETS_EVENT_KEY_UP;
-	text = SHEETS_EVENT_TEXT;
-	voice = SHEETS_EVENT_VOICE;
-	paste = SHEETS_EVENT_PASTE;
+	mouse_down = EVENT_MOUSE_DOWN;
+	mouse_up = EVENT_MOUSE_UP;
+	mouse_click = EVENT_MOUSE_CLICK;
+	mouse_hold = EVENT_MOUSE_HOLD;
+	mouse_drag = EVENT_MOUSE_DRAG;
+	mouse_scroll = EVENT_MOUSE_SCROLL;
+	mouse_ping = EVENT_MOUSE_PING;
+	key_down = EVENT_KEY_DOWN;
+	key_up = EVENT_KEY_UP;
+	text = EVENT_TEXT;
+	voice = EVENT_VOICE;
+	paste = EVENT_PASTE;
 }
 
 alignment = {
@@ -79,96 +71,82 @@ token = {
 	operator = TOKEN_OPERATOR;
 }
 
- -- @require lib.class
- -- @require lib.clipboard
- -- @require lib.parameters
+ -- @include .sheets.lib.class
+ -- @include lib.clipboard
+ -- @include lib.parameters
+ -- @include lib.surface2
 
- -- @include surface2
+ -- @include enum.Easing
 
- -- @require enum.Easing
+ -- @include exceptions.Exception
+ -- @include exceptions.IncorrectParameterException
+ -- @include exceptions.IncorrectConstructorException
+ -- @include exceptions.ResourceLoadException
+ -- @include exceptions.ThreadRuntimeException
 
- -- @require exceptions.Exception
- -- @require exceptions.IncorrectParameterException
- -- @require exceptions.IncorrectConstructorException
- -- @require exceptions.ResourceLoadException
- -- @require exceptions.ThreadRuntimeException
+ -- @include interfaces.ICollatedChildren
+ -- @include interfaces.IColoured
+ -- @include interfaces.IQueryable
+ -- @include interfaces.IChildContainer
+ -- @include interfaces.ITagged
+ -- @include interfaces.ISize
+ -- @include interfaces.ITimer
 
- -- @require interfaces.ICollatedChildren
- -- @require interfaces.IColoured
- -- @require interfaces.IQueryable
- -- @require interfaces.IChildContainer
- -- @require interfaces.ITagged
- -- @require interfaces.ISize
- -- @require interfaces.ITimer
+ -- @include events.Event
+ -- @include events.KeyboardEvent
+ -- @include events.MiscEvent
+ -- @include events.MouseEvent
+ -- @include events.TextEvent
 
- -- @require events.Event
- -- @require events.KeyboardEvent
- -- @require events.MiscEvent
- -- @require events.MouseEvent
- -- @require events.TextEvent
+ -- @include dynamic.Codegen
+ -- @include dynamic.DynamicValueParser
+ -- @include dynamic.QueryTracker
+ -- @include dynamic.Stream
+ -- @include dynamic.Transition
+ -- @include dynamic.Type
+ -- @include dynamic.Typechecking
+ -- @include dynamic.ValueHandler
 
- -- @require dynamic.Codegen
- -- @require dynamic.DynamicValueParser
- -- @require dynamic.QueryTracker
- -- @require dynamic.Stream
- -- @require dynamic.Transition
- -- @require dynamic.Type
- -- @require dynamic.Typechecking
- -- @require dynamic.ValueHandler
+ -- @include core.Application
+ -- @include core.Screen
+ -- @include core.Sheet
 
- -- @require core.Application
- -- @require core.Screen
- -- @require core.Sheet
-
- -- @if SHEETS_THREADING
-     -- @require core.Thread
+ -- @if THREADING
+     -- @include core.Thread
  -- @endif
 
- -- @require elements.Container
+ -- @include elements.Container
 
- -- @if SHEETS_BUTTON
-	 -- @require interfaces.IHasText
-	 -- @require elements.Button
+ -- @if ELEMENT_BUTTON
+	 -- @include interfaces.IHasText
+	 -- @include elements.Button
  -- @endif
- -- @if SHEETS_CHECKBOX
+ -- @if ELEMENT_CHECKBOX
 	 -- @/require elements.Checkbox
  -- @endif
- -- @if SHEETS_CLIPPEDCONTAINER
-	 -- @require elements.ClippedContainer
+ -- @if ELEMENT_CLIPPEDCONTAINER
+	 -- @include elements.ClippedContainer
  -- @endif
- -- @if SHEETS_DRAGGABLE
+ -- @if ELEMENT_DRAGGABLE
  	 -- @/require interfaces.IHasText
 	 -- @/require elements.Draggable
  -- @endif
- -- @if SHEETS_IMAGE
+ -- @if ELEMENT_IMAGE
 	 -- @/require elements.Image
  -- @endif
- -- @if SHEETS_KEYHANDLER
- 	 -- @require elements.KeyHandler
+ -- @if ELEMENT_KEYHANDLER
+ 	 -- @include elements.KeyHandler
  -- @endif
- -- @if SHEETS_PANEL
-	 -- @require elements.Panel
+ -- @if ELEMENT_PANEL
+	 -- @include elements.Panel
  -- @endif
- -- @if SHEETS_SCROLLCONTAINER
+ -- @if ELEMENT_SCROLLCONTAINER
 	 -- @/require elements.ScrollContainer
  -- @endif
- -- @if SHEETS_TEXT
+ -- @if ELEMENT_TEXT
  	 -- @/require interfaces.IHasText
 	 -- @/require elements.Text
  -- @endif
- -- @if SHEETS_TEXTINPUT
+ -- @if ELEMENT_TEXTINPUT
 	 -- @/require elements.TextInput
- -- @endif
-
- -- @if SHEETS_WRAP
-	end
-	f()
-	local sheets = {}
-	for k, v in pairs( env ) do
-		sheets[k] = v
-	end
-	env.class.set_environment( sheets )
- -- @endif
- -- @if SHEETS_EXTERNAL
- 	return sheets
  -- @endif

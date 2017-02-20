@@ -1,16 +1,16 @@
 
- -- @define SHEETS_EVENT_MOUSE_DOWN 0
- -- @define SHEETS_EVENT_MOUSE_UP 1
- -- @define SHEETS_EVENT_MOUSE_CLICK 2
- -- @define SHEETS_EVENT_MOUSE_HOLD 3
- -- @define SHEETS_EVENT_MOUSE_DRAG 4
- -- @define SHEETS_EVENT_MOUSE_SCROLL 5
- -- @define SHEETS_EVENT_MOUSE_PING 6
- -- @define SHEETS_EVENT_KEY_DOWN 7
- -- @define SHEETS_EVENT_KEY_UP 8
- -- @define SHEETS_EVENT_TEXT 9
- -- @define SHEETS_EVENT_VOICE 10
- -- @define SHEETS_EVENT_PASTE 11
+ -- @define EVENT_MOUSE_DOWN 0
+ -- @define EVENT_MOUSE_UP 1
+ -- @define EVENT_MOUSE_CLICK 2
+ -- @define EVENT_MOUSE_HOLD 3
+ -- @define EVENT_MOUSE_DRAG 4
+ -- @define EVENT_MOUSE_SCROLL 5
+ -- @define EVENT_MOUSE_PING 6
+ -- @define EVENT_KEY_DOWN 7
+ -- @define EVENT_KEY_UP 8
+ -- @define EVENT_TEXT 9
+ -- @define EVENT_VOICE 10
+ -- @define EVENT_PASTE 11
 
  -- @define ALIGNMENT_LEFT 0
  -- @define ALIGNMENT_CENTRE 1
@@ -76,45 +76,45 @@
  -- @define DVALUE_TOSTRING "tostring"
  -- @define DVALUE_TAG_CHECK "tag"
 
- -- @if SHEETS_LOWRES
+ -- @if LOWRES
 	 -- @define BLANK_PIXEL { WHITE, WHITE, " " }
  -- @else
  	 -- @define BLANK_PIXEL WHITE
  -- @endif
 
- -- @if SHEETS_LOWRES
+ -- @if LOWRES
 	 -- @define CIRCLE_CORRECTION 1.5
  -- @else
 	 -- @define CIRCLE_CORRECTION 1
  -- @endif
 
- -- @if SHEETS_CORE_ELEMENTS
-	 -- @define SHEETS_BUTTON
-	 -- @define SHEETS_CHECKBOX
-	 -- @define SHEETS_CLIPPEDCONTAINER
-	 -- @define SHEETS_COLOURSELECTOR
-	 -- @define SHEETS_DRAGGABLE
-	 -- @define SHEETS_IMAGE
-	 -- @define SHEETS_KEYHANDLER
-	 -- @define SHEETS_LABEL
-	 -- @define SHEETS_MENU
-	 -- @define SHEETS_PANEL
-	 -- @define SHEETS_RADIOBUTTON
-	 -- @define SHEETS_SCROLLCONTAINER
-	 -- @define SHEETS_TABS
-	 -- @define SHEETS_TERMINAL
-	 -- @define SHEETS_TEXT
-	 -- @define SHEETS_TEXTINPUT
-	 -- @define SHEETS_TOGGLE
-	 -- @define SHEETS_WINDOW
+ -- @if CORE_ELEMENTS
+	 -- @define ELEMENT_BUTTON
+	 -- @define ELEMENT_CHECKBOX
+	 -- @define ELEMENT_CLIPPEDCONTAINER
+	 -- @define ELEMENT_COLOURSELECTOR
+	 -- @define ELEMENT_DRAGGABLE
+	 -- @define ELEMENT_IMAGE
+	 -- @define ELEMENT_KEYHANDLER
+	 -- @define ELEMENT_LABEL
+	 -- @define ELEMENT_MENU
+	 -- @define ELEMENT_PANEL
+	 -- @define ELEMENT_RADIOBUTTON
+	 -- @define ELEMENT_SCROLLCONTAINER
+	 -- @define ELEMENT_TABS
+	 -- @define ELEMENT_TERMINAL
+	 -- @define ELEMENT_TEXT
+	 -- @define ELEMENT_TEXTINPUT
+	 -- @define ELEMENT_TOGGLE
+	 -- @define ELEMENT_WINDOW
  -- @endif
 
- -- @if SHEETS_LOWRES
+ -- @if LOWRES
  	-- @define GRAPHICS_NO_TEXT false
  -- @else
  	-- @define GRAPHICS_NO_TEXT true
  -- @endif
 
- -- @ifn SHEETS_LOWRES
+ -- @ifn LOWRES
 	 -- @define GRAPHICS_DEFAULT_FONT _graphics_default_font
  -- @endif

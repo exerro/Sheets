@@ -1,6 +1,5 @@
 
- -- @once
- -- @print Including sheets.dynamic.Stream
+ -- @print including(dynamic.Stream)
 
 local escape_chars = {
 	["n"] = "\n";
@@ -34,7 +33,7 @@ local keywords = {
 	["parent"] = true;
 }
 
-class "Stream" {
+@class Stream {
 	position = 1;
 	line = 1;
 	character = 1;

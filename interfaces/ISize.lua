@@ -1,8 +1,7 @@
 
- -- @once
- -- @print Including sheets.interfaces.ISize
+ -- @print including(interfaces.ISize)
 
-interface "ISize" {
+@interface ISize {
 	width = 0;
 	height = 0;
 }

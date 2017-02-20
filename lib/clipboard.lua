@@ -1,5 +1,6 @@
 
- -- @once
+ -- @print including(lib.clipboard)
+ -- @localise clipboard
 
 local c = {}
 

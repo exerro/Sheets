@@ -1,8 +1,7 @@
 
- -- @once
- -- @print Including sheets.events.TextEvent
+ -- @print including(events.TextEvent)
 
-class "TextEvent" extends "Event" {
+@class TextEvent extends Event {
 	event = "TextEvent";
 	text = "";
 }

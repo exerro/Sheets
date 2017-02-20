@@ -17,13 +17,13 @@ function Draggable:on_pre_draw()
 end
 
 function Draggable:on_mouse_event( event )
-	if event:is( SHEETS_EVENT_MOUSE_UP ) and self.down then
+	if event:is( EVENT_MOUSE_UP ) and self.down then
 		if self.on_drop then
 			self:on_drop( self.down.x, self.down.y )
 		end
 		self.down = false
 		self:set_changed()
-	elseif self.down and event:is( SHEETS_EVENT_MOUSE_DRAG ) and not event.handled and event.within then
+	elseif self.down and event:is( EVENT_MOUSE_DRAG ) and not event.handled and event.within then
 		self:setX( self.x + event.x - self.down.x )
 		self:setY( self.y + event.y - self.down.y )
 		if self.on_drag then
@@ -37,7 +37,7 @@ function Draggable:on_mouse_event( event )
 		return
 	end
 
-	if event:is( SHEETS_EVENT_MOUSE_DOWN ) and not self.down then
+	if event:is( EVENT_MOUSE_DOWN ) and not self.down then
 		if self.on_pickup then
 			self:on_pickup()
 		end
@@ -45,12 +45,12 @@ function Draggable:on_mouse_event( event )
 		self:set_changed()
 		self:bring_to_front()
 		event:handle()
-	elseif event:is( SHEETS_EVENT_MOUSE_CLICK ) then
+	elseif event:is( EVENT_MOUSE_CLICK ) then
 		if self.on_click then
 			self:on_click( event.button, event.x, event.y )
 		end
 		event:handle()
-	elseif event:is( SHEETS_EVENT_MOUSE_HOLD ) then
+	elseif event:is( EVENT_MOUSE_HOLD ) then
 		if self.on_hold then
 			self:on_hold( event.button, event.x, event.y )
 		end

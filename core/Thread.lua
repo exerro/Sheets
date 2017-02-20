@@ -1,8 +1,7 @@
 
- -- @once
- -- @print Including sheets.core.Thread
+ -- @print including(core.Thread)
 
-class "Thread" {
+@class Thread {
 	running = true;
 
 	f = nil;
@@ -46,7 +45,7 @@ function Thread:resume( event, ... )
 
 		self.filter = data
 	else
-		if data == SHEETS_EXCEPTION_ERROR then
+		if data == EXCEPTION_ERROR then
 			return Exception.throw( Exception.thrown() )
 		end
 

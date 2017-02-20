@@ -1,8 +1,7 @@
 
- -- @once
- -- @print Including sheets.interfaces.IChildContainer
+ -- @print including(interfaces.IChildContainer)
 
-interface "IChildContainer" implements "ICollatedChildren" implements "IQueryable" {
+@interface IChildContainer implements ICollatedChildren, IQueryable {
 	children = {};
 	application = nil;
 }

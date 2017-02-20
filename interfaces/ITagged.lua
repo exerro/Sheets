@@ -1,8 +1,7 @@
 
- -- @once
- -- @print Including sheets.interfaces.ITagged
+ -- @print including(interfaces.ITagged)
 
-interface "ITagged" {
+@interface ITagged {
 	tags = {};
 	subscriptions = {};
 	id = "ID";

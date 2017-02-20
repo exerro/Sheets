@@ -1,21 +1,20 @@
 
- -- @once
- -- @print Including sheets.dynamic.Type
+ -- @print including(dynamic.Type)
 
-class "Type" {
+@class Type {
 	name = "";
 }
 
-class "UnionType" extends "Type" {
+@class UnionType extends Type {
 	lvalue = nil;
 	rvalue = nil;
 }
 
-class "ListType" extends "Type" {
+@class ListType extends Type {
 	value = nil;
 }
 
-class "TableType" extends "Type" {
+@class TableType extends Type {
 	index = nil;
 	value = nil;
 }
@@ -69,9 +68,7 @@ end
 function Type:matches( type )
 	if self:type_of( UnionType ) then
 		return self.lvalue:matches( type ) and self.rvalue:matches( type )
-	end
-
-	if type:type_of( UnionType ) then
+	elseif type:type_of( UnionType ) then
 		return self:matches( type.lvalue ) or self:matches( type.rvalue )
 	elseif type:type_of( ListType ) then
 		return self.name == "List" and self.value:matches( type.value )
@@ -82,10 +79,6 @@ function Type:matches( type )
 	else
 		return self.name == type.name
 	end
-end
-
-function Type:casts_to( type )
-	
 end
 
 Type.primitive = {}

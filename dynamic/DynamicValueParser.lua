@@ -1,6 +1,5 @@
 
- -- @once
- -- @print Including sheets.dynamic.DynamicValueParser
+ -- @print including(dynamic.DynamicValueParser)
 
 local is_operator = {
 	["+"] = true;
@@ -46,7 +45,7 @@ local function parse_name( stream )
 	return stream:skip_value( TOKEN_IDENTIFIER )
 end
 
-class "DynamicValueParser" {
+@class DynamicValueParser {
 	stream = nil;
 	flags = {};
 }
@@ -117,7 +116,7 @@ function DynamicValueParser:parse_term()
 			           or self.stream:skip_value( TOKEN_KEYWORD, "parent" )
 		   			   or self.stream:skip_value( TOKEN_KEYWORD, "application" )
 			           or error "TODO: fix this error"
-					   
+
 			term = { type = DVALUE_DOTINDEX, value = term, index = index }
 
 		elseif self.stream:skip( TOKEN_SYMBOL, "#" ) then

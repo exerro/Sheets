@@ -1,8 +1,7 @@
 
- -- @once
- -- @print Including sheets.dynamic.QueryTracker
+ -- @print including(dynamic.QueryTracker)
 
-class "QueryTracker" {
+@class QueryTracker {
 parent = nil;
 	queries = {};
 	lifetimes = {};

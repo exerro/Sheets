@@ -1,8 +1,7 @@
 
- -- @once
- -- @print Including sheets.dynamic.Typechecking
+ -- @print including(dynamic.Typechecking)
 
-class "Typechecking" {
+@class Typechecking {
 
 }
 

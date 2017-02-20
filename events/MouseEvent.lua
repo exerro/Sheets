@@ -1,8 +1,7 @@
 
- -- @once
- -- @print Including sheets.events.MouseEvent
+ -- @print including(events.MouseEvent)
 
-class "MouseEvent" extends "Event" {
+@class MouseEvent extends Event {
 	event = "MouseEvent";
 	x = 0;
 	y = 0;

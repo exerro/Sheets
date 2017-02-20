@@ -1,12 +1,7 @@
 
- -- @once
- -- @print Including sheets.core.Screen
+ -- @print including(core.Screen)
 
-class "Screen"
-	implements "IChildContainer"
-	implements "ITagged"
-	implements "ISize"
-{
+@class Screen implements IChildContainer, ITagged, ISize {
 	parent = nil;
 
 	-- internal

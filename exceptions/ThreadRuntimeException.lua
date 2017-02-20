@@ -1,8 +1,9 @@
 
--- @once
--- @print Including sheets.exceptions.ThreadRuntimeException
+ -- @print including(exceptions.ThreadRuntimeException)
 
-class "ThreadRuntimeException" extends "Exception"
+@class ThreadRuntimeException extends Exception {
+	
+}
 
 function ThreadRuntimeException:ThreadRuntimeException( data, level )
 	return self:Exception( "ThreadRuntimeException", data, level )

@@ -1,8 +1,7 @@
 
- -- @once
- -- @print Including sheets.elements.ClippedContainer
+ -- @print including(elements.ClippedContainer)
 
-class "ClippedContainer" extends "Container" {
+@class ClippedContainer extends Container {
 	surface = nil;
 	colour = nil;
 }

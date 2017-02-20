@@ -1,8 +1,7 @@
 
- -- @once
- -- @print Including sheets.interfaces.IColoured
+ -- @print including(interfaces.IColoured)
 
-interface "IColoured" {
+@interface IColoured {
 	colour = nil;
 }
 

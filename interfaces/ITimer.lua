@@ -1,8 +1,7 @@
 
- -- @once
- -- @print Including sheets.interfaces.ITimer
+ -- @print including(interfaces.ITimer)
 
-interface "ITimer" {
+@interface ITimer {
 	timerID = 0;
 	time = nil;
 	lt = nil;

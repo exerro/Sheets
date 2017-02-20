@@ -1,6 +1,5 @@
 
- -- @once
- -- @print Including sheets.core.Application
+ -- @print including(core.Application)
 
 local function exception_handler( e )
 	return error( tostring( e ), 0 )
@@ -8,7 +7,7 @@ end
 
 local handle_event
 
-class "Application" implements "IQueryable" implements "ITimer" {
+@class Application implements IQueryable, ITimer {
 	name = "UnNamed Application";
 	path = "";
 
@@ -23,7 +22,7 @@ class "Application" implements "IQueryable" implements "ITimer" {
 	resource_loaders = {};
 	extensions = {};
 
-	 -- @if SHEETS_THREADING
+	 -- @if THREADING
 	threads = {};
 	 -- @endif
 
@@ -39,7 +38,7 @@ function Application:Application( name, path )
 	self.screens = {}
 	self.resource_loaders = {}
 	self.extensions = {}
-	 -- @if SHEETS_THREADING
+	 -- @if THREADING
 	self.threads = {}
 	 -- @endif
 	self.keys = {}
@@ -101,7 +100,7 @@ function Application:load_resource( resource, type, ... )
 	end
 end
 
- -- @if SHEETS_THREADING
+ -- @if THREADING
 function Application:add_thread( thread )
 	parameters.check( 1, "thread", Thread, thread )
 
@@ -287,7 +286,7 @@ function handle_event( self, event, params, ... )
 			timer = os.startTimer( 1 ), time = os.clock(), moved = false;
 		}
 
-		local e = MouseEvent( SHEETS_EVENT_MOUSE_DOWN, params[2] - 1, params[3] - 1, params[1], true )
+		local e = MouseEvent( EVENT_MOUSE_DOWN, params[2] - 1, params[3] - 1, params[1], true )
 
 		for i = #screens, 1, -1 do
 			if screens[i]:gets_term_events() then
@@ -296,7 +295,7 @@ function handle_event( self, event, params, ... )
 		end
 
 	elseif event == "mouse_up" then
-		local e = MouseEvent( SHEETS_EVENT_MOUSE_UP, params[2] - 1, params[3] - 1, params[1], true )
+		local e = MouseEvent( EVENT_MOUSE_UP, params[2] - 1, params[3] - 1, params[1], true )
 
 		for i = #screens, 1, -1 do
 			if screens[i]:gets_term_events() then
@@ -308,7 +307,7 @@ function handle_event( self, event, params, ... )
 		os.cancelTimer( self.mouse.timer )
 
 		if not self.mouse.moved and os.clock() - self.mouse.time < 1 and params[1] == self.mouse.button then
-			local e = MouseEvent( SHEETS_EVENT_MOUSE_CLICK, params[2] - 1, params[3] - 1, params[1], true )
+			local e = MouseEvent( EVENT_MOUSE_CLICK, params[2] - 1, params[3] - 1, params[1], true )
 
 			for i = #screens, 1, -1 do
 				if screens[i]:gets_term_events() then
@@ -318,7 +317,7 @@ function handle_event( self, event, params, ... )
 		end
 
 	elseif event == "mouse_drag" then
-		local e = MouseEvent( SHEETS_EVENT_MOUSE_DRAG, params[2] - 1, params[3] - 1, params[1], true )
+		local e = MouseEvent( EVENT_MOUSE_DRAG, params[2] - 1, params[3] - 1, params[1], true )
 
 		for i = #screens, 1, -1 do
 			if screens[i]:gets_term_events() then
@@ -330,7 +329,7 @@ function handle_event( self, event, params, ... )
 		os.cancelTimer( self.mouse.timer )
 
 	elseif event == "mouse_scroll" then
-		local e = MouseEvent( SHEETS_EVENT_MOUSE_SCROLL, params[2] - 1, params[3] - 1, params[1], true )
+		local e = MouseEvent( EVENT_MOUSE_SCROLL, params[2] - 1, params[3] - 1, params[1], true )
 
 		for i = #screens, 1, -1 do
 			if screens[i]:gets_term_events() then
@@ -340,9 +339,9 @@ function handle_event( self, event, params, ... )
 
 	elseif event == "monitor_touch" then
 		local events = {
-			MouseEvent( SHEETS_EVENT_MOUSE_DOWN, params[2] - 1, params[3] - 1, 1 );
-			MouseEvent( SHEETS_EVENT_MOUSE_UP, params[2] - 1, params[3] - 1, 1 );
-			MouseEvent( SHEETS_EVENT_MOUSE_CLICK, params[2] - 1, params[3] - 1, 1 );
+			MouseEvent( EVENT_MOUSE_DOWN, params[2] - 1, params[3] - 1, 1 );
+			MouseEvent( EVENT_MOUSE_UP, params[2] - 1, params[3] - 1, 1 );
+			MouseEvent( EVENT_MOUSE_CLICK, params[2] - 1, params[3] - 1, 1 );
 		}
 
 		for i = 1, #screens do
@@ -355,10 +354,10 @@ function handle_event( self, event, params, ... )
 
 	elseif event == "chatbox_something" then
 		-- TODO: implement this
-		-- handle( TextEvent( SHEETS_EVENT_VOICE, params[1] ) )
+		-- handle( TextEvent( EVENT_VOICE, params[1] ) )
 
 	elseif event == "char" then
-		local e = TextEvent( SHEETS_EVENT_TEXT, params[1] )
+		local e = TextEvent( EVENT_TEXT, params[1] )
 
 		for i = #screens, 1, -1 do
 			screens[i]:handle( e )
@@ -367,9 +366,9 @@ function handle_event( self, event, params, ... )
 	elseif event == "paste" then
 		local e
 		if self.keys.leftShift or self.keys.rightShift then -- TODO: why the left_ctrl/right_ctrl?
-			e = KeyboardEvent( SHEETS_EVENT_KEY_DOWN, keys.v, { left_ctrl = true, right_ctrl = true } )
+			e = KeyboardEvent( EVENT_KEY_DOWN, keys.v, { left_ctrl = true, right_ctrl = true } )
 		else
-			e = TextEvent( SHEETS_EVENT_PASTE, params[1] )
+			e = TextEvent( EVENT_PASTE, params[1] )
 		end
 
 		for i = #screens, 1, -1 do
@@ -378,7 +377,7 @@ function handle_event( self, event, params, ... )
 
 	elseif event == "key" then
 		self.keys[keys.getName( params[1] ) or params[1]] = os.clock()
-		local e = KeyboardEvent( SHEETS_EVENT_KEY_DOWN, params[1], self.keys )
+		local e = KeyboardEvent( EVENT_KEY_DOWN, params[1], self.keys )
 
 		for i = #screens, 1, -1 do
 			screens[i]:handle( e )
@@ -386,7 +385,7 @@ function handle_event( self, event, params, ... )
 
 	elseif event == "key_up" then
 		self.keys[keys.getName( params[1] ) or params[1]] = nil
-		local e = KeyboardEvent( SHEETS_EVENT_KEY_UP, params[1], self.keys )
+		local e = KeyboardEvent( EVENT_KEY_UP, params[1], self.keys )
 
 		for i = #screens, 1, -1 do
 			screens[i]:handle( e )
@@ -403,7 +402,7 @@ function handle_event( self, event, params, ... )
 		end
 
 	elseif event == "timer" and self.mouse and params[1] == self.mouse.timer then
-		local e = MouseEvent( SHEETS_EVENT_MOUSE_HOLD, self.mouse.x, self.mouse.y, self.mouse.button, true )
+		local e = MouseEvent( EVENT_MOUSE_HOLD, self.mouse.x, self.mouse.y, self.mouse.button, true )
 
 		for i = #screens, 1, -1 do
 			if screens[i]:gets_term_events() then
@@ -419,7 +418,7 @@ function handle_event( self, event, params, ... )
 		end
 
 		if not ev.handled then
-			-- @if SHEETS_THREADING
+			-- @if THREADING
 			for i = #self.threads, 1, -1 do
 				if self.threads[i].running then
 					self.threads[i]:resume( event, ... )

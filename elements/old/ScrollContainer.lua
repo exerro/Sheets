@@ -147,12 +147,12 @@ function ScrollContainer:handle( event )
 		c[i] = children[i]
 	end
 
-	if self.down and event:is( SHEETS_EVENT_MOUSE_UP ) then
+	if self.down and event:is( EVENT_MOUSE_UP ) then
 		self.down = false
 		self.held_scrollbar = false
 		self:set_changed()
 		event:handle()
-	elseif self.down and event:is( SHEETS_EVENT_MOUSE_DRAG ) then
+	elseif self.down and event:is( EVENT_MOUSE_DRAG ) then
 		local c_width, c_height = self:get_content_width(), self:get_content_height()
 		local h, v = self:get_active_scrollbars( c_width, c_height )
 
@@ -171,7 +171,7 @@ function ScrollContainer:handle( event )
 		local c_width, c_height = self:get_content_width(), self:get_content_height()
 		local h, v = self:get_active_scrollbars( c_width, c_height )
 
-		if event:is( SHEETS_EVENT_MOUSE_DOWN ) then
+		if event:is( EVENT_MOUSE_DOWN ) then
 			if event.x == self.width - 1 and v then
 				local px, py = self:get_scrollbar_positions( c_width, c_height, h, v )
 				local sx, sy = self:get_scrollbar_sizes( c_width, c_height, h, v )
@@ -211,13 +211,13 @@ function ScrollContainer:handle( event )
 				self:set_changed()
 				event:handle()
 			end
-		elseif event:is( SHEETS_EVENT_MOUSE_SCROLL ) then
+		elseif event:is( EVENT_MOUSE_SCROLL ) then
 			if v then
 				self:set_scroll_y( math.max( math.min( oy + event.button, c_height - self:get_display_height( h, v ) ), 0 ) )
 			elseif h then
 				self:set_scroll_x( math.max( math.min( ox + event.button, c_width - self:get_display_width( h, v ) ), 0 ) )
 			end
-		elseif event:is( SHEETS_EVENT_MOUSE_CLICK ) or event:is( SHEETS_EVENT_MOUSE_HOLD ) then
+		elseif event:is( EVENT_MOUSE_CLICK ) or event:is( EVENT_MOUSE_HOLD ) then
 			if event.x == self.width - 1 and v or event.y == self.height - 1 and h then
 				event:handle()
 			end

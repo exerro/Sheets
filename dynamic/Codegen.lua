@@ -1,6 +1,5 @@
 
- -- @once
- -- @print Including sheets.dynamic.Codegen
+ -- @print including(dynamic.Codegen)
 
 local property_cache = {}
 
@@ -13,7 +12,9 @@ local CHANGECODE_NO_TRANSITION, CHANGECODE_TRANSITION, SELF_INDEX_UPDATER,
 
 local node_query_internal, dynamic_value_internal
 
-class "Codegen" {}
+@class Codegen {
+
+}
 
 function Codegen.node_query( parsed_query, lifetime, updater )
 	local names = {}
@@ -55,10 +56,10 @@ function Codegen.node_query( parsed_query, lifetime, updater )
 			  .. table.concat( initialise_code, "\n" )
 			  .. "\nend"
 
-	local f, err = assert( (load or loadstring)( code, "query", nil, _ENV ) )
+	local f, err = assert( (load or loadstring)( code, "query", nil, { Codegen = Codegen } ) )
 
 	if setfenv then
-		setfenv( f, getfenv() )
+		setfenv( f, { Codegen = Codegen } )
 	end
 
 	local getter, initialiser = f( lifetime, updater, unpack( named_values ) )
@@ -296,10 +297,16 @@ function Codegen.dynamic_property_setter( property, options )
 		:gsub( "AST_MODIFICATION", function() return s3 end )
 		:gsub( "CASTING_RAW", function() return rawcaster end )
 		:gsub( "CASTING", function() return caster end )
-	local f = assert( (load or loadstring)( str, "property setter '" .. property .. "'", nil, _ENV ) )
+	local f = assert( (load or loadstring)( str, "property setter '" .. property .. "'", nil, { Typechecking = Typechecking, Type = Type, Codegen = Codegen, DynamicValueParser = DynamicValueParser, surface = surface, type = type, math = math, Stream = Stream } ) )
+
+	-- @if DEBUG
+		local h = fs.open( ".sheets_debug/property_" .. property .. ".lua", "w" ) or error( property )
+		h.write( str )
+		h.close()
+	-- @endif
 
 	if setfenv then
-		setfenv( f, getfenv() )
+		setfenv( f, { Typechecking = Typechecking, Type = Type, Codegen = Codegen, DynamicValueParser = DynamicValueParser, surface = surface, type = type, math = math, Stream = Stream } )
 	end
 
 	local fr = f( ptype )

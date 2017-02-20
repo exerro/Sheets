@@ -1,8 +1,7 @@
 
- -- @once
- -- @print Including sheets.elements.Panel
+ -- @print including(elements.Panel)
 
-class "Panel" extends "Sheet" implements "IColoured" {
+@class Panel extends Sheet implements IColoured {
 	colour = nil;
 }
 

@@ -152,27 +152,27 @@ function TextInput:on_pre_draw()
 end
 
 function TextInput:on_mouse_event( event )
-	if self.down and event:is( SHEETS_EVENT_MOUSE_DRAG ) then
+	if self.down and event:is( EVENT_MOUSE_DRAG ) then
 		self.selection = self.selection or self.cursor
 		self:set_cursor( event.x + self.scroll + 1 )
-	elseif self.down and event:is( SHEETS_EVENT_MOUSE_UP ) then
+	elseif self.down and event:is( EVENT_MOUSE_UP ) then
 		self.down = false
 	end
 
 	if event.handled or not event:is_within_area( 0, 0, self.width, self.height ) or not event.within then
-		if event:is( SHEETS_EVENT_MOUSE_DOWN ) then
+		if event:is( EVENT_MOUSE_DOWN ) then
 			self:unfocus()
 		end
 		return
 	end
 
-	if event:is( SHEETS_EVENT_MOUSE_DOWN ) then
+	if event:is( EVENT_MOUSE_DOWN ) then
 		self:focus()
 		self.selection = nil
 		self:set_cursor( event.x + self.scroll )
 		self.down = true
 		event:handle()
-	elseif event:is( SHEETS_EVENT_MOUSE_CLICK ) then
+	elseif event:is( EVENT_MOUSE_CLICK ) then
 		if self.double_click_data and self.double_click_data.x == event.x + self.scroll then
 			local pos1, pos2 = event.x + self.scroll + 1, event.x + self.scroll + 1
 			local pat = get_similar_pattern( self.text:sub( pos1, pos1 ) )
@@ -195,7 +195,7 @@ function TextInput:on_mouse_event( event )
 			end )
 			self.double_click_data = { x = event.x + self.scroll, timer = t }
 		end
-	elseif event:is( SHEETS_EVENT_MOUSE_HOLD ) then
+	elseif event:is( EVENT_MOUSE_HOLD ) then
 		event:handle()
 	end
 end
@@ -203,7 +203,7 @@ end
 function TextInput:on_keyboard_event( event )
 	if not self.focussed or event.handled then return end
 
-	if event:is( SHEETS_EVENT_KEY_DOWN ) then
+	if event:is( EVENT_KEY_DOWN ) then
 		if self.selection then
 			if event:matches "left" then
 				if event:is_held "left_shift" or event:is_held "right_shift" then

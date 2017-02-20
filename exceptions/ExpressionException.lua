@@ -1,8 +1,7 @@
 
- -- @once
- -- @print Including sheets.exceptions.ExpressionException
+ -- @print including(exceptions.ExpressionException)
 
-class "ExpressionException" extends "Exception" {
+@class ExpressionException extends Exception {
 	position = nil;
 }
 

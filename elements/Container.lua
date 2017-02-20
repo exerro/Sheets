@@ -1,10 +1,9 @@
 
- -- @once
- -- @print Including sheets.elements.Container
+ -- @print including(elements.Container)
 
 -- needs to update to new exception system
 
-class "Container" extends "Sheet" implements "IChildContainer" implements "IColoured" {
+@class Container extends Sheet implements IChildContainer, IColoured {
 	colour = nil;
 	x_offset = 0;
 	y_offset = 0;

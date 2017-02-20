@@ -1,10 +1,9 @@
 
- -- @once
- -- @print Including sheets.interfaces.IHasText
+ -- @print including(interfaces.IHasText)
 
 local wrapline, wrap
 
-interface "IHasText" {
+@interface IHasText {
 	text = "";
 	text_lines = nil;
 	horizontal_alignment = ALIGNMENT_LEFT;

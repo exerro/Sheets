@@ -1,6 +1,5 @@
 
- -- @once
- -- @print Including sheets.dynamic.ValueHandler
+ -- @print including(dynamic.ValueHandler)
 
 local floor = math.floor
 local get_transition_function
@@ -8,7 +7,7 @@ local TRANSITION_FUNCTION_CODE
 local tfcache = {}
 local setf
 
-class "ValueHandler" {
+@class ValueHandler {
 	object = nil;
 	lifetimes = {};
 	values = {};

@@ -1,10 +1,9 @@
 
- -- @once
- -- @print Including sheets.interfaces.IQueryable
+ -- @print including(interfaces.IQueryable)
 
 local setf, addtag, remtag, query_raw
 
-interface "IQueryable" implements "ICollatedChildren" {
+@interface IQueryable implements ICollatedChildren {
 	query_tracker = nil;
 }
 

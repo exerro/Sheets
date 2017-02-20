@@ -1,8 +1,7 @@
 
- -- @once
- -- @print sheets.dynamic.Transition
+ -- @print including(dynamic.Transition)
 
-class "Transition" {
+@class Transition {
 	duration = 0.4;
 	easing_function = nil;
 }

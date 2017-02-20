@@ -1,8 +1,10 @@
 
+ -- @print including(enum.Easing)
+
 local sin, cos = math.sin, math.cos
 local halfpi = math.pi / 2
 
-enum "Easing" {
+@enum Easing {
 	linear = function( u, d, t )
 		return u + d * t
 	end;

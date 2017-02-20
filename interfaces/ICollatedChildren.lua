@@ -1,8 +1,7 @@
 
- -- @once
- -- @print Including sheets.interfaces.ICollatedChildren
+ -- @print including(interfaces.ICollatedChildren)
 
-interface "ICollatedChildren" {
+@interface ICollatedChildren {
 	collated_children = {}
 }
 
