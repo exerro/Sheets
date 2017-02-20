@@ -33,7 +33,7 @@ parser:add_section( "version" ):set_param_count( 0, 1, "version" )
 parser:add_section( "silent" ):set_param_count( 0, 0, "silent" )
 
 parser:set_param_modifier( function( v )
-	return version( "--resolve", v, "--silent" )
+	return version( "resolve", v, "--silent" )
 end, "version" )
 
 parser:set_param_validator( function( v )
@@ -47,7 +47,7 @@ local parameters = parser:parse( ... )
 local name_raw = parameters[1]:gsub( "%.", "/" )
 local name = name_raw:gsub ".+/", ""
 local path = shell.resolve( name_raw )
-local ver = parameters.version or version( "--resolve", "stable", "--silent" )
+local ver = parameters.version or version( "resolve", "stable", "--silent" )
 
 if fs.exists( path .. "/.project_conf.txt" ) then
 	if parameters.force then
@@ -67,8 +67,8 @@ if not parameters.silent then
 	print( "Using Sheets " .. ver )
 end
 
-if not version( "--exists", ver, "--silent" ) then
-	version( "--install", ver )
+if not version( "exists", ver, "--silent" ) then
+	version( "install", ver )
 end
 
 fs.makeDir( path )
@@ -78,7 +78,7 @@ local conf = config.open( path .. "/.project_conf.txt" )
 
 conf:write( "name", name )
 conf:write( "author", "anonymous" )
-conf:write( "version", "0.0.1" )
+conf:write( "version", "stable" )
 conf:write( "sheets_version", ver )
 conf:write( "files", {} )
 conf:write( "flags.SHEETS_CORE_ELEMENTS", true )

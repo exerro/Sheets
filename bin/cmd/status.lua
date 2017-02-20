@@ -7,7 +7,7 @@ sbs status
 
 Usage
  > status [--silent]
- --> returns project and sheets status
+ --> return project and sheets status
  --> `--silent` to hide terminal output
  > status help|-h|--help
  --> displays help]]
@@ -35,7 +35,7 @@ if parameters.silent then
 	data.project_name = project_name
 	data.project_path = project_path
 
-	data.installed_versions = version( "--list", "--local", "--silent" )
+	data.installed_versions = version( "list", "--local", "--silent" )
 
 	if  data.project_path then
 		data.project_version        = project_conf:read "version"
@@ -69,7 +69,7 @@ else
 		print "No project open\n"
 	end
 
-	local versions = version( "--list", "--local", "--silent" )
+	local versions = version( "list", "--local", "--silent" )
 
 	if #versions > 0 then
 		print "Installed Sheets versions:"

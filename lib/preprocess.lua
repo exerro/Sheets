@@ -863,9 +863,27 @@ end
 
 commands["include"] = function( data, src, line, lines, state )
 	local file = data:match "^[%w_%.]+$"
-	          or error( "expected valid name after @inlcude, got '" .. data .. "' on line " .. line .. " of '" .. src .. "'", 0 )
+	          or error( "expected valid name after @include, got '" .. data .. "' on line " .. line .. " of '" .. src .. "'", 0 )
 	if state.ifstack_resultant then
 		local sublines = preprocess.process_file( file, state )
+			or error( "failed to find file '" .. file .. "' on line " .. line .. " of '" .. src .. "'", 0 )
+		local len = #sublines
+
+		for i = #lines, line + 1, -1 do
+			lines[i + len] = lines[i]
+		end
+
+		for i = 1, len do
+			lines[line + i] = sublines[i]
+		end
+	end
+end
+
+commands["includeraw"] = function( data, src, line, lines, state )
+	local file = data:match "^[%w_%./]+$"
+	          or error( "expected valid name after @includeraw, got '" .. data .. "' on line " .. line .. " of '" .. src .. "'", 0 )
+	if state.ifstack_resultant then
+		local sublines = preprocess.process_file( file, state, true )
 			or error( "failed to find file '" .. file .. "' on line " .. line .. " of '" .. src .. "'", 0 )
 		local len = #sublines
 

@@ -148,6 +148,8 @@ function param_methods:parse( ... )
 			data[k] = data[k] ~= nil
 		elseif v.upper_count == 1 then
 			data[k] = data[k] and data[k][1]
+		else
+			data[k] = data[k] or {}
 		end
 	end
 

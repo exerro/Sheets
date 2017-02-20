@@ -9,21 +9,21 @@ sbs version
 
 Usage
  > version -i|install <version> [--reinstall] [--silent]
- --> installs a version
+ --> install a version
  --> `--reinstall` to overwrite preinstalled version
  > version remove <version> [--silent]
- --> removes a local version installation
+ --> remove a local version installation
  > version -r|resolve <version> [--silent]
- --> returns the version in semantic version format
+ --> return the version in semantic version format
  > version -l|list [--local] [--silent]
- --> returns a list of versions
+ --> return a list of versions
  --> `--local` to only list installed versions
  > version -p|path <version> [--silent]
- --> returns the path to a version
+ --> return the path to a version
  > version -e|exists <version> [--silent]
- --> returns whether a version is installed
+ --> return whether a version is installed
  > version help|-h|--help
- --> displays help
+ --> display help
 
  -> `--silent` to hide terminal output]]
 
