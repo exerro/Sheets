@@ -9,6 +9,7 @@ Usage
  > init <project name> [--open] [--force] [--version <version>] [--silent]
  --> '--open' to open the project after creation
  --> '--force' to overwrite an existing project
+ --> '--author' <author> to define project author
  --> '--version' to specify version, defaults to 'stable'
  --> '--silent' to hide terminal output
  > init help|-h|--help
@@ -28,6 +29,7 @@ end
 
 parser:set_param_count( 1, 1 )
 parser:add_section( "open" ):set_param_count( 0, 0, "open" )
+parser:add_section( "author" ):set_param_count( 0, 1, "author" )
 parser:add_section( "force" ):set_param_count( 0, 0, "force" )
 parser:add_section( "version" ):set_param_count( 0, 1, "version" )
 parser:add_section( "silent" ):set_param_count( 0, 0, "silent" )
@@ -77,8 +79,8 @@ fs.makeDir( path .. "/.sheets_debug" )
 local conf = config.open( path .. "/.project_conf.txt" )
 
 conf:write( "name", name )
-conf:write( "author", "anonymous" )
-conf:write( "version", "stable" )
+conf:write( "author", parameters.author or "anonymous" )
+conf:write( "version", "v0.0.1" )
 conf:write( "sheets_version", ver )
 conf:write( "files", {} )
 conf:write( "flags.SHEETS_CORE_ELEMENTS", true )
