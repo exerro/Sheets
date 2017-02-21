@@ -84,7 +84,6 @@ conf:write( "files", {} )
 conf:write( "flags.SHEETS_CORE_ELEMENTS", true )
 conf:write( "flags.SHEETS_THREADING", true )
 conf:write( "flags.SHEETS_LOWRES", true )
-conf:write( "flags.SHEETS_MINIFY", false )
 conf:write( "flags.SHEETS_SML", false )
 conf:close()
 
