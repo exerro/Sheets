@@ -6,14 +6,14 @@ Project switching
  > init - create a new project
  > open - open a project
  > close - close the current project
-
+@
 Project management
  > add - add files/flags to current project
  > remove - remove files/flags from current project
  > list - list files/flags in current project
  > conf - modify the current project's config
  > debug - run a project
-
+@
 Sheets help
  > status - return project and sheets status
  > version - manage versions and returns information
@@ -32,7 +32,23 @@ Usage
 ]]
 
 if command == "commands" then
-	return print( COMMANDS_HELP )
+	return COMMANDS_HELP:gsub( "[^\n]+", function( line )
+		if line:sub( 1, 2 ) == " >" then
+			term.setTextColour( colours.grey )
+			term.write " > "
+			term.setTextColour( colours.white )
+			term.write( line:match " > (.-) %- " )
+			term.setTextColour( colours.grey )
+			term.write " - "
+			term.setTextColour( colours.lightGrey )
+			print( line:match " %- (.+)" )
+		elseif line == "@" then
+			print()
+		else
+			term.setTextColour( colours.cyan )
+			print( line )
+		end
+	end )
 elseif command then
 	(_ENV or getfenv())[command] "-h"
 else
