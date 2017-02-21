@@ -198,9 +198,10 @@ function Codegen.dynamic_value( parsed_value, lifetime, env, obj, updater )
 	return getter, initialiser
 end
 
-function Codegen.dynamic_property_setter( property, options )
+function Codegen.dynamic_property_setter( property, options, environment )
 	property_cache[property] = property_cache[property] or {}
 	options = options or {}
+	environment = environment or {}
 
 	local self_changed = ValueHandler.properties[property].change == "self"
 	local parent_changed = ValueHandler.properties[property].change == "parent"
@@ -233,7 +234,7 @@ function Codegen.dynamic_property_setter( property, options )
 
 	if ptype == Type.sheets.colour then
 		for k, v in pairs( colour ) do
-			t2[#t2 + 1] = "environment." .. k .. " = { precalculated_type = rtype, value = " .. v .. " }"
+			environment[k] = { precalculated_type = ptype, value = v }
 		end
 
 		t5[#t5 + 1] = "if value == TRANSPARENT then value = nil end"
@@ -241,7 +242,7 @@ function Codegen.dynamic_property_setter( property, options )
 
 	if ptype == Type.sheets.alignment then
 		for k, v in pairs( alignment ) do
-			t2[#t2 + 1] = "environment." .. k .. " = { precalculated_type = rtype, value = " .. v .. " }"
+			environment[k] = { precalculated_type = ptype, value = v }
 		end
 	end
 
@@ -313,11 +314,11 @@ function Codegen.dynamic_property_setter( property, options )
 		setfenv( f, env )
 	end
 
-	local fr = f( ptype )
+	local fr = f( ptype, environment )
 
 	property_cache[property][#property_cache[property] + 1] = { s1, s2, s3, s4, s5, f = fr }
 
-	return fr
+	return fr, environment
 end
 
 CHANGECODE_NO_TRANSITION = [[
@@ -523,7 +524,7 @@ QUERY_UPDATER = [[function FUNC()
 end]]
 
 GENERIC_SETTER = [[
-local rtype = ...
+local rtype, environment = ...
 return function( self, value )
 	self.values:respawn PROPERTY_QUOTED
 	self[RAW_PROPERTY] = value
@@ -543,7 +544,6 @@ return function( self, value )
 	VALUE_MODIFICATION
 
 	local parser = DynamicValueParser( Stream( value ) )
-	local environment = {}
 	local percentage_ast
 
 	parser.flags.enable_queries = true

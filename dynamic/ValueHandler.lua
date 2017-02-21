@@ -33,13 +33,18 @@ function ValueHandler:ValueHandler( object )
 	object.set = setf
 end
 
-function ValueHandler:add( name, default, options )
+function ValueHandler:add( name, default, options, environment )
 	if not ValueHandler.properties[name] then
 		error "TODO: fix this error"
 	end
 
-	self.object["set_" .. name] = type( options ) == "function" and options or Codegen.dynamic_property_setter( name, options )
+	if type( options ) == "table" or options == nil then
+		options, environment = Codegen.dynamic_property_setter( name, options, environment )
+	end
+
+	self.object["set_" .. name] = options
 	self.object["raw_" .. name] = default
+	self.object["_environment_" .. name] = environment
 	self.object[name] = default
 	self.values[#self.values + 1] = name
 	self.defaults[name] = default

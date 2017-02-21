@@ -3,23 +3,11 @@
 
 local X_ENVIRONMENT = [[
 parser.flags.enable_percentages = true
-percentage_ast = { type = DVALUE_DOTINDEX, value = { type = DVALUE_PARENT }, index = "width" }
-environment.left = 0
-environment.out_left={type=DVALUE_UNEXPR,operator="-",value={type=DVALUE_IDENTIFIER,value="width"}}
-environment.centre={type=DVALUE_BINEXPR,operator="-",lvalue={type=DVALUE_PERCENTAGE,value={type=DVALUE_INTEGER,value="50"}},rvalue={type=DVALUE_BINEXPR,operator="/",lvalue={type=DVALUE_IDENTIFIER,value="width"},rvalue={type=DVALUE_INTEGER,value="2"}}}
-environment.center = environment.centre
-environment.right={type=DVALUE_BINEXPR,operator="-",lvalue={type=DVALUE_PERCENTAGE,value={type=DVALUE_INTEGER,value="100"}},rvalue={type=DVALUE_IDENTIFIER,value="width"}}
-environment.out_right={type=DVALUE_PERCENTAGE,value={type=DVALUE_INTEGER,value="100"}}]]
+percentage_ast = { type = DVALUE_DOTINDEX, value = { type = DVALUE_PARENT }, index = "width" }]]
 
 local Y_ENVIRONMENT = [[
 parser.flags.enable_percentages = true
-percentage_ast = { type = DVALUE_DOTINDEX, value = { type = DVALUE_PARENT }, index = "height" }
-environment.top = 0
-environment.out_top={type=DVALUE_UNEXPR,operator="-",value={type=DVALUE_IDENTIFIER,value="height"}}
-environment.centre={type=DVALUE_BINEXPR,operator="-",lvalue={type=DVALUE_PERCENTAGE,value={type=DVALUE_INTEGER,value="50"}},rvalue={type=DVALUE_BINEXPR,operator="/",lvalue={type=DVALUE_IDENTIFIER,value="height"},rvalue={type=DVALUE_INTEGER,value="2"}}}
-environment.center = environment.centre
-environment.bottom={type=DVALUE_BINEXPR,operator="-",lvalue={type=DVALUE_PERCENTAGE,value={type=DVALUE_INTEGER,value="100"}},rvalue={type=DVALUE_IDENTIFIER,value="height"}}
-environment.out_bottom={type=DVALUE_PERCENTAGE,value={type=DVALUE_INTEGER,value="100"}}]]
+percentage_ast = { type = DVALUE_DOTINDEX, value = { type = DVALUE_PARENT }, index = "height" }]]
 
 @class Sheet implements ITagged, ISize {
 	x = 0;
@@ -49,13 +37,30 @@ function Sheet:Sheet( x, y, width, height )
 end
 
 function Sheet:initialise()
+	local centrex = {type=DVALUE_BINEXPR,operator="-",lvalue={type=DVALUE_PERCENTAGE,value={type=DVALUE_INTEGER,value="50"}},rvalue={type=DVALUE_BINEXPR,operator="/",lvalue={type=DVALUE_IDENTIFIER,value= "width"},rvalue={type=DVALUE_INTEGER,value="2"}}}
+	local centrey = {type=DVALUE_BINEXPR,operator="-",lvalue={type=DVALUE_PERCENTAGE,value={type=DVALUE_INTEGER,value="50"}},rvalue={type=DVALUE_BINEXPR,operator="/",lvalue={type=DVALUE_IDENTIFIER,value="height"},rvalue={type=DVALUE_INTEGER,value="2"}}}
+
 	self.values = ValueHandler( self )
 
 	self:ITagged()
 	self:ISize()
 
-	self.values:add( "x", 0, { custom_environment_code = X_ENVIRONMENT } )
-	self.values:add( "y", 0, { custom_environment_code = Y_ENVIRONMENT } )
+	self.values:add( "x", 0, { custom_environment_code = X_ENVIRONMENT }, {
+		left = 0;
+		out_left={type=DVALUE_UNEXPR,operator="-",value={type=DVALUE_IDENTIFIER,value="width"}};
+		centre = centrex;
+		center = centrex;
+		right={type=DVALUE_BINEXPR,operator="-",lvalue={type=DVALUE_PERCENTAGE,value={type=DVALUE_INTEGER,value="100"}},rvalue={type=DVALUE_IDENTIFIER,value="width"}};
+		out_right={type=DVALUE_PERCENTAGE,value={type=DVALUE_INTEGER,value="100"}};
+	} )
+	self.values:add( "y", 0, { custom_environment_code = Y_ENVIRONMENT }, {
+		top = 0;
+		out_top={type=DVALUE_UNEXPR,operator="-",value={type=DVALUE_IDENTIFIER,value="height"}};
+		centre = centrey;
+		center = centrey;
+		bottom={type=DVALUE_BINEXPR,operator="-",lvalue={type=DVALUE_PERCENTAGE,value={type=DVALUE_INTEGER,value="100"}},rvalue={type=DVALUE_IDENTIFIER,value="height"}};
+		out_bottom={type=DVALUE_PERCENTAGE,value={type=DVALUE_INTEGER,value="100"}};
+	} )
 	self.values:add( "z", 0, { custom_update_code = "if self.parent then self.parent:reposition_child_z_index( self ) end" } )
 	self.values:add( "parent", nil, function( self, parent )
 		if parent and not class.type_of( parent, Sheet ) and not class.type_of( parent, Screen ) then
