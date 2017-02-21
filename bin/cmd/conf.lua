@@ -7,9 +7,11 @@ elseif mode == "-g" or mode == "read" or mode == "-r" then
 	mode = "get"
 elseif mode == "-s" or mode == "write" or mode == "w" then
 	mode = "set"
+elseif mode == "-d" or mode == "delete" then
+	mode = "remove"
 end
 
-local len = mode == "set" and 2 or mode == "get" and 1 or 0
+local len = mode == "set" and 2 or (mode == "get" or mode == "remove") and 1 or 0
 local parser = param()
 local HELP = [[
 sbs conf
@@ -22,6 +24,9 @@ Usage
  > conf get|-g|read|-r <key> [--silent]
  --> return a config key
  --> '--silent' to hide terminal output
+ > conf remove|delete|-d <key> [--silent]
+ --> remove a config key
+ --> '--silent' to hide terminal output
  > conf set|-s|write|-w <key> [value] [--silent]
  --> set a config key
  --> value defaults to true
@@ -31,7 +36,7 @@ Usage
 
 if mode == "help" or mode == "-h" or mode == "--help" then
 	return print( HELP )
-elseif mode ~= "set" and mode ~= "get" and mode ~= "list" then
+elseif mode ~= "set" and mode ~= "get" and mode ~= "list" and mode ~= "remove" then
 	if mode then
 		return error( "Invalid mode '" .. mode .. "': use 'sbs conf -h' for help", 0 )
 	else
@@ -64,9 +69,57 @@ if mode == "list" then
 	if parameters.silent then
 		return project_conf.data
 	else
-		for k, v in pairs( project_conf.data ) do
-			print( k )
+		local maxindent = 0
+
+		local function indentrecursive( data, indent )
+			for k, v in pairs( data ) do
+				if k ~= "files" and k ~= "flags" or indent ~= 0 then
+					if type( v ) == "table" then
+						indentrecursive( v, indent + 1 )
+					else
+						maxindent = math.max( maxindent, 2 * indent + #tostring( k ) )
+					end
+				end
+			end
 		end
+
+		local function printrecursive( data, indent )
+			for k, v in pairs( data ) do
+				if k ~= "files" and k ~= "flags" or indent ~= 0 then
+					if type( v ) == "table" then
+						term.setTextColour( colours.lightGrey )
+						term.write( ("  "):rep( indent ) .. k )
+						term.setTextColour( colours.grey )
+						print " ->"
+						printrecursive( v, indent + 1 )
+					else
+						term.write( ("  "):rep( indent ) )
+
+						if tostring( k ):find "^SHEETS_" then
+							term.setTextColour( colours.lightGrey )
+							term.write( "SHEETS_" )
+							term.setTextColour( colours.white )
+							term.write( k:sub( 8 ) )
+						else
+							term.setTextColour( colours.white )
+							term.write( k )
+						end
+
+						term.setTextColour( colours.grey )
+						term.write( (" "):rep( maxindent - 2 * indent - #tostring( k ) ) .. " = " )
+						term.setTextColour( colours.lightBlue )
+						print( textutils.serialize( v ) )
+					end
+				end
+			end
+		end
+
+		indentrecursive( project_conf.data, 0 )
+		printrecursive( project_conf.data, 0 )
+
+		term.setTextColour( colours.grey )
+		print( "files - `sbs list files`" )
+		print( "flags - `sbs list flags`" )
 	end
 elseif mode == "get" then
 	if parameters.silent then
@@ -82,5 +135,12 @@ elseif mode == "set" then
 
 	if not parameters.silent then
 		print( "Set index '" .. parameters[1] .. "' to '" .. parameters[2] .. "'" )
+	end
+elseif mode == "remove" then
+	project_conf:write( parameters[1] )
+	project_conf:save()
+
+	if not parameters.silent then
+		print( "Removed index '" .. parameters[1] .. "'" )
 	end
 end
