@@ -1,0 +1,3 @@
+[submodule "amend"]
+	path = amend
+	url = https://github.com/Exerro/amend.git
