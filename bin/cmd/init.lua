@@ -29,6 +29,10 @@ if h == "-h" or h == "help" or h == "--help" then
 	return print( HELP )
 end
 
+if open "--silent" then
+	close()
+end
+
 parser:set_param_count( 0, 1 )
 parser:add_section( "author" ):set_param_count( 0, 1, "author" )
 parser:add_section( "name" ):set_param_count( 0, 1, "name" )
