@@ -123,7 +123,7 @@ function param_methods:parse( ... )
 
 				data[section][#data[section] + 1] = arg
 
-				if self.sections[section].upper_count and #data[section] > self.sections[section].upper_count then
+				if self.sections[section].upper_count and #data[section] >= self.sections[section].upper_count then
 					section = ":default:"
 				end
 			end
