@@ -71,12 +71,20 @@ else
 		return error( "Cannot open and reopen a project", 0 )
 	end
 
-	if open "--silent" then
-		close()
-	end
-
 	local name = parameters[1]
 	local path = shell.resolve( name )
+
+	if open "--silent" then
+		if path == sheets_global_config:read "project.path" then
+			if not parameters.silent then
+				print( "Project '" .. sheets_global_config:read "project.name" .. "' is already open" )
+			end
+
+			return true
+		else
+			close( parameters.silent and "--silent" )
+		end
+	end
 
 	if fs.isDir( path ) and fs.exists( path .. "/.project_conf.txt" ) then
 		local conf = config.open( path .. "/.project_conf.txt" )

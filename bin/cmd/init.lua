@@ -30,7 +30,7 @@ if h == "-h" or h == "help" or h == "--help" then
 end
 
 if open "--silent" then
-	close()
+	close( parameters.silent and "--silent" )
 end
 
 parser:set_param_count( 0, 1 )
@@ -98,5 +98,5 @@ conf:write( "flags.SHEETS_SML", false )
 conf:close()
 
 if parameters.open then
-	open( "/" .. path )
+	open( "/" .. path, parameters.silent and "--silent" )
 end
