@@ -174,7 +174,20 @@ function DynamicValueParser:parse_term()
 				error "TODO: fix this error"
 			end
 
-			term = { type = DVALUE_PERCENTAGE, value = term }
+			local ast = self.flags.percentage_ast
+			local val
+
+			if term.type == DVALUE_FLOAT or term.type == DVALUE_INTEGER then
+				val = { type = DVALUE_FLOAT, value = tostring( tonumber( term.value ) / 100 ) }
+			else
+				val = { type = DVALUE_BINEXPR, operator = "/", lvalue = term, rvalue = { type = DVALUE_FLOAT, value = 100 } }
+			end
+
+			if val.type == DVALUE_FLOAT and val.value == "1" then
+				term = ast
+			else
+				term = { type = DVALUE_BINEXPR, operator = "*", lvalue = ast, rvalue = val }
+			end
 		else
 			break
 		end

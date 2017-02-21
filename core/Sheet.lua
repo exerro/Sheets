@@ -1,6 +1,16 @@
 
  -- @print including(core.Sheet)
 
+local X_ENVIRONMENT = [[
+parser.flags.enable_percentages = true
+parser.flags.percentage_ast = { type = DVALUE_DOTINDEX, value = { type = DVALUE_PARENT }, index = "width" }
+environment.left = { type = DVALUE_INTEGER, value = "0" }]]
+
+local Y_ENVIRONMENT = [[
+parser.flags.enable_percentages = true
+parser.flags.percentage_ast = { type = DVALUE_DOTINDEX, value = { type = DVALUE_PARENT }, index = "height" }
+environment.top = { type = DVALUE_INTEGER, value = "0" }]]
+
 @class Sheet implements ITagged, ISize {
 	x = 0;
 	y = 0;
@@ -34,8 +44,8 @@ function Sheet:initialise()
 	self:ITagged()
 	self:ISize()
 
-	self.values:add( "x", 0 )
-	self.values:add( "y", 0 )
+	self.values:add( "x", 0, { custom_environment_code = X_ENVIRONMENT } )
+	self.values:add( "y", 0, { custom_environment_code = Y_ENVIRONMENT } )
 	self.values:add( "z", 0, { custom_update_code = "if self.parent then self.parent:reposition_child_z_index( self ) end" } )
 	self.values:add( "parent", nil, function( self, parent )
 		if parent and not class.type_of( parent, Sheet ) and not class.type_of( parent, Screen ) then
