@@ -40,10 +40,10 @@
  -- @define TOKEN_EOF "eof"
  -- @define TOKEN_STRING "string"
  -- @define TOKEN_FLOAT "float"
- -- @define TOKEN_BOOLEAN "float"
+ -- @define TOKEN_BOOLEAN "boolean"
  -- @define TOKEN_INTEGER "int"
  -- @define TOKEN_IDENTIFIER "identifier"
- -- @define TOKEN_KEYWORD "float"
+ -- @define TOKEN_KEYWORD "keyword"
  -- @define TOKEN_NEWLINE "newline"
  -- @define TOKEN_WHITESPACE "whitespace"
  -- @define TOKEN_SYMBOL "symbol"
@@ -76,18 +76,6 @@
  -- @define DVALUE_TOSTRING "tostring"
  -- @define DVALUE_TAG_CHECK "tag"
 
- -- @if LOWRES
-	 -- @define BLANK_PIXEL { WHITE, WHITE, " " }
- -- @else
- 	 -- @define BLANK_PIXEL WHITE
- -- @endif
-
- -- @if LOWRES
-	 -- @define CIRCLE_CORRECTION 1.5
- -- @else
-	 -- @define CIRCLE_CORRECTION 1
- -- @endif
-
  -- @if CORE_ELEMENTS
 	 -- @define ELEMENT_BUTTON
 	 -- @define ELEMENT_CHECKBOX
@@ -107,14 +95,4 @@
 	 -- @define ELEMENT_TEXTINPUT
 	 -- @define ELEMENT_TOGGLE
 	 -- @define ELEMENT_WINDOW
- -- @endif
-
- -- @if LOWRES
- 	-- @define GRAPHICS_NO_TEXT false
- -- @else
- 	-- @define GRAPHICS_NO_TEXT true
- -- @endif
-
- -- @ifn LOWRES
-	 -- @define GRAPHICS_DEFAULT_FONT _graphics_default_font
  -- @endif
