@@ -3,20 +3,21 @@ local command = ...
 
 local COMMANDS_HELP = [[
 Project switching
- > init - creates a new project
- > open - opens a project
- > close - closes the current project
+ > init - create a new project
+ > open - open a project
+ > close - close the current project
 
 Project management
- > add - adds files/flags to current project
- > remove - removes files/flags from current project
- > conf - modifies the current project's config
- > debug - runs a project
+ > add - add files/flags to current project
+ > remove - remove files/flags from current project
+ > list - list files/flags in current project
+ > conf - modify the current project's config
+ > debug - run a project
 
 Sheets help
- > status - returns project and sheets status
- > version - manages versions and returns information
- > help - returns help]]
+ > status - return project and sheets status
+ > version - manage versions and returns information
+ > help - show help]]
 local GENERIC_HELP = [[
 sbs help
  - Returns help

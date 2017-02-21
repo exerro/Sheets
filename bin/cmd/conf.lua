@@ -77,11 +77,7 @@ elseif mode == "get" then
 elseif mode == "set" then
 	local value = parameters[2] == nil and "true" or parameters[2]
 
-	if value == "true" or value == "false" then
-		value = value == "true"
-	end
-
-	project_conf:write( parameters[1], value )
+	project_conf:write( parameters[1], value ~= "false" and (value == "true" or tonumber( value ) or value) )
 	project_conf:save()
 
 	if not parameters.silent then
