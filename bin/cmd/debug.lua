@@ -112,6 +112,10 @@ for i = 1, #to_include do
 	lines[i + 1] = " -- @include " .. to_include[i]
 end
 
+if #to_include == 0 and not parameters.silent then
+	print( "Warning: no project files included" )
+end
+
 local file_contents = table.concat( lines, "\n" )
 local h = fs.open( project .. "/.sheets_debug/file_includer.lua", "w" )
 local content
