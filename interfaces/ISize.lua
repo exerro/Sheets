@@ -3,11 +3,11 @@
 
 local WIDTH_PERCENTAGE_ENABLE = [[
 parser.flags.enable_percentages = true
-parser.flags.percentage_ast = { type = DVALUE_DOTINDEX, value = { type = DVALUE_PARENT }, index = "width" }]]
+percentage_ast = { type = DVALUE_DOTINDEX, value = { type = DVALUE_PARENT }, index = "width" }]]
 
 local HEIGHT_PERCENTAGE_ENABLE = [[
 parser.flags.enable_percentages = true
-parser.flags.percentage_ast = { type = DVALUE_DOTINDEX, value = { type = DVALUE_PARENT }, index = "height" }]]
+percentage_ast = { type = DVALUE_DOTINDEX, value = { type = DVALUE_PARENT }, index = "height" }]]
 
 @interface ISize {
 	width = 0;

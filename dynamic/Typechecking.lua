@@ -56,7 +56,7 @@ function Typechecking.check_type( ast, state )
 
 			if type( value ) == "table" then
 				if value.type then
-					return Typechecking.check_type( value )
+					return Typechecking.check_type( value, state )
 				elseif value.precalculated_type then
 					return ast, value.precalculated_type
 				end
@@ -132,7 +132,23 @@ function Typechecking.check_type( ast, state )
 		return ast
 
 	elseif ast.type == DVALUE_PERCENTAGE then
-		-- TODO: see issue #37
+		local term = ast.value
+		local ast = state.percentage_ast
+		local val
+
+		if term.type == DVALUE_FLOAT or term.type == DVALUE_INTEGER then
+			val = { type = DVALUE_FLOAT, value = tostring( tonumber( term.value ) / 100 ) }
+		else
+			val = { type = DVALUE_BINEXPR, operator = "/", lvalue = term, rvalue = { type = DVALUE_FLOAT, value = 100 } }
+		end
+
+		if val.type == DVALUE_FLOAT and val.value == "1" then
+			term = ast
+		else
+			term = { type = DVALUE_BINEXPR, operator = "*", lvalue = ast, rvalue = val }
+		end
+
+		return Typechecking.check_type( term, state )
 
 	elseif ast.type == DVALUE_BINEXPR then
 		local lvalue_ast, lvalue_type = Typechecking.check_type( ast.lvalue, state )

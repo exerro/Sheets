@@ -3,13 +3,19 @@
 
 local X_ENVIRONMENT = [[
 parser.flags.enable_percentages = true
-parser.flags.percentage_ast = { type = DVALUE_DOTINDEX, value = { type = DVALUE_PARENT }, index = "width" }
-environment.left = { type = DVALUE_INTEGER, value = "0" }]]
+percentage_ast = { type = DVALUE_DOTINDEX, value = { type = DVALUE_PARENT }, index = "width" }
+environment.left = 0
+environment.centre={type=DVALUE_BINEXPR,operator="-",lvalue={type=DVALUE_PERCENTAGE,value={type=DVALUE_INTEGER,value="50"}},rvalue={type=DVALUE_BINEXPR,operator="/",lvalue={type=DVALUE_IDENTIFIER,value="width"},rvalue={type=DVALUE_INTEGER,value="2"}}}
+environment.center = environment.centre
+environment.right={type=DVALUE_BINEXPR,operator="-",lvalue={type=DVALUE_PERCENTAGE,value={type=DVALUE_INTEGER,value="100"}},rvalue={type=DVALUE_IDENTIFIER,value="width"}}]]
 
 local Y_ENVIRONMENT = [[
 parser.flags.enable_percentages = true
-parser.flags.percentage_ast = { type = DVALUE_DOTINDEX, value = { type = DVALUE_PARENT }, index = "height" }
-environment.top = { type = DVALUE_INTEGER, value = "0" }]]
+percentage_ast = { type = DVALUE_DOTINDEX, value = { type = DVALUE_PARENT }, index = "height" }
+environment.top = 0
+environment.centre={type=DVALUE_BINEXPR,operator="-",lvalue={type=DVALUE_PERCENTAGE,value={type=DVALUE_INTEGER,value="50"}},rvalue={type=DVALUE_BINEXPR,operator="/",lvalue={type=DVALUE_IDENTIFIER,value="height"},rvalue={type=DVALUE_INTEGER,value="2"}}}
+environment.center = environment.centre
+environment.bottom={type=DVALUE_BINEXPR,operator="-",lvalue={type=DVALUE_PERCENTAGE,value={type=DVALUE_INTEGER,value="100"}},rvalue={type=DVALUE_IDENTIFIER,value="height"}}]]
 
 @class Sheet implements ITagged, ISize {
 	x = 0;

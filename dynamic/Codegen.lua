@@ -544,6 +544,7 @@ return function( self, value )
 
 	local parser = DynamicValueParser( Stream( value ) )
 	local environment = {}
+	local percentage_ast
 
 	parser.flags.enable_queries = true
 
@@ -557,6 +558,7 @@ return function( self, value )
 	local value_parsed, value_type = Typechecking.check_type( value_parsed, {
 		object = self;
 		environment = environment;
+		percentage_ast = percentage_ast;
 	} )
 	local lifetime = self.values.lifetimes[PROPERTY_QUOTED]
 	local default  = self.values .defaults[PROPERTY_QUOTED]
