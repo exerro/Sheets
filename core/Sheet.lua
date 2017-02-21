@@ -5,17 +5,21 @@ local X_ENVIRONMENT = [[
 parser.flags.enable_percentages = true
 percentage_ast = { type = DVALUE_DOTINDEX, value = { type = DVALUE_PARENT }, index = "width" }
 environment.left = 0
+environment.out_left={type=DVALUE_UNEXPR,operator="-",value={type=DVALUE_IDENTIFIER,value="width"}}
 environment.centre={type=DVALUE_BINEXPR,operator="-",lvalue={type=DVALUE_PERCENTAGE,value={type=DVALUE_INTEGER,value="50"}},rvalue={type=DVALUE_BINEXPR,operator="/",lvalue={type=DVALUE_IDENTIFIER,value="width"},rvalue={type=DVALUE_INTEGER,value="2"}}}
 environment.center = environment.centre
-environment.right={type=DVALUE_BINEXPR,operator="-",lvalue={type=DVALUE_PERCENTAGE,value={type=DVALUE_INTEGER,value="100"}},rvalue={type=DVALUE_IDENTIFIER,value="width"}}]]
+environment.right={type=DVALUE_BINEXPR,operator="-",lvalue={type=DVALUE_PERCENTAGE,value={type=DVALUE_INTEGER,value="100"}},rvalue={type=DVALUE_IDENTIFIER,value="width"}}
+environment.out_right={type=DVALUE_PERCENTAGE,value={type=DVALUE_INTEGER,value="100"}}]]
 
 local Y_ENVIRONMENT = [[
 parser.flags.enable_percentages = true
 percentage_ast = { type = DVALUE_DOTINDEX, value = { type = DVALUE_PARENT }, index = "height" }
 environment.top = 0
+environment.out_top={type=DVALUE_UNEXPR,operator="-",value={type=DVALUE_IDENTIFIER,value="height"}}
 environment.centre={type=DVALUE_BINEXPR,operator="-",lvalue={type=DVALUE_PERCENTAGE,value={type=DVALUE_INTEGER,value="50"}},rvalue={type=DVALUE_BINEXPR,operator="/",lvalue={type=DVALUE_IDENTIFIER,value="height"},rvalue={type=DVALUE_INTEGER,value="2"}}}
 environment.center = environment.centre
-environment.bottom={type=DVALUE_BINEXPR,operator="-",lvalue={type=DVALUE_PERCENTAGE,value={type=DVALUE_INTEGER,value="100"}},rvalue={type=DVALUE_IDENTIFIER,value="height"}}]]
+environment.bottom={type=DVALUE_BINEXPR,operator="-",lvalue={type=DVALUE_PERCENTAGE,value={type=DVALUE_INTEGER,value="100"}},rvalue={type=DVALUE_IDENTIFIER,value="height"}}
+environment.out_bottom={type=DVALUE_PERCENTAGE,value={type=DVALUE_INTEGER,value="100"}}]]
 
 @class Sheet implements ITagged, ISize {
 	x = 0;

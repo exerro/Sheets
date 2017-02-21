@@ -129,8 +129,6 @@ function Typechecking.check_type( ast, state )
 			error "TODO: fix this error"
 		end
 
-		return ast
-
 	elseif ast.type == DVALUE_PERCENTAGE then
 		local term = ast.value
 		local ast = state.percentage_ast
@@ -287,6 +285,9 @@ function Typechecking.check_type( ast, state )
 		else
 			error "TODO: fix this error"
 		end
+
+	else
+		error "TODO: fix this error"
 
 	end
 end
