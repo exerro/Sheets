@@ -1,13 +1,8 @@
 
- -- @print Including sheets.class
-
+-- @localise class
 class = {}
-local classobj = setmetatable( {}, { __index = class } )
-local names = {}
-local interfaces = {}
-local environment = _ENV or getfenv()
-local last_created
 
+local classobj = setmetatable( {}, { __index = class } )
 local supported_meta_methods = { __add = true, __sub = true, __mul = true, __div = true, __mod = true, __pow = true, __unm = true, __len = true, __eq = true, __lt = true, __lte = true, __tostring = true, __concat = true }
 
 local function _tostring( self )
@@ -18,19 +13,8 @@ local function _concat( a, b )
 	return tostring( a ) .. tostring( b )
 end
 
-local function generic_instance_tostring( self )
+local function _instance_tostring( self )
 	return "[Instance] " .. self:type()
-end
-
-local function construct( t )
-	if not last_created then
-		return error "no class to define"
-	end
-
-	for k, v in pairs( t ) do
-		last_created[k] = v
-	end
-	last_created = nil
 end
 
 local function new_super( object, super )
@@ -101,7 +85,7 @@ function classobj:new( ... )
 	end
 
 	if not self.tostring then
-		instance.tostring = generic_instance_tostring
+		instance.tostring = _instance_tostring
 	end
 
 	local ob = self
@@ -117,11 +101,6 @@ function classobj:new( ... )
 
 end
 
-function classobj:extends( super )
-	self.super = super
-	self.meta.__index = super
-end
-
 function classobj:type()
 	return tostring( self.meta.__type )
 end
@@ -134,31 +113,45 @@ function classobj:implements( interface )
 	return self.__interface_list[interface] == true
 end
 
-function class:new( name )
+function class.new( name, super, ... )
+	local implements = { ... }
+	local len = #implements
+	local implements_lookup = {}
 
-	if type( name or self ) ~= "string" then
-		return error( "expected string class name, got " .. type( name or self ) )
+	if type( name ) ~= "string" then
+		return error( "expected string class name, got " .. type( name ) )
 	end
 
-	local mt = { __index = classobj, __CLASS = true, __tostring = _tostring, __concat = _concat, __call = classobj.new, __type = name or self }
-	local obj = setmetatable( { meta = mt, __interface_list = {} }, mt )
+	local mt = { __index = classobj, __CLASS = true, __tostring = _tostring, __concat = _concat, __call = classobj.new, __type = name }
+	local obj = setmetatable( { meta = mt, __interface_list = implements_lookup }, mt )
 
-	names[name] = obj
-	last_created = obj
+	if super then
+		obj.super = super
+		obj.meta.__index = super
 
-	environment[name] = obj
+		for interface in pairs( super.__interface_list ) do
+			implements_lookup[interface] = true
+		end
+	end
+
+	for i = 1, len do
+		implements_lookup[implements[i]] = true
+		for k, v in pairs( implements[i] ) do
+			if k ~= "__interface_list" then
+				obj[k] = v
+			end
+		end
+		for interface in pairs( implements[i].__interface_list ) do
+			implements_lookup[interface] = true
+		end
+	end
 
 	return function( t )
-		if not last_created then
-			return error "no class to define"
-		end
-
 		for k, v in pairs( t ) do
-			last_created[k] = v
+			obj[k] = v
 		end
-		last_created = nil
+		return obj
 	end
-
 end
 
 function class.type( object )
@@ -176,7 +169,9 @@ end
 
 function class.type_of( object, class )
 	if type( object ) == "table" then
-		local ok, v = pcall( function() return getmetatable( object ).__CLASS or getmetatable( object ).__INSTANCE or error() end )
+		local ok, v = pcall( function()
+			return getmetatable( object ).__CLASS or getmetatable( object ).__INSTANCE or error()
+		end )
 		return ok and object:type_of( class )
 	end
 
@@ -191,84 +186,39 @@ function class.is_instance( object )
 	return pcall( function() if not getmetatable( object ).__INSTANCE then error() end end ), nil
 end
 
-function class.get( name )
-	return environment[name]
-end
-
-function class.set_environment( env )
-	environment = env
-	env.class = class
-	env.extends = extends
-	env.interface = interface
-	env.implements = implements
-	-- env.enum = enum -- TODO: enums would be cool
-end
-
 setmetatable( class, {
 	__call = class.new;
 } )
 
-function extends( name )
-	if not last_created then
-		return error "no class to extend"
-	elseif not names[name] then
-		return error( "no such class '" .. tostring( name ) .. "'" )
-	end
+function class.new_interface( name, ... )
+	local implements = { ... }
+	local implements_lookup = {}
+	local obj = { __interface_list = implements_lookup }
+	local len = #implements
 
-	last_created:extends( names[name] )
-
-	return construct
-end
-
-function interface( name )
-	interfaces[name] = { __interface_list = {} }
-	environment[name] = interfaces[name]
-	last_created = interfaces[name]
-	return function( t )
-		if type( t ) ~= "table" then
-			return error( "expected table t, got " .. class.type( t ) )
-		end
-		environment[name] = t
-		interfaces[name] = t
-		t.__interface_list = {}
-	end
-end
-
-function implements( name )
-	if not last_created then
-		return error "no class to modify"
-	elseif not interfaces[name] then
-		return error( "no interface by name '" .. tostring( name ) .. "'" )
-	end
-
-	for k, v in pairs( interfaces[name] ) do
-		if k ~= "__interface_list" then
-			last_created[k] = v
-		end
-	end
-
-	local t = { interfaces[name] }
-	local i = 1
-	local __interface_list = last_created.__interface_list
-	while t[i] do
-		__interface_list[t[i]] = true
-
-		for k, v in pairs( t[i].__interface_list ) do
-			if not __interface_list[k] then
-				t[#t + 1] = k
+	for i = 1, len do
+		implements_lookup[implements[i]] = true
+		for k, v in pairs( implements[i] ) do
+			if k ~= "__interface_list" then
+				obj[k] = v
 			end
 		end
-
-		i = i + 1
+		for interface in pairs( implements[i].__interface_list ) do
+			implements_lookup[interface] = true
+		end
 	end
 
-	return construct
+	return function( t )
+		for k, v in pairs( t ) do
+			obj[k] = v
+		end
+		return obj
+	end
 end
 
-function enum( name )
-	last_created = nil
+function class.new_enum( name )
 	return function( t )
-		environment[name] = setmetatable( {}, { __index = t, __newindex = function( t, k, v )
+		return setmetatable( {}, { __index = t, __newindex = function( t, k, v )
 			return error( "attempt to set enum index '" .. tostring( k ) .. "'" )
 		end } )
 	end

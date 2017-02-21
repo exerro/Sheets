@@ -45,7 +45,7 @@ colour = {
 	black = BLACK;
 }
 
- -- @include .sheets.lib.class
+ -- @include lib.class
  -- @include lib.clipboard
  -- @include lib.parameters
  -- @include lib.surface2
