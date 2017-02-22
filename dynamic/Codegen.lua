@@ -56,10 +56,11 @@ function Codegen.node_query( parsed_query, lifetime, updater )
 			  .. table.concat( initialise_code, "\n" )
 			  .. "\nend"
 
-	local f, err = assert( (load or loadstring)( code, "query", nil, { Codegen = Codegen } ) )
+	local env = setmetatable( { Codegen = Codegen }, { __index = _ENV or getfenv() } )
+	local f, err = assert( (load or loadstring)( code, "query", nil, env ) )
 
 	if setfenv then
-		setfenv( f, { Codegen = Codegen } )
+		setfenv( f, env )
 	end
 
 	local getter, initialiser = f( lifetime, updater, unpack( named_values ) )
@@ -186,29 +187,31 @@ function Codegen.dynamic_value( parsed_value, lifetime, env, obj, updater )
 		h.close()
 	end
 
-	local f, err = assert( (load or loadstring)( code, "dynamic value", nil, _ENV ) )
+	local env = setmetatable( {  }, { __index = _ENV or getfenv() } )
+	local f, err = assert( (load or loadstring)( code, "dynamic value", nil, env ) )
 
 	if setfenv then
-		setfenv( f, getfenv() )
+		setfenv( f, env )
 	end
 
 	local getter, initialiser = f( obj, lifetime, updater, unpack( inputs ) )
 	return getter, initialiser
 end
 
-function Codegen.dynamic_property_setter( property, options )
+function Codegen.dynamic_property_setter( property, options, environment )
 	property_cache[property] = property_cache[property] or {}
 	options = options or {}
+	environment = environment or {}
 
 	local self_changed = ValueHandler.properties[property].change == "self"
 	local parent_changed = ValueHandler.properties[property].change == "parent"
 	local ptype = ValueHandler.properties[property].type
 
-	local t1 = {}
-	local t2 = {}
-	local t3 = {}
-	local t4 = {}
-	local t5 = {}
+	local t1 = {} -- code to update the string value
+	local t2 = {} -- code to change the environment
+	local t3 = {} -- code to update the AST
+	local t4 = {} -- code to run on value update
+	local t5 = {} -- code to update the value before assignment
 
 	if options.update_surface_size then
 		t4[#t4 + 1] = "if self.surface then self.surface = surface.create( self.width, self.height ) end"
@@ -231,7 +234,7 @@ function Codegen.dynamic_property_setter( property, options )
 
 	if ptype == Type.sheets.colour then
 		for k, v in pairs( colour ) do
-			t2[#t2 + 1] = "environment." .. k .. " = { type = rtype, value = " .. v .. " }"
+			environment[k] = { precalculated_type = ptype, value = v }
 		end
 
 		t5[#t5 + 1] = "if value == TRANSPARENT then value = nil end"
@@ -239,22 +242,23 @@ function Codegen.dynamic_property_setter( property, options )
 
 	if ptype == Type.sheets.alignment then
 		for k, v in pairs( alignment ) do
-			t2[#t2 + 1] = "environment." .. k .. " = { type = rtype, value = " .. v .. " }"
+			environment[k] = { precalculated_type = ptype, value = v }
 		end
 	end
 
+	t2[#t2 + 1] = options.custom_environment_code
 	t4[#t4 + 1] = options.custom_update_code
 
-	local s5 = table.concat( t5, "\n" ) -- code to update the value before assignment
-	local s4 = table.concat( t4, "\n" ) -- code to run on value update
-	local s3 = table.concat( t3, "\n" ) -- code to update the AST
-	local s2 = table.concat( t2, "\n" ) -- code to change the environment
-	local s1 = table.concat( t1, "\n" ) -- code to update the string value
+	local s5 = table.concat( t5, "\n" )
+	local s4 = table.concat( t4, "\n" )
+	local s3 = table.concat( t3, "\n" )
+	local s2 = table.concat( t2, "\n" )
+	local s1 = table.concat( t1, "\n" )
 
 	for i = 1, #property_cache[property] do
 		local c = property_cache[property][i]
 		if c[1] == s1 and c[2] == s2 and c[3] == s3 and c[4] == s4 and c[5] == s5 then
-			return c.f
+			return c.f, c.e
 		end
 	end
 
@@ -297,7 +301,8 @@ function Codegen.dynamic_property_setter( property, options )
 		:gsub( "AST_MODIFICATION", function() return s3 end )
 		:gsub( "CASTING_RAW", function() return rawcaster end )
 		:gsub( "CASTING", function() return caster end )
-	local f = assert( (load or loadstring)( str, "property setter '" .. property .. "'", nil, { Typechecking = Typechecking, Type = Type, Codegen = Codegen, DynamicValueParser = DynamicValueParser, surface = surface, type = type, math = math, Stream = Stream } ) )
+	local env = setmetatable( { Typechecking = Typechecking, Type = Type, Codegen = Codegen, DynamicValueParser = DynamicValueParser, surface = surface, Stream = Stream }, { __index = _ENV or getfenv() } )
+	local f = assert( (load or loadstring)( str, "property setter '" .. property .. "'", nil, env ) )
 
 	-- @if DEBUG
 		local h = fs.open( ".sheets_debug/property_" .. property .. ".lua", "w" ) or error( property )
@@ -306,25 +311,29 @@ function Codegen.dynamic_property_setter( property, options )
 	-- @endif
 
 	if setfenv then
-		setfenv( f, { Typechecking = Typechecking, Type = Type, Codegen = Codegen, DynamicValueParser = DynamicValueParser, surface = surface, type = type, math = math, Stream = Stream } )
+		setfenv( f, env )
 	end
 
-	local fr = f( ptype )
+	local fr = f( ptype, environment )
 
-	property_cache[property][#property_cache[property] + 1] = { s1, s2, s3, s4, s5, f = fr }
+	property_cache[property][#property_cache[property] + 1] = { s1, s2, s3, s4, s5, f = fr, e = environment }
 
-	return fr
+	return fr, environment
 end
 
 CHANGECODE_NO_TRANSITION = [[
 PROCESS_VALUE
-self[PROPERTY_QUOTED] = value
-ONCHANGE
-self.values:trigger PROPERTY_QUOTED]]
+if self[PROPERTY_QUOTED] ~= value then
+	self[PROPERTY_QUOTED] = value
+	ONCHANGE
+	self.values:trigger PROPERTY_QUOTED
+end]]
 
 CHANGECODE_TRANSITION = [[
 PROCESS_VALUE
-self.values:transition( PROPERTY_QUOTED, value, self[PROPERTY_TRANSITION_QUOTED]CUSTOM_UPDATE )]]
+if self[PROPERTY_QUOTED] ~= value then
+	self.values:transition( PROPERTY_QUOTED, value, self[PROPERTY_TRANSITION_QUOTED]CUSTOM_UPDATE )
+end]]
 
 STRING_CASTING = [[
 if value_type == Type.primitive.integer or value_type == Type.primitive.number or value_type == Type.primitive.boolean then
@@ -519,7 +528,7 @@ QUERY_UPDATER = [[function FUNC()
 end]]
 
 GENERIC_SETTER = [[
-local rtype = ...
+local rtype, environment = ...
 return function( self, value )
 	self.values:respawn PROPERTY_QUOTED
 	self[RAW_PROPERTY] = value
@@ -539,7 +548,7 @@ return function( self, value )
 	VALUE_MODIFICATION
 
 	local parser = DynamicValueParser( Stream( value ) )
-	local environment = {}
+	local percentage_ast
 
 	parser.flags.enable_queries = true
 
@@ -553,6 +562,7 @@ return function( self, value )
 	local value_parsed, value_type = Typechecking.check_type( value_parsed, {
 		object = self;
 		environment = environment;
+		percentage_ast = percentage_ast;
 	} )
 	local lifetime = self.values.lifetimes[PROPERTY_QUOTED]
 	local default  = self.values .defaults[PROPERTY_QUOTED]

@@ -52,7 +52,31 @@ function Typechecking.check_type( ast, state )
 
 	elseif ast.type == DVALUE_IDENTIFIER then
 		if state.environment[ast.value] then
-			return ast, state.environment[ast.value].type
+			local value = state.environment[ast.value]
+
+			if type( value ) == "table" then
+				if value.type then
+					return Typechecking.check_type( value, state )
+				elseif value.precalculated_type then
+					return ast, value.precalculated_type
+				end
+			end
+
+			local type = Typechecking.resolve_type( value )
+
+			if type == Type.primitive.integer then
+				ast = { type = DVALUE_INTEGER, value = tostring( value ) }
+			elseif type == Type.primitive.number then
+				ast = { type = DVALUE_FLOAT, value = tostring( value ) }
+			elseif type == Type.primitive.string then
+				ast = { type = DVALUE_STING, value = value }
+			elseif type == Type.primitive.boolean then
+				ast = { type = DVALUE_BOOLEAN, value = tostring( value ) }
+			else
+				error "TODO: fix this error"
+			end
+
+			return ast, type
 
 		elseif state.object.values:has( ast.value ) then
 			return {
@@ -64,6 +88,7 @@ function Typechecking.check_type( ast, state )
 			}, ValueHandler.properties[ast.value].type
 
 		else
+			print( ast.value )
 			error "TODO: fix this error"
 
 		end
@@ -105,10 +130,24 @@ function Typechecking.check_type( ast, state )
 			error "TODO: fix this error"
 		end
 
-		return ast
-
 	elseif ast.type == DVALUE_PERCENTAGE then
-		-- See issue #37
+		local term = ast.value
+		local ast = state.percentage_ast
+		local val
+
+		if term.type == DVALUE_FLOAT or term.type == DVALUE_INTEGER then
+			val = { type = DVALUE_FLOAT, value = tostring( tonumber( term.value ) / 100 ) }
+		else
+			val = { type = DVALUE_BINEXPR, operator = "/", lvalue = term, rvalue = { type = DVALUE_FLOAT, value = 100 } }
+		end
+
+		if val.type == DVALUE_FLOAT and val.value == "1" then
+			term = ast
+		else
+			term = { type = DVALUE_BINEXPR, operator = "*", lvalue = ast, rvalue = val }
+		end
+
+		return Typechecking.check_type( term, state )
 
 	elseif ast.type == DVALUE_BINEXPR then
 		local lvalue_ast, lvalue_type = Typechecking.check_type( ast.lvalue, state )
@@ -247,6 +286,9 @@ function Typechecking.check_type( ast, state )
 		else
 			error "TODO: fix this error"
 		end
+
+	else
+		error "TODO: fix this error"
 
 	end
 end

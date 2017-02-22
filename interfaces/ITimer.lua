@@ -12,6 +12,8 @@ function ITimer:ITimer()
 	self.time = os.clock()
 	self.timers = {}
 	self:step_timer()
+
+	function self:ITimer() end
 end
 
 function ITimer:new_timer( n )

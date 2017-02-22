@@ -9,6 +9,10 @@ local setf, addtag, remtag, query_raw
 
 function IQueryable:IQueryable()
 	self.query_tracker = QueryTracker( self )
+
+	function self:IQueryable() end
+
+	self:ICollatedChildren()
 end
 
 function IQueryable:iquery( query )

@@ -21,8 +21,6 @@ function Screen:Screen( application, width, height )
 	self.application = application
 	self.values = ValueHandler( self )
 
-	self:ICollatedChildren()
-	self:IQueryable()
 	self:IChildContainer()
 	self:ITagged()
 	self:ISize()
