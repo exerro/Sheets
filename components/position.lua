@@ -6,8 +6,7 @@ local centrey = {type=DVALUE_BINEXPR,operator="-",lvalue={type=DVALUE_PERCENTAGE
 
 COMPONENT(position) {
 	PROPERTY(x, 0) {
-		-- enable percentages
-		percentage_ast = x_percentage_ast;
+		ENABLE_PERCENTAGES({type=DVALUE_DOTINDEX,value={type=DVALUE_PARENT},index='width'});
 	};
 	ENVIRONMENT(x) {
 		left = 0;
@@ -18,7 +17,7 @@ COMPONENT(position) {
 		out_right={type=DVALUE_PERCENTAGE,value={type=DVALUE_INTEGER,value="100"}};
 	};
 	PROPERTY(y, 0) {
-		-- enable percentages
+		ENABLE_PERCENTAGES({type=DVALUE_DOTINDEX,value={type=DVALUE_PARENT},index='height'});
 	};
 	ENVIRONMENT(y) {
 		left = 0;

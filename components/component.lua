@@ -8,11 +8,12 @@ component = {}
 components = {}
 
  -- @define COMPONENT(name) components.name=(function(data)data.property='name';data.__component=true return data end)
- -- @define PROPERTY(name, def) (function(flags)return{type="property",property='name',default=def,options=options}end)
- -- @define GETTER(name, def) {type="getter",property='name',default=def}
- -- @define SETTER(name) {type="setter",property='name'}
- -- @define ENVIRONMENT(name) (function(env)return{type="environment",property='name',environment=env}end)
+ -- @define PROPERTY(name, def) (function(flags)return{type="property",property=('name'):gsub("%-","_"),default=def,options=options}end)
+ -- @define GETTER(name, def) {type="getter",property=('name'):gsub("%-","_"),default=def}
+ -- @define SETTER(name) {type="setter",property=('name'):gsub("%-","_")}
+ -- @define ENVIRONMENT(name) (function(env)return{type="environment",property=('name'):gsub("%-","_"),environment=env}end)
  -- @define WITH(name) (function(data)return{type="dependency",component='name',data=data}end)
+ -- @define ENABLE_PERCENTAGES(ast) percentages_enabled=true; percentage_ast=ast;
 
 local function add_data_t( res, data, lookup, src )
 	for i = 1, #data do
@@ -75,26 +76,8 @@ end
 
 do
 	COMPONENT(a) {
-		PROPERTY(x, 0) {};
-		ENVIRONMENT(x) {};
-	}
-	COMPONENT(b) {
-		WITH(a) {
-			ENVIRONMENT(x) {}
-		}
-	}
-	COMPONENT(c) {
-		PROPERTY(y, 1) {}
-	}
-	COMPONENT(d) {
-		WITH(a) {
-			WITH(c) {
-				ENVIRONMENT(y) {};
-			};
-			ENVIRONMENT(x) {};
-			PROPERTY(x, 1) {};
-		}
+		PROPERTY(some-value, 0) {};
 	}
 
-	components.combine( components.d, components.c, components.a, components.b )
+	components.combine( components.a )
 end

@@ -2,14 +2,22 @@
  -- @include component
  -- @include size
 
+ -- @define IDENT_REF(x) {type=DVALUE_IDENTIFIER,value=("x"):gsub("%-","_")}
+
 COMPONENT(text) {
    WITH(size) {
-	   ENVIRONMENT(width) { auto = auto_width };
-	   ENVIRONMENT(height) { auto = auto_height };
+	   ENVIRONMENT(width) {
+		   auto={type=DVALUE_UNEXPR,operator="#",value=IDENT_REF(text)};
+	   };
+	   ENVIRONMENT(height) {
+		   auto=IDENT_REF(line-count);
+	   };
    };
    PROPERTY(text, "") {};
-   PROPERTY(text_colour, WHITE) {};
-   PROPERTY(horizontal_alignment, ALIGNMENT_LEFT) {};
-   PROPERTY(vertical_alignment, ALIGNMENT_TOP) {};
-   RPROPERTY(line_count, 0);
+   PROPERTY(text-colour, WHITE) {};
+   PROPERTY(horizontal-alignment, ALIGNMENT_LEFT) {};
+   PROPERTY(vertical-alignment, ALIGNMENT_TOP) {};
+   GETTER(line-count, 0);
 }
+
+ -- @unset IDENT_REF
