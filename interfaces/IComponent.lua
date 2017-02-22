@@ -8,6 +8,8 @@ local copy_prop
 local get_transition_function
 
 local function initialiser( self )
+	self.values = ValueHandler( self )
+	
 	for k, v in pairs( self.properties ) do
 		self.values:add( k, v.default )
 	end

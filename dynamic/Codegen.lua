@@ -226,6 +226,10 @@ function Codegen.dynamic_property_setter( property, options, environment )
 		t1[#t1 + 1] = "if value:sub( 1, 1 ) == '!' then value = value:sub( 2 ) else value = ('%q'):format( value ) end"
 	end
 
+	if options.percentages_enabled then
+		t2[#t2 + 1] = "parser.flags.enable_percentages = true"
+	end
+
 	if ptype == Type.sheets.colour then
 		for k, v in pairs( colour ) do
 			environment[k] = { precalculated_type = ptype, value = v }
@@ -301,7 +305,7 @@ function Codegen.dynamic_property_setter( property, options, environment )
 		setfenv( f, env )
 	end
 
-	local fr = f( ptype, environment )
+	local fr = f( ptype, options.percentage_ast, environment )
 
 	return fr
 end
@@ -513,7 +517,7 @@ QUERY_UPDATER = [[function FUNC()
 end]]
 
 GENERIC_SETTER = [[
-local rtype, environment = ...
+local rtype, percentage_ast, environment = ...
 return function( self, value )
 	self.values:respawn PROPERTY_QUOTED
 	self[RAW_PROPERTY] = value
@@ -533,7 +537,6 @@ return function( self, value )
 	VALUE_MODIFICATION
 
 	local parser = DynamicValueParser( Stream( value ) )
-	local percentage_ast
 
 	parser.flags.enable_queries = true
 

@@ -4,11 +4,7 @@
 
  -- @print including(elements.Container)
 
-@class Container extends Sheet implements IChildContainer, IColoured {
-	colour = nil;
-	x_offset = 0;
-	y_offset = 0;
-
+@class Container extends Sheet implements IChildContainer {
 	on_pre_draw = nil;
 	on_post_draw = nil;
 }
@@ -16,13 +12,11 @@
 Container:add_components( 'colour', 'offset' )
 
 function Container:Container( x, y, w, h )
-	self:initialise()
+	self:Sheet( x, y, w, h )
+	
 	self:ICollatedChildren()
 	self:IQueryable()
 	self:IChildContainer()
-	self:IColoured()
-
-	return self:Sheet( x, y, w, h )
 end
 
 function Container:update( dt )

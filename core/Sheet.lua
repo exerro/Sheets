@@ -37,17 +37,13 @@ percentage_ast = { type = DVALUE_DOTINDEX, value = { type = DVALUE_PARENT }, ind
 Sheet:add_components( 'parent', 'position', 'size' )
 
 function Sheet:Sheet( x, y, width, height )
+	self:initialise_properties()
+	self:ITagged()
+
 	if x ~= nil then self:set_x( x ) end
 	if y ~= nil then self:set_y( y ) end
 	if width ~= nil then self:set_width( width ) end
 	if height ~= nil then self:set_height( height ) end
-end
-
-function Sheet:initialise()
-	self.values = ValueHandler( self )
-	self:initialise_properties()
-
-	self:ITagged()
 end
 
 function Sheet:remove()
