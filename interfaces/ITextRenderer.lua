@@ -1,40 +1,24 @@
 
- -- @print including(interfaces.IHasText)
+ -- @print including(interfaces.ITextRenderer)
+
+ -- don't implement this without add_component('text', 'size')
 
 local wrapline, wrap
 
-@interface IHasText implements ISize {
-	text = "";
-	text_lines = nil;
-	horizontal_alignment = ALIGNMENT_LEFT;
-	vertical_alignment = ALIGNMENT_TOP;
-	text_colour = WHITE;
+@interface ITextRenderer {
+
 }
 
-function IHasText:IHasText()
+function ITextRenderer:ITextRenderer()
 	local function wrap()
 		return self:wrap_text()
 	end
 
-	self.values:add( "text", "" )
-	self.values:add( "text_colour", WHITE )
-	self.values:add( "horizontal_alignment", ALIGNMENT_LEFT )
-	self.values:add( "vertical_alignment", ALIGNMENT_TOP )
-	self.values:add( "line_count", 0, function()
-		return error "cannot set IHasText 'line_count' property"
-	end )
 	self.values:subscribe( "width", {}, wrap )
 	self.values:subscribe( "text", {}, wrap )
-
-	self._environment_width.auto = { type = DVALUE_UNEXPR, operator = "#", value = { type = DVALUE_IDENTIFIER, value = "text" } }
-	self._environment_height.auto = { type = DVALUE_DOTINDEX, value = { type = DVALUE_SELF }, index = "line_count" }
-
-	function self:IHasText() end
-
-	self:ISize()
 end
 
-function IHasText:wrap_text()
+function ITextRenderer:wrap_text()
 	self.text_lines = wrap( self.text, self.width )
 	self:set_changed()
 
@@ -44,7 +28,7 @@ function IHasText:wrap_text()
 	end
 end
 
-function IHasText:draw_text( surface, x, y )
+function ITextRenderer:draw_text( surface, x, y )
 	local offset, lines = 0, self.text_lines
 	local linec = #self.text_lines
 
@@ -55,11 +39,6 @@ function IHasText:draw_text( surface, x, y )
 	local horizontal_alignment = self.horizontal_alignment
 	local vertical_alignment = self.vertical_alignment
 
-	if not lines then
-		self:wrap_text()
-		lines = self.text_lines
-	end
-
 	if vertical_alignment == ALIGNMENT_CENTRE then
 		offset = math.floor( self.height / 2 - linec / 2 + .5 )
 	elseif vertical_alignment == ALIGNMENT_BOTTOM then
@@ -67,7 +46,6 @@ function IHasText:draw_text( surface, x, y )
 	end
 
 	for i = 1, linec do
-
 		local x_offset = 0
 		if horizontal_alignment == ALIGNMENT_CENTRE then
 			x_offset = math.floor( self.width / 2 - #lines[i] / 2 + .5 )
@@ -76,34 +54,34 @@ function IHasText:draw_text( surface, x, y )
 		end
 
 		surface:drawString( x + x_offset, y + offset + i - 1, lines[i], nil, self.text_colour )
-
 	end
-end
-
-function IHasText:on_pre_draw()
-	self:draw_text "default"
 end
 
 function wrapline( text, width )
 	if text:sub( 1, width ):find "\n" then
-		return text:match "^(.-)\n[^%S\n]*(.*)$"
+		return text:match "^(.-)\n(.*)$"
 	end
+
 	if #text <= width then
 		return text
 	end
+
 	for i = width + 1, 1, -1 do
 		if text:sub( i, i ):find "%s" then
 			return text:sub( 1, i - 1 ):gsub( "[^%S\n]+$", "" ), text:sub( i + 1 ):gsub( "^[^%S\n]+", "" )
 		end
 	end
+
 	return text:sub( 1, width ), text:sub( width + 1 )
 end
 
 function wrap( text, width )
 	local lines, line = {}
-	while text do
+
+	repeat
 		line, text = wrapline( text, width )
 		lines[#lines + 1] = line
-	end
+	until not text
+
 	return lines
 end

@@ -2,7 +2,6 @@
  -- @print including(dynamic.ValueHandler)
 
 local floor = math.floor
-local get_transition_function
 local TRANSITION_FUNCTION_CODE
 local tfcache = {}
 local setf
@@ -29,31 +28,12 @@ function ValueHandler:ValueHandler( object )
 	self.removed_lifetimes = {}
 	self.transitions = {}
 	self.transitions_lookup = {}
-
-	object.set = setf
 end
 
-function ValueHandler:add( name, default, options, environment )
-	if not ValueHandler.properties[name] then
-		error "TODO: fix this error"
-	end
-
-	if type( options ) == "table" or options == nil then
-		options, environment = Codegen.dynamic_property_setter( name, options, environment )
-	end
-
-	self.object["set_" .. name] = options
-	self.object["raw_" .. name] = default
-	self.object["_environment_" .. name] = environment
-	self.object[name] = default
+function ValueHandler:add( name, default )
 	self.values[#self.values + 1] = name
 	self.defaults[name] = default
 	self.lifetimes[name] = {}
-
-	if ValueHandler.properties[name].transitionable then
-		self.object["set_" .. name .. "_transition"] = get_transition_function( name )
-		self.object[name .. "_transition"] = Transition.none
-	end
 end
 
 function ValueHandler:remove( name )
@@ -232,29 +212,11 @@ ValueHandler.properties.vertical_alignment = { type = Type.sheets.alignment, cha
 
 ValueHandler.properties.colour = { type = Type.sheets.colour, change = "self", transitionable = false }
 ValueHandler.properties.text_colour = { type = Type.sheets.colour, change = "self", transitionable = false }
+
+ValueHandler.properties.active = { type = Type.primitive.boolean, change = "self", transitionable = false }
 ValueHandler.properties.active_colour = { type = Type.sheets.colour, change = "self", transitionable = false }
 
 ValueHandler.properties.parent = { type = Type.sheets.optional_Sheet, change = "parent", transitionable = false }
-
-function get_transition_function( name )
-	if not tfcache[name] then
-		tfcache[name] = (load or loadstring)( TRANSITION_FUNCTION_CODE:gsub( "PROPERTY", name ) )()
-	end
-
-	return tfcache[name]
-end
-
-function setf( self, t )
-	for k, v in pairs( t ) do
-		if self["set_" .. k] then
-			self["set_" .. k]( self, v )
-		else
-			-- TODO: error or just ignore?
-		end
-	end
-
-	return self
-end
 
 TRANSITION_FUNCTION_CODE = [[
 return function( self, value )

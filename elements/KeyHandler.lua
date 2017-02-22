@@ -10,7 +10,7 @@
 function KeyHandler:KeyHandler()
 	self.actions = {}
 	self.shortcuts = {}
-	self:initialise()
+	
 	return self:Sheet( 0, 0, 0, 0 )
 end
 

@@ -59,11 +59,9 @@ colour = {
  -- @include exceptions.ThreadRuntimeException
 
  -- @include interfaces.ICollatedChildren
- -- @include interfaces.IColoured
  -- @include interfaces.IQueryable
  -- @include interfaces.IChildContainer
  -- @include interfaces.ITagged
- -- @include interfaces.ISize
  -- @include interfaces.ITimer
 
  -- @include events.Event
@@ -92,7 +90,6 @@ colour = {
  -- @include elements.Container
 
  -- @if ELEMENT_BUTTON
-	 -- @include interfaces.IHasText
 	 -- @include elements.Button
  -- @endif
  -- @if ELEMENT_CHECKBOX
@@ -102,7 +99,6 @@ colour = {
 	 -- @include elements.ClippedContainer
  -- @endif
  -- @if ELEMENT_DRAGGABLE
- 	 -- @/require interfaces.IHasText
 	 -- @/require elements.Draggable
  -- @endif
  -- @if ELEMENT_IMAGE
@@ -118,7 +114,6 @@ colour = {
 	 -- @/require elements.ScrollContainer
  -- @endif
  -- @if ELEMENT_TEXT
- 	 -- @/require interfaces.IHasText
 	 -- @/require elements.Text
  -- @endif
  -- @if ELEMENT_TEXTINPUT
