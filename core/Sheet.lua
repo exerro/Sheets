@@ -1,4 +1,9 @@
 
+ -- @include interfaces.IComponent
+ -- @include components.parent
+ -- @include components.position
+ -- @include components.size
+
  -- @print including(core.Sheet)
 
 local X_ENVIRONMENT = [[
@@ -9,7 +14,7 @@ local Y_ENVIRONMENT = [[
 parser.flags.enable_percentages = true
 percentage_ast = { type = DVALUE_DOTINDEX, value = { type = DVALUE_PARENT }, index = "height" }]]
 
-@class Sheet implements ITagged, ISize {
+@class Sheet implements IComponent, ITagged, ISize {
 	x = 0;
 	y = 0;
 	z = 0;
@@ -28,6 +33,8 @@ percentage_ast = { type = DVALUE_DOTINDEX, value = { type = DVALUE_PARENT }, ind
 	handles_text = false;
 	values = nil;
 }
+
+Sheet:add_components( 'parent', 'position', 'size' )
 
 function Sheet:Sheet( x, y, width, height )
 	if x ~= nil then self:set_x( x ) end

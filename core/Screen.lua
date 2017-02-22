@@ -1,7 +1,12 @@
 
+ -- @include interfaces.IComponent
+ -- @include components.component
+ -- @include components.parent
+ -- @include components.size
+
  -- @print including(core.Screen)
 
-@class Screen implements IChildContainer, ITagged, ISize {
+@class Screen implements IChildContainer, IComponent, ITagged, ISize {
 	parent = nil;
 
 	-- internal
@@ -12,6 +17,8 @@
 	changed = true;
 	values = nil;
 }
+
+Screen:add_components( 'parent', 'size' )
 
 function Screen:Screen( application, width, height )
 	self.parent = application

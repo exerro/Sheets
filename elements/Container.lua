@@ -1,7 +1,8 @@
 
- -- @print including(elements.Container)
+ -- @include components.colour
+ -- @include components.offset
 
--- needs to update to new exception system
+ -- @print including(elements.Container)
 
 @class Container extends Sheet implements IChildContainer, IColoured {
 	colour = nil;
@@ -11,6 +12,8 @@
 	on_pre_draw = nil;
 	on_post_draw = nil;
 }
+
+Container:add_components( 'colour', 'offset' )
 
 function Container:Container( x, y, w, h )
 	self:initialise()

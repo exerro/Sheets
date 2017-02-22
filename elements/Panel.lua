@@ -1,9 +1,13 @@
 
+ -- @include components.colour
+
  -- @print including(elements.Panel)
 
 @class Panel extends Sheet implements IColoured {
 	colour = nil;
 }
+
+Panel:add_components( 'colour' )
 
 function Panel:Panel( x, y, w, h )
 	self:initialise()

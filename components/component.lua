@@ -13,7 +13,7 @@ components = {}
  -- @define SETTER(name) {type="setter",property=('name'):gsub("%-","_")}
  -- @define ENVIRONMENT(name) (function(env)return{type="environment",property=('name'):gsub("%-","_"),environment=env}end)
  -- @define WITH(name) (function(data)return{type="dependency",component='name',data=data}end)
- -- @define ENABLE_PERCENTAGES(ast) percentages_enabled=true; percentage_ast=ast;
+ -- @define ENABLE_PERCENTAGES(ast) percentages_enabled=true; percentage_ast=ast
 
 local function add_data_t( res, data, lookup, src )
 	for i = 1, #data do
@@ -38,7 +38,7 @@ local function add_data_t( res, data, lookup, src )
 	end
 end
 
-function components.combine(...)
+function component.combine(...)
 	local c = { ... }
 	local lookup = {}
 	local properties = {}
@@ -72,12 +72,4 @@ function components.combine(...)
 	end
 
 	return properties
-end
-
-do
-	COMPONENT(a) {
-		PROPERTY(some-value, 0) {};
-	}
-
-	components.combine( components.a )
 end

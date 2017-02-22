@@ -1,4 +1,8 @@
 
+ -- @include components.active
+ -- @include components.colour
+ -- @include components.text
+
  -- @print including(elements.Button)
 
 @class Button extends Sheet implements IHasText, IColoured {
@@ -8,6 +12,8 @@
 	horizontal_alignment = ALIGNMENT_CENTRE;
 	vertical_alignment = ALIGNMENT_CENTRE;
 }
+
+Button:add_components( 'active', 'colour', 'text' )
 
 function Button:Button( x, y, width, height, text )
 	self:initialise()
