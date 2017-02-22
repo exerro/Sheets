@@ -7,6 +7,8 @@
 
 function ICollatedChildren:ICollatedChildren()
 	self.collated_children = {}
+
+	function self:ICollatedChildren() end
 end
 
 function ICollatedChildren:update_collated( mode, child, data )

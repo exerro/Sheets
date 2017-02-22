@@ -3,7 +3,7 @@
 
 local wrapline, wrap
 
-@interface IHasText {
+@interface IHasText implements ISize {
 	text = "";
 	text_lines = nil;
 	horizontal_alignment = ALIGNMENT_LEFT;
@@ -13,32 +13,44 @@ local wrapline, wrap
 
 function IHasText:IHasText()
 	local function wrap()
-		self:wrap_text()
-		self:set_changed()
+		return self:wrap_text()
 	end
 
 	self.values:add( "text", "" )
 	self.values:add( "text_colour", WHITE )
 	self.values:add( "horizontal_alignment", ALIGNMENT_LEFT )
 	self.values:add( "vertical_alignment", ALIGNMENT_TOP )
+	self.values:add( "line_count", 0, function()
+		return error "cannot set IHasText 'line_count' property"
+	end )
 	self.values:subscribe( "width", {}, wrap )
 	self.values:subscribe( "text", {}, wrap )
+
+	self._environment_width.auto = { type = DVALUE_UNEXPR, operator = "#", value = { type = DVALUE_IDENTIFIER, value = "text" } }
+	self._environment_height.auto = { type = DVALUE_DOTINDEX, value = { type = DVALUE_SELF }, index = "line_count" }
+
+	function self:IHasText() end
+
+	self:ISize()
 end
 
-function IHasText:auto_height()
-	if not self.text_lines then
-		self:wrap_text( true )
+function IHasText:wrap_text()
+	self.text_lines = wrap( self.text, self.width )
+	self:set_changed()
+
+	if #self.text_lines ~= self.line_count then
+		self.line_count = #self.text_lines
+		self.values:trigger "line_count"
 	end
-
-	return self:set_height( #self.text_lines )
-end
-
-function IHasText:wrap_text( ignore_height )
-	self.text_lines = wrap( self.text, self.width, not ignore_height and self.height )
 end
 
 function IHasText:draw_text( surface, x, y )
 	local offset, lines = 0, self.text_lines
+	local linec = #self.text_lines
+
+	if linec > self.height then
+		linec = self.height
+	end
 
 	local horizontal_alignment = self.horizontal_alignment
 	local vertical_alignment = self.vertical_alignment
@@ -49,12 +61,12 @@ function IHasText:draw_text( surface, x, y )
 	end
 
 	if vertical_alignment == ALIGNMENT_CENTRE then
-		offset = math.floor( self.height / 2 - #lines / 2 + .5 )
+		offset = math.floor( self.height / 2 - linec / 2 + .5 )
 	elseif vertical_alignment == ALIGNMENT_BOTTOM then
-		offset = self.height - #lines
+		offset = self.height - linec
 	end
 
-	for i = 1, #lines do
+	for i = 1, linec do
 
 		local x_offset = 0
 		if horizontal_alignment == ALIGNMENT_CENTRE then
@@ -87,9 +99,9 @@ function wrapline( text, width )
 	return text:sub( 1, width ), text:sub( width + 1 )
 end
 
-function wrap( text, width, height )
+function wrap( text, width )
 	local lines, line = {}
-	while text and ( not height or #lines < height ) do
+	while text do
 		line, text = wrapline( text, width )
 		lines[#lines + 1] = line
 	end

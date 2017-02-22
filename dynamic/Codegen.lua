@@ -258,7 +258,7 @@ function Codegen.dynamic_property_setter( property, options, environment )
 	for i = 1, #property_cache[property] do
 		local c = property_cache[property][i]
 		if c[1] == s1 and c[2] == s2 and c[3] == s3 and c[4] == s4 and c[5] == s5 then
-			return c.f
+			return c.f, c.e
 		end
 	end
 
@@ -316,20 +316,24 @@ function Codegen.dynamic_property_setter( property, options, environment )
 
 	local fr = f( ptype, environment )
 
-	property_cache[property][#property_cache[property] + 1] = { s1, s2, s3, s4, s5, f = fr }
+	property_cache[property][#property_cache[property] + 1] = { s1, s2, s3, s4, s5, f = fr, e = environment }
 
 	return fr, environment
 end
 
 CHANGECODE_NO_TRANSITION = [[
 PROCESS_VALUE
-self[PROPERTY_QUOTED] = value
-ONCHANGE
-self.values:trigger PROPERTY_QUOTED]]
+if self[PROPERTY_QUOTED] ~= value then
+	self[PROPERTY_QUOTED] = value
+	ONCHANGE
+	self.values:trigger PROPERTY_QUOTED
+end]]
 
 CHANGECODE_TRANSITION = [[
 PROCESS_VALUE
-self.values:transition( PROPERTY_QUOTED, value, self[PROPERTY_TRANSITION_QUOTED]CUSTOM_UPDATE )]]
+if self[PROPERTY_QUOTED] ~= value then
+	self.values:transition( PROPERTY_QUOTED, value, self[PROPERTY_TRANSITION_QUOTED]CUSTOM_UPDATE )
+end]]
 
 STRING_CASTING = [[
 if value_type == Type.primitive.integer or value_type == Type.primitive.number or value_type == Type.primitive.boolean then

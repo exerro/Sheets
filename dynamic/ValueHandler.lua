@@ -225,6 +225,7 @@ ValueHandler.properties.width = { type = Type.primitive.integer, change = "self"
 ValueHandler.properties.height = { type = Type.primitive.integer, change = "self", transitionable = true }
 
 ValueHandler.properties.text = { type = Type.primitive.string, change = "self", transitionable = false }
+ValueHandler.properties.line_count = { type = Type.primitive.integer, change = "none", transitionable = false }
 
 ValueHandler.properties.horizontal_alignment = { type = Type.sheets.alignment, change = "self", transitionable = false }
 ValueHandler.properties.vertical_alignment = { type = Type.sheets.alignment, change = "self", transitionable = false }

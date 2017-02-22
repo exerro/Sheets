@@ -43,7 +43,6 @@ function Application:Application( name, path )
 	 -- @endif
 	self.keys = {}
 
-	self:ICollatedChildren()
 	self:IQueryable()
 	self:ITimer()
 

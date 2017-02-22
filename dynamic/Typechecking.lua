@@ -88,6 +88,7 @@ function Typechecking.check_type( ast, state )
 			}, ValueHandler.properties[ast.value].type
 
 		else
+			print( ast.value )
 			error "TODO: fix this error"
 
 		end
