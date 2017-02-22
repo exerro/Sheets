@@ -16,22 +16,10 @@ function IHasText:IHasText()
 		return self:wrap_text()
 	end
 
-	self.values:add( "text", "" )
-	self.values:add( "text_colour", WHITE )
-	self.values:add( "horizontal_alignment", ALIGNMENT_LEFT )
-	self.values:add( "vertical_alignment", ALIGNMENT_TOP )
-	self.values:add( "line_count", 0, function()
-		return error "cannot set IHasText 'line_count' property"
-	end )
 	self.values:subscribe( "width", {}, wrap )
 	self.values:subscribe( "text", {}, wrap )
 
-	self._environment_width.auto = { type = DVALUE_UNEXPR, operator = "#", value = { type = DVALUE_IDENTIFIER, value = "text" } }
-	self._environment_height.auto = { type = DVALUE_DOTINDEX, value = { type = DVALUE_SELF }, index = "line_count" }
-
 	function self:IHasText() end
-
-	self:ISize()
 end
 
 function IHasText:wrap_text()

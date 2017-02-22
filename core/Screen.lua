@@ -6,7 +6,7 @@
 
  -- @print including(core.Screen)
 
-@class Screen implements IChildContainer, IComponent, ITagged, ISize {
+@class Screen implements IChildContainer, IComponent, ITagged {
 	parent = nil;
 
 	-- internal
@@ -27,10 +27,10 @@ function Screen:Screen( application, width, height )
 	self.surface = surface.create( 0, 0 )
 	self.application = application
 	self.values = ValueHandler( self )
+	self:initialise_properties()
 
 	self:IChildContainer()
 	self:ITagged()
-	self:ISize()
 
 	self:set_width( width )
 	self:set_height( height )

@@ -14,7 +14,7 @@ local Y_ENVIRONMENT = [[
 parser.flags.enable_percentages = true
 percentage_ast = { type = DVALUE_DOTINDEX, value = { type = DVALUE_PARENT }, index = "height" }]]
 
-@class Sheet implements IComponent, ITagged, ISize {
+@class Sheet implements IComponent, ITagged {
 	x = 0;
 	y = 0;
 	z = 0;
@@ -44,42 +44,10 @@ function Sheet:Sheet( x, y, width, height )
 end
 
 function Sheet:initialise()
-	local centrex = {type=DVALUE_BINEXPR,operator="-",lvalue={type=DVALUE_PERCENTAGE,value={type=DVALUE_INTEGER,value="50"}},rvalue={type=DVALUE_BINEXPR,operator="/",lvalue={type=DVALUE_IDENTIFIER,value= "width"},rvalue={type=DVALUE_INTEGER,value="2"}}}
-	local centrey = {type=DVALUE_BINEXPR,operator="-",lvalue={type=DVALUE_PERCENTAGE,value={type=DVALUE_INTEGER,value="50"}},rvalue={type=DVALUE_BINEXPR,operator="/",lvalue={type=DVALUE_IDENTIFIER,value="height"},rvalue={type=DVALUE_INTEGER,value="2"}}}
-
 	self.values = ValueHandler( self )
+	self:initialise_properties()
 
 	self:ITagged()
-	self:ISize()
-
-	self.values:add( "x", 0, { custom_environment_code = X_ENVIRONMENT }, {
-		left = 0;
-		out_left={type=DVALUE_UNEXPR,operator="-",value={type=DVALUE_IDENTIFIER,value="width"}};
-		centre = centrex;
-		center = centrex;
-		right={type=DVALUE_BINEXPR,operator="-",lvalue={type=DVALUE_PERCENTAGE,value={type=DVALUE_INTEGER,value="100"}},rvalue={type=DVALUE_IDENTIFIER,value="width"}};
-		out_right={type=DVALUE_PERCENTAGE,value={type=DVALUE_INTEGER,value="100"}};
-	} )
-	self.values:add( "y", 0, { custom_environment_code = Y_ENVIRONMENT }, {
-		top = 0;
-		out_top={type=DVALUE_UNEXPR,operator="-",value={type=DVALUE_IDENTIFIER,value="height"}};
-		centre = centrey;
-		center = centrey;
-		bottom={type=DVALUE_BINEXPR,operator="-",lvalue={type=DVALUE_PERCENTAGE,value={type=DVALUE_INTEGER,value="100"}},rvalue={type=DVALUE_IDENTIFIER,value="height"}};
-		out_bottom={type=DVALUE_PERCENTAGE,value={type=DVALUE_INTEGER,value="100"}};
-	} )
-	self.values:add( "z", 0, { custom_update_code = "if self.parent then self.parent:reposition_child_z_index( self ) end" } )
-	self.values:add( "parent", nil, function( self, parent )
-		if parent and not class.type_of( parent, Sheet ) and not class.type_of( parent, Screen ) then
-			Exception.throw( IncorrectParameterException( "expected Sheet or Screen parent, got " .. class.type( parent ), 2 ) )
-		end
-
-		if parent then
-			return parent:add_child( self )
-		else
-			return self:remove()
-		end
-	end )
 end
 
 function Sheet:remove()

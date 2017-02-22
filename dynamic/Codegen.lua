@@ -1,8 +1,6 @@
 
  -- @print including(dynamic.Codegen)
 
-local property_cache = {}
-
 local CHANGECODE_NO_TRANSITION, CHANGECODE_TRANSITION, SELF_INDEX_UPDATER,
       ARBITRARY_DOTINDEX_UPDATER, ARBITRARY_INDEX_UPDATER, DYNAMIC_QUERY_UPDATER,
 	  QUERY_UPDATER, GENERIC_SETTER, STRING_CASTING, RAW_STRING_CASTING,
@@ -199,10 +197,6 @@ function Codegen.dynamic_value( parsed_value, lifetime, env, obj, updater )
 end
 
 function Codegen.dynamic_property_setter( property, options, environment )
-	property_cache[property] = property_cache[property] or {}
-	options = options or {}
-	environment = environment or {}
-
 	local self_changed = ValueHandler.properties[property].change == "self"
 	local parent_changed = ValueHandler.properties[property].change == "parent"
 	local ptype = ValueHandler.properties[property].type
@@ -254,13 +248,6 @@ function Codegen.dynamic_property_setter( property, options, environment )
 	local s3 = table.concat( t3, "\n" )
 	local s2 = table.concat( t2, "\n" )
 	local s1 = table.concat( t1, "\n" )
-
-	for i = 1, #property_cache[property] do
-		local c = property_cache[property][i]
-		if c[1] == s1 and c[2] == s2 and c[3] == s3 and c[4] == s4 and c[5] == s5 then
-			return c.f, c.e
-		end
-	end
 
 	local change_code
 
@@ -316,9 +303,7 @@ function Codegen.dynamic_property_setter( property, options, environment )
 
 	local fr = f( ptype, environment )
 
-	property_cache[property][#property_cache[property] + 1] = { s1, s2, s3, s4, s5, f = fr, e = environment }
-
-	return fr, environment
+	return fr
 end
 
 CHANGECODE_NO_TRANSITION = [[

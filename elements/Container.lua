@@ -22,9 +22,6 @@ function Container:Container( x, y, w, h )
 	self:IChildContainer()
 	self:IColoured()
 
-	self.values:add( "x_offset", 0 )
-	self.values:add( "y_offset", 0 )
-
 	return self:Sheet( x, y, w, h )
 end
 

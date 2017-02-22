@@ -19,7 +19,6 @@ function Button:Button( x, y, width, height, text )
 	self:initialise()
 	self:IHasText()
 	self:IColoured()
-	self.values:add( "active_colour", LIGHTBLUE )
 	self:Sheet( x, y, width, height )
 
 	self:set_colour( CYAN )

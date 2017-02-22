@@ -63,7 +63,6 @@ colour = {
  -- @include interfaces.IQueryable
  -- @include interfaces.IChildContainer
  -- @include interfaces.ITagged
- -- @include interfaces.ISize
  -- @include interfaces.ITimer
 
  -- @include events.Event
