@@ -21,13 +21,12 @@
 Screen:add_components( 'parent', 'size' )
 
 function Screen:Screen( application, width, height )
-	self.parent = application
+	self:initialise_properties()
 	self.terminals = {}
 	self.monitors = {}
 	self.surface = surface.create( 0, 0 )
 	self.application = application
-	self.values = ValueHandler( self )
-	self:initialise_properties()
+	self.parent = application
 
 	self:IChildContainer()
 	self:ITagged()

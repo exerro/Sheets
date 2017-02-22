@@ -20,12 +20,12 @@ COMPONENT(position) {
 		ENABLE_PERCENTAGES({type=DVALUE_DOTINDEX;value={type=DVALUE_PARENT};index='height'});
 	};
 	ENVIRONMENT(y) {
-		left = 0;
-		out_left={type=DVALUE_UNEXPR,operator="-",value={type=DVALUE_IDENTIFIER,value="height"}};
+		top = 0;
+		out_top={type=DVALUE_UNEXPR,operator="-",value={type=DVALUE_IDENTIFIER,value="height"}};
 		centre = centrey;
 		center = centrey;
-		right={type=DVALUE_BINEXPR,operator="-",lvalue={type=DVALUE_PERCENTAGE,value={type=DVALUE_INTEGER,value="100"}},rvalue={type=DVALUE_IDENTIFIER,value="height"}};
-		out_right={type=DVALUE_PERCENTAGE,value={type=DVALUE_INTEGER,value="100"}};
+		bottom={type=DVALUE_BINEXPR,operator="-",lvalue={type=DVALUE_PERCENTAGE,value={type=DVALUE_INTEGER,value="100"}},rvalue={type=DVALUE_IDENTIFIER,value="height"}};
+		out_bottom={type=DVALUE_PERCENTAGE,value={type=DVALUE_INTEGER,value="100"}};
 	};
 	PROPERTY(z, 0) {
 		custom_update_code = "if self.parent then self.parent:reposition_child_z_index( self ) end";

@@ -9,9 +9,10 @@ local get_transition_function
 
 local function initialiser( self )
 	self.values = ValueHandler( self )
-	
+
 	for k, v in pairs( self.properties ) do
 		self.values:add( k, v.default )
+		self[k] = v.default
 	end
 
 	self.set = setf
@@ -91,7 +92,6 @@ function IComponent:add_components( ... )
 
 		self["set_" .. property] = setter_function
 		self["raw_" .. property] = default
-		self[property] = default
 
 		if ValueHandler.properties[property].transitionable then
 			self["set_" .. property .. "_transition"] = get_transition_function( property )

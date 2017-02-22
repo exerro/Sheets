@@ -12,11 +12,11 @@
 Container:add_components( 'colour', 'offset' )
 
 function Container:Container( x, y, w, h )
-	self:Sheet( x, y, w, h )
-	
 	self:ICollatedChildren()
 	self:IQueryable()
 	self:IChildContainer()
+
+	return self:Sheet( x, y, w, h )
 end
 
 function Container:update( dt )

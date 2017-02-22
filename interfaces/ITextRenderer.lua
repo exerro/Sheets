@@ -19,7 +19,11 @@ function ITextRenderer:ITextRenderer()
 end
 
 function ITextRenderer:wrap_text()
-	self.text_lines = wrap( self.text, self.width )
+	if self.width <= 0 then
+		self.text_lines = {}
+	else
+		self.text_lines = wrap( self.text, self.width )
+	end
 	self:set_changed()
 
 	if #self.text_lines ~= self.line_count then
