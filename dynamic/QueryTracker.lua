@@ -1,4 +1,6 @@
 
+ -- @include lib.lifetime
+
  -- @print including(dynamic.QueryTracker)
 
 @class QueryTracker {
@@ -47,21 +49,7 @@ end
 function QueryTracker:untrack( ID )
 	for i = #self.queries, 1, -1 do
 		if self.queries[i][3] == ID then
-			local t = self.lifetimes[ID]
-
-
-			for i = #t, 1, -1 do
-				local l = t[i]
-				t[i] = nil
-				if l[1] == "value" then
-					l[2].values:unsubscribe( l[3], l[4] )
-				elseif l[1] == "query" then
-					l[2]:unsubscribe( l[3], l[4] )
-				elseif l[1] == "tag" then
-					l[2]:unsubscribe_from_tag( l[3], l[4] )
-				end
-			end
-
+			lifetime.destroy( self.lifetimes[ID] )
 			self.lifetimes[ID] = nil
 			self.subscriptions[ID] = nil
 

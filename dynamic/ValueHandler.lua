@@ -1,4 +1,6 @@
 
+ -- @include lib.lifetime
+
  -- @print including(dynamic.ValueHandler)
 
 local floor = math.floor
@@ -57,26 +59,13 @@ function ValueHandler:trigger( name )
 end
 
 function ValueHandler:respawn( name )
-	local t = self.lifetimes[name]
-
-	for i = #t, 1, -1 do
-		local l = t[i]
-		t[i] = nil
-		if l[1] == "value" then
-			l[2].values:unsubscribe( l[3], l[4] )
-		elseif l[1] == "query" then
-			l[2]:unsubscribe( l[3], l[4] )
-		elseif l[1] == "tag" then
-			l[2]:unsubscribe_from_tag( l[3], l[4] )
-		end
-	end
-
+	lifetime.destroy( self.lifetimes[name] )
 	self.lifetimes[name] = {}
 end
 
 function ValueHandler:subscribe( name, lifetime, callback )
 	self.subscriptions[name] = self.subscriptions[name] or {}
-	lifetime[#lifetime + 1] = { "value", self.object, name, callback }
+	lifetime[#lifetime + 1] = { "value", self, name, callback }
 
 	local t = self.subscriptions[name]
 
