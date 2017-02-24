@@ -78,7 +78,7 @@ function IComponent:add_components( ... )
 		local options = v.options
 		local environment = v.environment
 		local default = v.default
-		local setter_function
+		local setter_function, unsetter_function
 
 		if v.type == "property" or v.type == "setter" then
 			if type( options ) == "table" or options == nil then
@@ -88,9 +88,16 @@ function IComponent:add_components( ... )
 			else
 				error "TODO: fix this error"
 			end
+
+			unsetter_function = function( self )
+				self[property] = default
+				self[property .. "_is_defined"] = false
+				return self
+			end
 		end
 
 		self["set_" .. property] = setter_function
+		self["unset_" .. property] = unsetter_function
 		self["raw_" .. property] = default
 
 		if ValueHandler.properties[property].transitionable then

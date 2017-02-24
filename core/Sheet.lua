@@ -3,18 +3,11 @@
  -- @include components.parent
  -- @include components.position
  -- @include components.size
+ -- @include interfaces.IThemed
 
  -- @print including(core.Sheet)
 
-local X_ENVIRONMENT = [[
-parser.flags.enable_percentages = true
-percentage_ast = { type = DVALUE_DOTINDEX, value = { type = DVALUE_PARENT }, index = "width" }]]
-
-local Y_ENVIRONMENT = [[
-parser.flags.enable_percentages = true
-percentage_ast = { type = DVALUE_DOTINDEX, value = { type = DVALUE_PARENT }, index = "height" }]]
-
-@class Sheet implements IComponent, ITagged {
+@class Sheet implements IComponent, ITagged, IThemed {
 	x = 0;
 	y = 0;
 	z = 0;
@@ -39,6 +32,7 @@ Sheet:add_components( 'parent', 'position', 'size' )
 function Sheet:Sheet( x, y, width, height )
 	self:initialise_properties()
 	self:ITagged()
+	self:IThemed()
 
 	if x ~= nil then self:set_x( x ) end
 	if y ~= nil then self:set_y( y ) end

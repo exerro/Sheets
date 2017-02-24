@@ -4,7 +4,7 @@
  -- @print including(elements.Panel)
 
 @class Panel extends Sheet {
-	colour = nil;
+	
 }
 
 Panel:add_components( 'colour' )
