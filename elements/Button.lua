@@ -17,10 +17,10 @@ function Button:Button( x, y, width, height, text )
 
 	self:ITextRenderer()
 
-	self:set_colour( CYAN )
-	self:set_active_colour( LIGHTBLUE )
-	self:set_horizontal_alignment( ALIGNMENT_CENTRE )
-	self:set_vertical_alignment( ALIGNMENT_CENTRE )
+	self:set_colour( CYAN, true )
+	self:set_active_colour( LIGHTBLUE, true )
+	self:set_horizontal_alignment( ALIGNMENT_CENTRE, true )
+	self:set_vertical_alignment( ALIGNMENT_CENTRE, true )
 
 	if text then
 		self:set_text( text )

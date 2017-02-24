@@ -21,6 +21,6 @@ function IThemed:update_styles( start )
 	end
 
 	for property, v in pairs( plist ) do
-		self["set_" .. property]( self, v )
+		self["set_" .. property]( self, v, true )
 	end
 end

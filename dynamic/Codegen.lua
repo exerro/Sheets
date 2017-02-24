@@ -287,6 +287,7 @@ function Codegen.dynamic_property_setter( property, options, environment )
 		:gsub( "CHANGECODE", change_code )
 		:gsub( "PROPERTY_QUOTED", ("%q"):format( property ) )
 		:gsub( "RAW_PROPERTY", ("%q"):format( "raw_" .. property ) )
+		:gsub( "DEFINED_PROPERTY", ("%q"):format( property .. "_is_defined" ) )
 		:gsub( "VALUE_MODIFICATION", function() return s1 end )
 		:gsub( "ENV_MODIFICATION", function() return s2 end )
 		:gsub( "AST_MODIFICATION", function() return s3 end )
@@ -518,7 +519,7 @@ end]]
 
 GENERIC_SETTER = [[
 local rtype, percentage_ast, environment = ...
-return function( self, value )
+return function( self, value, dont_set )
 	self.values:respawn PROPERTY_QUOTED
 	self[RAW_PROPERTY] = value
 
@@ -530,6 +531,8 @@ return function( self, value )
 		end
 
 		CHANGECODE
+
+		self[DEFINED_PROPERTY] = not dont_set
 
 		return self
 	end
@@ -565,6 +568,8 @@ return function( self, value )
 
 		if value ~= self[PROPERTY_QUOTED] then
 			CHANGECODE
+
+			self[DEFINED_PROPERTY] = not dont_set
 		end
 	end
 
