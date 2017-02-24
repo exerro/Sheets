@@ -21,6 +21,10 @@ Transition.smooth = Transition( Easing.smooth, 0.4 )
 Transition.smooth_slow = Transition( Easing.smooth, 0.8 )
 Transition.smooth_fast = Transition( Easing.smooth, 0.2 )
 
+Transition.ease = Transition( Easing.ease, 0.4 )
+Transition.ease_slow = Transition( Easing.ease, 0.8 )
+Transition.ease_fast = Transition( Easing.ease, 0.2 )
+
 Transition.entrance = Transition( Easing.entrance, 0.4 )
 Transition.entrance_slow = Transition( Easing.entrance, 0.8 )
 Transition.entrance_fast = Transition( Easing.entrance, 0.2 )
