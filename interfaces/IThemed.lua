@@ -14,8 +14,10 @@ function IThemed:update_styles( start )
 
 	for i = start, #self.active_styles do
 		for property, v in pairs( self.active_styles[i] ) do
-			if not self[property .. "_is_defined"] then
-				plist[property] = v
+			if self.values:has( property ) then
+				if not self[property .. "_is_defined"] then
+					plist[property] = v
+				end
 			end
 		end
 	end
