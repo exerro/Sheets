@@ -266,13 +266,13 @@ function Typechecking.check_type( ast, state )
 		elseif ast.operator == ">" or ast.operator == "<" or ast.operator == ">=" or ast.operator == "<=" then
 			if  lvalue_type == Type.primitive.integer / Type.primitive.number
 			and rvalue_type == Type.primitive.integer / Type.primitive.number then
-				return Type.primitive.boolean
+				return ast, Type.primitive.boolean
 			else
 				error "TODO: fix this error"
 			end
 
 		elseif ast.operator == "~=" or ast.operator == "==" then
-			return type.primitive.boolean
+			return ast, type.primitive.boolean
 
 		end
 

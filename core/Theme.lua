@@ -15,11 +15,11 @@ function Theme:Theme( app )
 end
 
 function Theme:apply()
-	-- add all rules
+	-- TODO: add all rules
 end
 
 function Theme:unapply()
-	-- kill self.lifetime
+	-- TODO: kill self.lifetime
 end
 
 function Theme:add_rule( selector, styles )
