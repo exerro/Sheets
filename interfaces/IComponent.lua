@@ -13,6 +13,10 @@ local function initialiser( self )
 	for k, v in pairs( self.properties ) do
 		self.values:add( k, v.default )
 		self[k] = v.default
+
+		if ValueHandler.properties[k].transitionable then
+			self.values:add( k .. "_transition", nil )
+		end
 	end
 
 	self.set = setf

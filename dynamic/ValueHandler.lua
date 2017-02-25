@@ -1,4 +1,6 @@
 
+ -- @include lib.lifetime
+
  -- @print including(dynamic.ValueHandler)
 
 local floor = math.floor
@@ -57,26 +59,13 @@ function ValueHandler:trigger( name )
 end
 
 function ValueHandler:respawn( name )
-	local t = self.lifetimes[name]
-
-	for i = #t, 1, -1 do
-		local l = t[i]
-		t[i] = nil
-		if l[1] == "value" then
-			l[2].values:unsubscribe( l[3], l[4] )
-		elseif l[1] == "query" then
-			l[2]:unsubscribe( l[3], l[4] )
-		elseif l[1] == "tag" then
-			l[2]:unsubscribe_from_tag( l[3], l[4] )
-		end
-	end
-
+	lifetimelib.destroy( self.lifetimes[name] )
 	self.lifetimes[name] = {}
 end
 
 function ValueHandler:subscribe( name, lifetime, callback )
 	self.subscriptions[name] = self.subscriptions[name] or {}
-	lifetime[#lifetime + 1] = { "value", self.object, name, callback }
+	lifetime[#lifetime + 1] = { "value", self, name, callback }
 
 	local t = self.subscriptions[name]
 
@@ -120,9 +109,23 @@ function ValueHandler:child_inserted()
 	self.removed_lifetimes = {}
 end
 
-function ValueHandler:transition( property, final, transition, custom_update )
+function ValueHandler:is_transitioning( property )
+	return self.transitions_lookup[property] ~= nil
+end
+
+function ValueHandler:get_final_property_value( property )
+	local trans = self.transitions[self.transitions_lookup[property]]
+	return trans and trans.final or self.object[property]
+end
+
+function ValueHandler:get_transition_timeout( property )
+	local trans = self.transitions[self.transitions_lookup[property]]
+	return trans.duration - trans.clock
+end
+
+function ValueHandler:transition( property, final, transition, custom_update, dt_scale )
 	local index = self.transitions_lookup[property] or #self.transitions + 1
-	local floored = false -- TODO: make this respect the property
+	local floored = false
 	local ptype = ValueHandler.properties[property].type
 
 	if ptype == Type.primitive.integer then
@@ -146,6 +149,7 @@ function ValueHandler:transition( property, final, transition, custom_update )
 			floored = floored;
 			change = ValueHandler.properties[property].change;
 			custom_update = custom_update;
+			dt_scale = dt_scale;
 		}
 	else
 		if self.object[property] ~= final then
@@ -169,12 +173,16 @@ end
 function ValueHandler:update( dt )
 	for i = #self.transitions, 1, -1 do
 		local trans = self.transitions[i]
-		trans.clock = trans.clock + dt
+		trans.clock = trans.clock + dt * trans.dt_scale
 
 		if trans.clock >= trans.duration then
 			self.object[trans.property] = trans.final
 			table.remove( self.transitions, i )
 			self.transitions_lookup[trans.property] = nil
+
+			for n = i, #self.transitions do
+				self.transitions_lookup[self.transitions[i].property] = n
+			end
 		else
 			local eased = trans.easing( trans.initial, trans.diff, trans.clock / trans.duration )
 			self.object[trans.property] = trans.floored and floor( eased + 0.5 ) or eased

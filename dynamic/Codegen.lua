@@ -260,7 +260,7 @@ function Codegen.dynamic_property_setter( property, options, environment )
 
 		if s4 ~= "" then
 			change_code = change_code
-				:gsub( "CUSTOM_UPDATE", ", function( self )\n" .. s4 .. "\nend" )
+				:gsub( "CUSTOM_UPDATE", "function( self )\n" .. s4 .. "\nend" )
 				:gsub( "PROPERTY_TRANSITION_QUOTED", ("%q"):format( property .. "_transition" ) )
 				:gsub( "PROCESS_VALUE", s5 )
 		end
@@ -293,7 +293,7 @@ function Codegen.dynamic_property_setter( property, options, environment )
 		:gsub( "AST_MODIFICATION", function() return s3 end )
 		:gsub( "CASTING_RAW", function() return rawcaster end )
 		:gsub( "CASTING", function() return caster end )
-	local env = setmetatable( { Typechecking = Typechecking, Type = Type, Codegen = Codegen, DynamicValueParser = DynamicValueParser, surface = surface, Stream = Stream }, { __index = _ENV or getfenv() } )
+	local env = setmetatable( { Typechecking = Typechecking, Type = Type, Codegen = Codegen, DynamicValueParser = DynamicValueParser, surface = surface, Stream = Stream, lifetimelib = lifetimelib }, { __index = _ENV or getfenv() } )
 	local f = assert( (load or loadstring)( str, "property setter '" .. property .. "'", nil, env ) )
 
 	-- @if DEBUG
@@ -321,8 +321,20 @@ end]]
 
 CHANGECODE_TRANSITION = [[
 PROCESS_VALUE
-if self[PROPERTY_QUOTED] ~= value then
-	self.values:transition( PROPERTY_QUOTED, value, self[PROPERTY_TRANSITION_QUOTED]CUSTOM_UPDATE )
+if self.values:get_final_property_value PROPERTY_QUOTED ~= value then
+	local dt_scale = 1
+	local refs = lifetimelib.get_value_references( self.values.lifetimes[PROPERTY_QUOTED] )
+
+	for i = 1, #refs do
+		if refs[i][1]:is_transitioning( refs[i][2] ) then
+			local scale = self[PROPERTY_TRANSITION_QUOTED].duration / refs[i][1]:get_transition_timeout( refs[i][2] )
+			if scale < dt_scale then
+				dt_scale = scale
+			end
+		end
+	end
+
+	self.values:transition( PROPERTY_QUOTED, value, self[PROPERTY_TRANSITION_QUOTED], CUSTOM_UPDATE, dt_scale )
 end]]
 
 STRING_CASTING = [[
@@ -873,7 +885,9 @@ function dynamic_value_internal( value, state )
 		local nr = #state.names + 1
 		local nu = #state.names + 2
 		local t = {
-			value = "(n" .. nr .. " and n" .. nr .. "." .. value.index .. ")";
+			value = ValueHandler.properties[value.index].transitionable
+				and "(n" .. nr .. " and n" .. nr .. ".values:get_final_property_value('" .. value.index .. "'))"
+				 or "(n" .. nr .. " and n" .. nr .. "." .. value.index .. ")";
 			complex = true;
 			update = "f" .. nu .. "()";
 			initialise = nil;
