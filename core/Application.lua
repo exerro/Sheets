@@ -267,7 +267,7 @@ function Application:run()
 		while self.running do
 			local event = { coroutine.yield() }
 			if event[1] == "timer" and event[2] == t then
-				t = os.startTimer( .05 )
+				t = os.startTimer( 1/FPS )
 			elseif event[1] == "terminate" and self.terminateable then
 				self:stop()
 			else

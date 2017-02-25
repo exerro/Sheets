@@ -3,6 +3,7 @@
  -- @defineifndef SML false
  -- @defineifndef THREADING true
  -- @defineifndef CORE_ELEMENTS true
+ -- @defineifndef FPS 20
 
  -- @define including(x) Including file sheets.x
 
