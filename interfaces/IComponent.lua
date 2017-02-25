@@ -1,4 +1,5 @@
 
+ -- @include dynamic.codegen.dynamic_setter
  -- @include components.component
 
  -- @print including(interfaces.IComponent)
@@ -86,7 +87,7 @@ function IComponent:add_components( ... )
 
 		if v.type == "property" or v.type == "setter" then
 			if type( options ) == "table" or options == nil then
-				setter_function = Codegen.dynamic_property_setter( property, options or {}, environment )
+				setter_function = dynamic_property_setter_codegen( property, options or {}, environment )
 			elseif type( options ) == "function" then
 				setter_function = options
 			else

@@ -1,5 +1,6 @@
 
  -- @include lib.lifetime
+ -- @include dynamic.codegen.node_query
 
  -- @print including(interfaces.IQueryable)
 
@@ -104,7 +105,7 @@ function query_raw( self, query, lifetime, track, parsed )
 		end
 	end
 
-	query_f, init_f = Codegen.node_query( query, lifetime, updater )
+	query_f, init_f = node_query_codegen( query, lifetime, updater )
 
 	init_f( self )
 

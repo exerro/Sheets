@@ -70,7 +70,6 @@ colour = {
  -- @include events.MouseEvent
  -- @include events.TextEvent
 
- -- @include dynamic.Codegen
  -- @include dynamic.DynamicValueParser
  -- @include dynamic.QueryTracker
  -- @include dynamic.Stream
