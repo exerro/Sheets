@@ -184,7 +184,7 @@ function ValueHandler:update( dt )
 				self.transitions_lookup[self.transitions[i].property] = n
 			end
 		else
-			local eased = trans.easing( trans.initial, trans.diff, trans.clock / trans.duration )
+			local eased = trans.initial + trans.diff * trans.easing( trans.clock / trans.duration )
 			self.object[trans.property] = trans.floored and floor( eased + 0.5 ) or eased
 		end
 
