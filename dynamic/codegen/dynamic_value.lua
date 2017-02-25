@@ -7,39 +7,29 @@
 local SELF_INDEX_UPDATER, ARBITRARY_DOTINDEX_UPDATER, ARBITRARY_INDEX_UPDATER,
       DYNAMIC_QUERY_UPDATER, QUERY_UPDATER
 
+local function basic_value( value, update )
+	return {
+		value = value;
+		complex = false;
+		update = update or nil;
+		initialise = nil;
+		dependants = {};
+		dependencies = {};
+	}
+end
+
 local function dynamic_value_internal( value, state )
 	if not value then return error "here" end
 	if value.type == DVALUE_INTEGER
 	or value.type == DVALUE_FLOAT
 	or value.type == DVALUE_BOOLEAN then
-		return {
-			value = tostring( value.value );
-			complex = false;
-			update = nil;
-			initialise = nil;
-			dependants = {};
-			dependencies = {};
-		}
+		return basic_value( tostring( value.value ) )
 
 	elseif value.type == DVALUE_STRING then
-		return {
-			value = ("%q"):format( value.value );
-			complex = false;
-			update = nil;
-			initialise = nil;
-			dependants = {};
-			dependencies = {};
-		}
+		return basic_value( ("%q"):format( value.value ) )
 
 	elseif value.type == DVALUE_SELF then
-		return {
-			value = "self";
-			complex = false;
-			update = nil;
-			initialise = nil;
-			dependants = {};
-			dependencies = {};
-		}
+		return basic_value "self"
 
 	elseif value.type == DVALUE_PARENT then
 		if state.object:type_of( Application ) then
@@ -68,14 +58,7 @@ local function dynamic_value_internal( value, state )
 
 	elseif value.type == DVALUE_APPLICATION then
 		if state.object:type_of( Application ) then
-			return {
-				value = "self";
-				complex = false;
-				update = nil;
-				initialise = nil;
-				dependants = {};
-				dependencies = {};
-			}
+			return basic_value "self"
 
 		else
 			local nr = #state.names + 1
@@ -102,35 +85,20 @@ local function dynamic_value_internal( value, state )
 	elseif value.type == DVALUE_IDENTIFIER then
 		if state.environment[value.value] ~= nil then
 			state.inputs[#state.inputs + 1] = state.environment[value.value].value;
-
-			return {
-				value = "i" .. #state.inputs;
-				complex = false;
-				update = nil;
-				initialise = nil;
-				dependants = {};
-				dependencies = {};
-			}
-
+			return basic_value( "i" .. #state.inputs )
 		else
 			error "TODO: fix this error"
 		end
 
-	elseif value.type == DVALUE_PERCENTAGE then
-		error "NYI"
+	-- elseif value.type == DVALUE_PERCENTAGE then
+	-- percentages will be resolved at the Typechecking stage
 
 	elseif value.type == DVALUE_UNEXPR then
 		local val = dynamic_value_internal( value.value, state )
 		local n = #state.names + 1
-		local t = {
-			value = "n" .. n;
-			complex = false;
-			update = "n" .. n .. " = " .. val.value .. " ~= nil and " .. value.operator .. " " .. val.value .. " or nil";
-			initialise = nil;
-			dependants = {};
-			dependencies = { val };
-		}
+		local t = basic_value( "n" .. n, "n" .. n .. " = " .. val.value .. " ~= nil and " .. value.operator .. " " .. val.value .. " or nil" )
 
+		t.dependencies = { val }
 		state.names[n] = "n" .. n
 		val.dependants[#val.dependants + 1] = t
 
@@ -147,15 +115,9 @@ local function dynamic_value_internal( value, state )
 			params_strval[i] = params[i].value
 		end
 
-		local t = {
-			value = "n" .. n;
-			complex = false;
-			update = "n" .. n .. " = " .. val.value .. " ~= nil and " .. table.concat( params_strval, " ~= nil and " ) .. " ~= nil and " .. val.value .. "(" .. table.concat( params_strval, ", " ) .. ") or nil";
-			initialise = nil;
-			dependants = {};
-			dependencies = { val, unpack( params ) };
-		}
+		local t = basic_value( "n" .. n, "n" .. n .. " = " .. val.value .. " ~= nil and " .. table.concat( params_strval, " ~= nil and " ) .. " ~= nil and " .. val.value .. "(" .. table.concat( params_strval, ", " ) .. ") or nil" )
 
+		t.dependencies = { val, unpack( params ) }
 		state.names[n] = "n" .. n
 		val.dependants[#val.dependants + 1] = t
 
@@ -204,21 +166,15 @@ local function dynamic_value_internal( value, state )
 		local lvalue = dynamic_value_internal( value.lvalue, state )
 		local rvalue = dynamic_value_internal( value.rvalue, state )
 		local n = #state.names + 1
-		local t = {
-			value = "n" .. n;
-			complex = false;
-			update = "n" .. n .. " = " .. (
-				   (value.operator == "or" and lvalue.value .. " or " .. rvalue.value)
-				or (value.operator == "and" and lvalue.value .. " and " .. rvalue.value .. " or nil")
-				-- or value.operator == "==" and "" -- potentially $abc == $def == true if both are undefined
-				-- or value.operator == "~=" and "" -- potentially $abc != $def == true if one is undefined and false if both are undefined
-				or (lvalue.value .. " ~= nil and " .. rvalue.value .. " ~= nil and " .. lvalue.value .. " " .. value.operator .. " " .. rvalue.value .. " or nil")
-			);
-			initialise = nil;
-			dependants = {};
-			dependencies = { lvalue, rvalue };
-		}
+		local t = basic_value( "n" .. n, "n" .. n .. " = " .. (
+			   (value.operator == "or" and lvalue.value .. " or " .. rvalue.value)
+			or (value.operator == "and" and lvalue.value .. " and " .. rvalue.value .. " or nil")
+			-- or value.operator == "==" and "" -- potentially $abc == $def == true if both are undefined
+			-- or value.operator == "~=" and "" -- potentially $abc != $def == true if one is undefined and false if both are undefined
+			or (lvalue.value .. " ~= nil and " .. rvalue.value .. " ~= nil and " .. lvalue.value .. " " .. value.operator .. " " .. rvalue.value .. " or nil")
+	 	) )
 
+		t.dependencies = { lvalue, rvalue };
 		state.names[n] = "n" .. n
 		lvalue.dependants[#lvalue.dependants + 1] = t
 		rvalue.dependants[#rvalue.dependants + 1] = t
@@ -319,15 +275,9 @@ local function dynamic_value_internal( value, state )
 	elseif value.type == DVALUE_FLOOR then
 		local val = dynamic_value_internal( value.value, state )
 		local n = #state.names + 1
-		local t = {
-			value = "n" .. n;
-			complex = false;
-			update = "n" .. n .. " = " .. val.value .. " ~= nil and floor( " .. val.value .. " ) or nil";
-			initialise = nil;
-			dependants = {};
-			dependencies = { val };
-		}
+		local t = basic_value( "n" .. n, "n" .. n .. " = " .. val.value .. " ~= nil and floor( " .. val.value .. " ) or nil" )
 
+		t.dependencies = { val }
 		state.names[n] = "n" .. n
 		val.dependants[#val.dependants + 1] = t
 		state.floored = true
@@ -337,15 +287,9 @@ local function dynamic_value_internal( value, state )
 	elseif value.type == DVALUE_TOSTRING then
 		local val = dynamic_value_internal( value.value, state )
 		local n = #state.names + 1
-		local t = {
-			value = "n" .. n;
-			complex = false;
-			update = "n" .. n .. " = " .. val.value .. " ~= nil and tostring( " .. val.value .. " ) or nil";
-			initialise = nil;
-			dependants = {};
-			dependencies = { val };
-		}
+		local t = basic_value( "n" .. n, "n" .. n .. " = " .. val.value .. " ~= nil and tostring( " .. val.value .. " ) or nil" )
 
+		t.dependencies = { val };
 		state.names[n] = "n" .. n
 		val.dependants[#val.dependants + 1] = t
 		state.tostringed = true
