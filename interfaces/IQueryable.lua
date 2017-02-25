@@ -122,7 +122,7 @@ function query_raw( self, query, lifetime, track, parsed )
 		return matches, ID
 	else
 		if not parsed then
-			lifetime.destroy( lifetime )
+			lifetimelib.destroy( lifetime )
 		end
 
 		return matches

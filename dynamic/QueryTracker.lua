@@ -49,7 +49,7 @@ end
 function QueryTracker:untrack( ID )
 	for i = #self.queries, 1, -1 do
 		if self.queries[i][3] == ID then
-			lifetime.destroy( self.lifetimes[ID] )
+			lifetimelib.destroy( self.lifetimes[ID] )
 			self.lifetimes[ID] = nil
 			self.subscriptions[ID] = nil
 
