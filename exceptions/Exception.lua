@@ -18,7 +18,7 @@ end
 	trace = {};
 }
 
-function Exception:Exception( name, data, level )
+function Exception:Exception( name, data, level, userspace )
 	self.name = name
 	self.data = data
 	self.trace = {}
@@ -26,25 +26,36 @@ function Exception:Exception( name, data, level )
 	level = ( level or 1 ) + 2
 
 	if level > 2 then
-		for i = 1, 5 do
+		local i = 1
+
+		while #self.trace < 5 do
 			local src = select( 2, pcall( error, "", level + i ) ):gsub( ": $", "" )
 
 			if src == "pcall" or src == "" then
 				break
 			else
+				local src_and_line
+
 				if __get_src_and_line then
 					local line, msg = src:match( "^" .. (select(2,pcall(error,"@",2)):match"^(.*):%d+: @$") .. ":(%d+)$" )
 
 					if line then
-						local src, line = __get_src_and_line( tonumber( line ) )
-						self.trace[i] = src .. "[" .. line .. "]"
+						src, line = __get_src_and_line( tonumber( line ) )
+						src_and_line = src .. "[" .. line .. "]"
 					else
-						self.trace[i] = ("%s[%s]"):format( src:match "(.+):(%d+)" )
+						src_and_line = ("%s[%s]"):format( src:match "(.+):(%d+)" )
 					end
 				else
-					self.trace[i] = ("%s[%s]"):format( src:match "(.+):(%d+)" )
+					src_and_line = ("%s[%s]"):format( src:match "(.+):(%d+)" )
+				end
+
+				if not (userspace and src:find "^sheets%.") then
+					print( src )
+					userspace = false
+					self.trace[#self.trace + 1] = src_and_line
 				end
 			end
+			i = i + 1
 		end
 	end
 end

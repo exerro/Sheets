@@ -21,7 +21,7 @@ function SourceCodeException:SourceCodeException( data, source, character, strli
 	self.character = character
 	self.strline = strline
 
-	return self:Exception( self:type(), data, 0 )
+	return self:Exception( self:type(), data, 1, true )
 end
 
 function SourceCodeException:get_data( indent )
