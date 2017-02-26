@@ -86,7 +86,7 @@ function Stream:consume_string()
 		elseif char == close then
 			self.position = i + 1
 			return { type = TOKEN_STRING, value = table.concat( str ), position = {
-				character = char, line = line;
+				character = char, line = line; source = self.source; strline = self.strline;
 			} }
 		else
 			str[#str + 1] = char
@@ -109,7 +109,7 @@ function Stream:consume_identifier()
 	self.character = self.character + #word
 
 	return { type = type, value = word, position = {
-		character = char, line = self.line;
+		character = char, line = self.line; source = self.source; strline = self.strline;
 	} }
 end
 
@@ -124,7 +124,7 @@ function Stream:consume_number()
 	self.character = self.character + #num
 
 	return { type = type, value = num, position = {
-		character = char, line = line;
+		character = char, line = line; source = self.source; strline = self.strline;
 	} }
 end
 
@@ -148,7 +148,7 @@ function Stream:consume_whitespace()
 	end
 
 	return { type = type, value = value, position = {
-		character = char, line = line;
+		character = char, line = line; source = self.source; strline = self.strline;
 	} }
 end
 
@@ -174,14 +174,14 @@ function Stream:consume_symbol()
 	self.position = self.position + #value
 
 	return { type = TOKEN_SYMBOL, value = value, position = {
-		character = char, line = self.line;
+		character = char, line = self.line; source = self.source; strline = self.strline;
 	} }
 end
 
 function Stream:consume()
 	if self.position > #self.text then
 		return { type = TOKEN_EOF, value = "", position = {
-			character = self.character, line = self.line;
+			character = self.character, line = self.line; source = self.source; strline = self.strline;
 		} }
 	end
 
