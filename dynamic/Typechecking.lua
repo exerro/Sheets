@@ -262,10 +262,16 @@ function Typechecking.check_type( ast, state )
 
 			if t then
 				for i = 2, #tr do
-					t = UnionType( t, tr[i] )
+					if not (t == tr[i]) then
+						t = UnionType( t, tr[i] )
+					end
 				end
 
-				return ast, t / rvalue_type
+				if not (t == rvalue_type) then
+					t = t / rvalue_type
+				end
+
+				return ast, t
 			else
 				return rvalue_ast, rvalue_type
 			end

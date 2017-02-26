@@ -54,7 +54,7 @@ function Type:tostring()
 end
 
 function UnionType:tostring()
-	return self.lvalue:tostring() .. " | " .. self.rvalue:tostring()
+	return self.lvalue:tostring() .. "|" .. self.rvalue:tostring()
 end
 
 function ListType:tostring()

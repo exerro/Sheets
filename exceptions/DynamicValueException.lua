@@ -53,7 +53,7 @@ function DynamicValueException.invalid_tag_object( type, position )
 end
 
 function DynamicValueException.cast_failure( type, expected, position )
-	return DynamicValueException( "cannot cast type " .. type:tostring() .. " to " .. expected:type(), position )
+	return DynamicValueException( "cannot cast type " .. type:tostring() .. " to " .. expected:tostring(), position )
 end
 
 function DynamicValueException.invalid_colour_value( value, position )

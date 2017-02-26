@@ -218,7 +218,7 @@ function DynamicValueParser:parse_expression()
 	while self.stream:skip( TOKEN_WHITESPACE ) do end
 
 	while self.stream:test( TOKEN_SYMBOL ) and is_operator[self.stream:peek().value] do
-		positions[#positions + 1] = self.stream:peek().position
+		local pos = self.stream:peek().position
 		local op = self.stream:next().value
 		local prec = op_precedences[op]
 
@@ -239,9 +239,10 @@ function DynamicValueParser:parse_expression()
 		while self.stream:skip( TOKEN_WHITESPACE ) do end
 
 		operand_stack[#operand_stack + 1] = self:parse_term()
-			or Exception.throw( DynamicParserException.expected_expression( "after operator '" .. op .. "'", positions[#positions] ) )
+			or Exception.throw( DynamicParserException.expected_expression( "after operator '" .. op .. "'", pos ) )
 		operator_stack[#operator_stack + 1] = lua_operators[op] or op
 		precedences[#precedences + 1] = prec
+		positions[#positions + 1] = pos
 
 		while self.stream:skip( TOKEN_WHITESPACE ) do end
 	end
