@@ -32,7 +32,18 @@ function Exception:Exception( name, data, level )
 			if src == "pcall" or src == "" then
 				break
 			else
-				self.trace[i] = src
+				if __get_src_and_line then
+					local line, msg = src:match( "^" .. (select(2,pcall(error,"@",2)):match"^(.*):%d+: @$") .. ":(%d+)$" )
+
+					if line then
+						local src, line = __get_src_and_line( tonumber( line ) )
+						self.trace[i] = src .. "[" .. line .. "]"
+					else
+						self.trace[i] = ("%s[%s]"):format( src:match "(.+):(%d+)" )
+					end
+				else
+					self.trace[i] = ("%s[%s]"):format( src:match "(.+):(%d+)" )
+				end
 			end
 		end
 	end
