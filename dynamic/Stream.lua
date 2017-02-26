@@ -33,6 +33,7 @@ local keywords = {
 	["parent"] = true;
 }
 
+@private
 @class Stream {
 	position = 1;
 	line = 1;

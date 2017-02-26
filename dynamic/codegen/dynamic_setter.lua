@@ -9,6 +9,7 @@ local CHANGECODE_NO_TRANSITION, CHANGECODE_TRANSITION, GENERIC_SETTER,
 	  NUMBER_CASTING, RAW_NUMBER_CASTING, COLOUR_CASTING, RAW_COLOUR_CASTING,
 	  ALIGNMENT_CASTING, RAW_ALIGNMENT_CASTING, ERR_CASTING
 
+ -- @private
  -- @localise dynamic_property_setter_codegen
 function dynamic_property_setter_codegen( property, options, environment )
 	local self_changed = ValueHandler.properties[property].change == "self"

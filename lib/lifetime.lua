@@ -1,6 +1,7 @@
 
  -- @print including(lib.lifetime)
 
+ -- @private
  -- @localise lifetimelib
 lifetimelib = {}
 

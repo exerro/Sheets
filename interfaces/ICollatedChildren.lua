@@ -1,6 +1,7 @@
 
  -- @print including(interfaces.ICollatedChildren)
 
+@private
 @interface ICollatedChildren {
 	collated_children = {}
 }

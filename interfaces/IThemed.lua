@@ -1,6 +1,7 @@
 
  -- @print including (interfaces.IThemed)
 
+@private
 @interface IThemed {
 	active_styles = {};
 }

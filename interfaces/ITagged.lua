@@ -1,6 +1,7 @@
 
  -- @print including(interfaces.ITagged)
 
+@private
 @interface ITagged {
 	tags = {};
 	subscriptions = {};

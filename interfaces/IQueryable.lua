@@ -6,6 +6,7 @@
 
 local setf, addtag, remtag, query_raw
 
+@private
 @interface IQueryable implements ICollatedChildren {
 	query_tracker = nil;
 }

@@ -45,6 +45,7 @@ local function parse_name( stream )
 	return stream:skip_value( TOKEN_IDENTIFIER )
 end
 
+@private
 @class DynamicValueParser {
 	stream = nil;
 	flags = {};

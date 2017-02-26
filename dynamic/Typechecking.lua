@@ -1,6 +1,7 @@
 
  -- @print including(dynamic.Typechecking)
 
+@private
 @class Typechecking {
 
 }

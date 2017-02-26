@@ -2,7 +2,6 @@
  -- @include codegen.dynamic_value
 
  -- @print including(dynamic.codegen.node_query)
- -- @localise node_query_codegen
 
 local function node_query_internal( query, name, tracked )
 	if query.type == QUERY_ID then
@@ -69,6 +68,8 @@ local function node_query_internal( query, name, tracked )
 	end
 end
 
+ -- @private
+ -- @localise node_query_codegen
 function node_query_codegen( parsed_query, lifetime, updater )
 	local names = {}
 	local named_values = {}

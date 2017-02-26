@@ -1,3 +1,7 @@
+
+-- @private
+-- @localise surface
+
 surface = { } do
 --[[
 Surface version 2.0.0

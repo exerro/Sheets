@@ -1,6 +1,7 @@
 
  -- @print including(events.TextEvent)
 
+@private
 @class TextEvent extends Event {
 	event = "TextEvent";
 	text = "";

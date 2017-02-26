@@ -8,6 +8,7 @@ local TRANSITION_FUNCTION_CODE
 local tfcache = {}
 local setf
 
+@private
 @class ValueHandler {
 	object = nil;
 	lifetimes = {};

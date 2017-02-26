@@ -23,6 +23,7 @@ local function initialiser( self )
 	self.set = setf
 end
 
+@private
 @interface IComponent {
 	lookup = nil;
 	properties = nil;

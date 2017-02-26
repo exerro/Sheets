@@ -1,6 +1,7 @@
 
  -- @print including(events.MouseEvent)
 
+@private
 @class MouseEvent extends Event {
 	event = "MouseEvent";
 	x = 0;

@@ -2,7 +2,6 @@
  -- @include codegen.node_query
 
  -- @print including(dynamic.codegen.dynamic_value)
- -- @localise dynamic_value_codegen
 
 local SELF_INDEX_UPDATER, ARBITRARY_DOTINDEX_UPDATER, ARBITRARY_INDEX_UPDATER,
       DYNAMIC_QUERY_UPDATER, QUERY_UPDATER
@@ -348,6 +347,8 @@ local function dynamic_value_internal( value, state )
 	end
 end
 
+ -- @private
+ -- @localise dynamic_value_codegen
 function dynamic_value_codegen( parsed_value, lifetime, env, obj, updater, transitions )
 	local names = {}
 	local functions = {}

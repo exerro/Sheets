@@ -1,6 +1,7 @@
 
  -- @print including(exceptions.ExpressionException)
 
+@private
 @class ExpressionException extends Exception {
 	position = nil;
 }

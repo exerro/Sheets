@@ -17,6 +17,7 @@
 
  -- @include constants
 
+ -- @localise alignment
 alignment = {
 	left = ALIGNMENT_LEFT;
 	centre = ALIGNMENT_CENTRE;
@@ -26,6 +27,7 @@ alignment = {
 	bottom = ALIGNMENT_BOTTOM;
 }
 
+ -- @localise colour
 colour = {
 	transparent = TRANSPARENT;
 	white = WHITE;

@@ -3,6 +3,7 @@
 
  -- @print including(dynamic.QueryTracker)
 
+@private
 @class QueryTracker {
 parent = nil;
 	queries = {};

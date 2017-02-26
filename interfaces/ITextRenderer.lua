@@ -5,6 +5,7 @@
 
 local wrapline, wrap
 
+@private
 @interface ITextRenderer {
 
 }

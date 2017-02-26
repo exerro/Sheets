@@ -1,6 +1,7 @@
 
  -- @print including(interfaces.IChildContainer)
 
+@private
 @interface IChildContainer implements ICollatedChildren, IQueryable {
 	children = {};
 	application = nil;

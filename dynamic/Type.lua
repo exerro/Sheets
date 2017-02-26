@@ -1,19 +1,23 @@
 
  -- @print including(dynamic.Type)
 
+@private
 @class Type {
 	name = "";
 }
 
+@private
 @class UnionType extends Type {
 	lvalue = nil;
 	rvalue = nil;
 }
 
+@private
 @class ListType extends Type {
 	value = nil;
 }
 
+@private
 @class TableType extends Type {
 	index = nil;
 	value = nil;

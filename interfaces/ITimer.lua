@@ -8,6 +8,7 @@ if ccemux then
 	clockf = function()return milliTime()/1000 end
 end
 
+@private
 @interface ITimer {
 	timerID = 0;
 	time = nil;
