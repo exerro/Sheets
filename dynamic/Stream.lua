@@ -1,4 +1,5 @@
 
+ -- @include exceptions.StreamException
  -- @print including(dynamic.Stream)
 
 local escape_chars = {
@@ -33,16 +34,33 @@ local keywords = {
 	["parent"] = true;
 }
 
-@private
+@ifn DEBUG
+	@private
+@endif
 @class Stream {
 	position = 1;
 	line = 1;
 	character = 1;
 	text = "";
+	source = "stream";
+	strline = "";
 }
 
-function Stream:Stream( text )
+function Stream:Stream( text, source, line )
 	self.text = text
+	self.source = source
+	self.strline = text:match "(.-)\n" or text
+	self.line = line
+end
+
+function Stream:get_strline()
+	local text = self.text
+
+	for i = 1, self.line - 1 do
+		text = text:gsub( ".-\n", "" )
+	end
+
+	self.strline = text:match "(.-)\n" or text
 end
 
 function Stream:consume_string()
@@ -58,6 +76,7 @@ function Stream:consume_string()
 		if char == "\n" then
 			self.line = self.line + 1
 			self.character = 0
+			self:get_strline()
 		end
 
 		if escaped then
@@ -76,7 +95,7 @@ function Stream:consume_string()
 		self.character = self.character + 1
 	end
 
-	error( "TODO: fix this error" )
+	Exception.throw( StreamException.unfinished_string( self.source, self.character, self.strline, self.line ) )
 end
 
 function Stream:consume_identifier()
@@ -119,6 +138,7 @@ function Stream:consume_whitespace()
 		self.position = self.position + 1
 		self.character = 1
 		type = TOKEN_NEWLINE
+		self:get_strline()
 	else
 		local n = #self.text:match( "^[^%S\n]+", self.position )
 
@@ -147,8 +167,7 @@ function Stream:consume_symbol()
 	elseif symbols[s2] then
 		value = s2
 	elseif not symbols[s1] then
-		print( s1, s2, s3 )
-		error( "TODO: fix this error" )
+		Exception.throw( StreamException.unexpected_symbol( s1, self.source, self.character, self.strline, self.line ) )
 	end
 
 	self.character = self.character + #value
