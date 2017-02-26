@@ -49,22 +49,25 @@ function Exception:get_traceback( initial, delimiter )
 	return initial .. table.concat( self.trace, delimiter )
 end
 
-function Exception:get_data()
+function Exception:get_data( indent )
+	indent = type( indent ) == "number" and math.max( indent, 0 ) or 0
+
 	if type( self.data ) == "string" or class.is_class( self.data ) or class.is_instance( self.data ) then
-		return tostring( self.data )
+		return (" "):rep( indent * 4 + 2 ) .. tostring( self.data ):gsub( "\n", "\n" .. (" "):rep( indent * 4 + 2 ) )
 	else
-		return textutils.serialize( self.data )
+		return (" "):rep( indent * 4 + 2 ) .. textutils.serialize( self.data ):gsub( "\n", "\n" .. (" "):rep( indent * 4 + 2 ) )
 	end
 end
 
 function Exception:get_data_and_traceback( indent )
 	parameters.check( 1, "indent", "number", indent or 1 )
+	indent = indent or 1
 
-	return self:get_data() .. self:get_traceback( "\n" .. (" "):rep( indent or 1 ) .. "in ", "\n" .. (" "):rep( indent or 1 ) .. "in " )
+	return self:get_data( indent - 1 ) .. self:get_traceback( "\n" .. (" "):rep( indent * 4 ) .. "in ", "\n" .. (" "):rep( indent * 4 ) .. "in " )
 end
 
 function Exception:tostring()
-	return tostring( self.name ) .. " exception:\n  " .. self:get_data_and_traceback( 4 )
+	return tostring( self.name ) .. ":\n" .. self:get_data_and_traceback( 1 )
 end
 
 function Exception.thrown()
