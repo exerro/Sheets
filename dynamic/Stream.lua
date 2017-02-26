@@ -69,6 +69,8 @@ function Stream:consume_string()
 	local escaped = false
 	local sub = string.sub
 	local str = {}
+	local schar, sline = self.character, self.line
+	local sstrline = self.strline
 
 	for i = self.position + 1, #text do
 		local char = sub( text, i, i )
@@ -86,7 +88,7 @@ function Stream:consume_string()
 		elseif char == close then
 			self.position = i + 1
 			return { type = TOKEN_STRING, value = table.concat( str ), position = {
-				character = char, line = line; source = self.source; strline = self.strline;
+				character = char, line = sline; source = self.source; strline = self.strline;
 			} }
 		else
 			str[#str + 1] = char
@@ -95,7 +97,7 @@ function Stream:consume_string()
 		self.character = self.character + 1
 	end
 
-	Exception.throw( StreamException.unfinished_string( self.source, self.character, self.strline, self.line ) )
+	Exception.throw( StreamException.unfinished_string( self.source, schar, sstrline, sline ) )
 end
 
 function Stream:consume_identifier()
@@ -124,7 +126,7 @@ function Stream:consume_number()
 	self.character = self.character + #num
 
 	return { type = type, value = num, position = {
-		character = char, line = line; source = self.source; strline = self.strline;
+		character = char, line = self.line; source = self.source; strline = self.strline;
 	} }
 end
 
@@ -148,7 +150,7 @@ function Stream:consume_whitespace()
 	end
 
 	return { type = type, value = value, position = {
-		character = char, line = line; source = self.source; strline = self.strline;
+		character = char, line = self.line; source = self.source; strline = self.strline;
 	} }
 end
 

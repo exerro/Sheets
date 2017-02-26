@@ -50,7 +50,6 @@ function Exception:Exception( name, data, level, userspace )
 				end
 
 				if not (userspace and src:find "^sheets%.") then
-					print( src )
 					userspace = false
 					self.trace[#self.trace + 1] = src_and_line
 				end

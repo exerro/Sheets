@@ -8,26 +8,20 @@
 	character = 0
 }
 
-function SourceCodeException:SourceCodeException( data, source, character, strline, line )
-	parameters.check_constructor( self.class, 5,
+function SourceCodeException:SourceCodeException( data, position )
+	parameters.check_constructor( self.class, 2,
 		"data", "string", data,
-		"source", "string", source,
-		"character", "number", character,
-		"strline", "string", strline,
-		"line", "number", line or 0
+		"position", "table", position
 	)
-	self.source = source
-	self.line = line or 0
-	self.character = character
-	self.strline = strline
+	self.position = position
 
 	return self:Exception( self:type(), data, 1, true )
 end
 
 function SourceCodeException:get_data( indent )
-	local srcstr = self.line ~= 0
-	           and self.source .. "[" .. self.line .. ", " .. self.character .. "]: "
-	            or self.source .. "[" .. self.character .. "]: "
-	local posptr = (" "):rep( self.character - 1 ) .. "^"
-	return srcstr .. self.data .. "\n" .. self.strline:gsub( "\t", " " ) .. "\n" .. posptr
+	local srcstr = self.position.line ~= 0
+	           and self.position.source .. "[" .. self.position.line .. ", " .. self.position.character .. "]: "
+	            or self.position.source .. "[" .. self.position.character .. "]: "
+	local posptr = (" "):rep( self.position.character - 1 ) .. "^"
+	return srcstr .. self.data .. "\n" .. self.position.strline:gsub( "\t", " " ) .. "\n" .. posptr
 end

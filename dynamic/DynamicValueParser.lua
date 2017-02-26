@@ -1,5 +1,9 @@
 
+ -- @include exceptions.DynamicParserException
+
  -- @print including(dynamic.DynamicValueParser)
+
+local query_operator_list = { ["&"] = 1, ["|"] = 0, [">"] = 2 }
 
 local is_operator = {
 	["+"] = true;
@@ -45,7 +49,9 @@ local function parse_name( stream )
 	return stream:skip_value( TOKEN_IDENTIFIER )
 end
 
-@private
+@ifn DEBUG
+	@private
+@endif
 @class DynamicValueParser {
 	stream = nil;
 	flags = {};
@@ -83,7 +89,7 @@ function DynamicValueParser:parse_primary_expression()
 		if self.flags.enable_queries then
 			self.stream:next()
 		else
-			error "TODO: fix this error"
+			Exception.throw( DynamicParserException.disabled_queries( self.stream:peek().position ) )
 		end
 
 		local dynamic = not self.stream:skip( TOKEN_SYMBOL, "$" )
@@ -91,9 +97,9 @@ function DynamicValueParser:parse_primary_expression()
 
 		return { type = dynamic and DVALUE_DQUERY or DVALUE_QUERY, query = query, source = { type = DVALUE_APPLICATION } }
 	elseif self.stream:skip( TOKEN_SYMBOL, "(" ) then
-		local expr = self:parse_expression() or error "TODO: fix this error"
+		local expr = self:parse_expression() or Exception.throw( DynamicParserException.expected_expression( "after '('", self.stream:peek().position ) )
 
-		return self.stream:skip( TOKEN_SYMBOL, ")" ) and expr or error "TODO: fix this error"
+		return self.stream:skip( TOKEN_SYMBOL, ")" ) and expr or Exception.throw( DynamicParserException.expected_closing( ")", self.stream:peek().position ) )
 	end
 
 	return nil
@@ -116,14 +122,14 @@ function DynamicValueParser:parse_term()
 			local index = parse_name( self.stream )
 			           or self.stream:skip_value( TOKEN_KEYWORD, "parent" )
 		   			   or self.stream:skip_value( TOKEN_KEYWORD, "application" )
-			           or error "TODO: fix this error"
+			           or Exception.throw( DynamicParserException.invalid_dotindex( self.stream:peek() ) )
 
 			term = { type = DVALUE_DOTINDEX, value = term, index = index }
 
 		elseif self.stream:skip( TOKEN_SYMBOL, "#" ) then
 			local tag = parse_name( self.stream )
 			         or self.stream:skip_value( TOKEN_KEYWORD )
-					 or error "TODO: fix this error"
+					 or Exception.throw( DynamicParserException.invalid_tagname( self.stream:peek() ) )
 
 			term = { type = DVALUE_TAG_CHECK, value = term, tag = tag }
 
@@ -135,12 +141,13 @@ function DynamicValueParser:parse_term()
 			if not self.stream:skip( TOKEN_SYMBOL, ")" ) then
 				repeat
 					while self.stream:skip( TOKEN_WHITESPACE ) do end
-					parameters[#parameters + 1] = self:parse_expression() or error "TODO: fix this error"
+					parameters[#parameters + 1] = self:parse_expression()
+						or Exception.throw( DynamicParserException.expected_expression( "for function parameter", self.stream:peek().position ) )
 					while self.stream:skip( TOKEN_WHITESPACE ) do end
 				until not self.stream:skip( TOKEN_SYMBOL, "," )
 
 				if not self.stream:skip( TOKEN_SYMBOL, ")" ) then
-					error "TODO: fix this error"
+					Exception.throw( DynamicParserException.expected_closing( ")", self.stream:peek().position ) )
 				end
 			end
 
@@ -148,11 +155,11 @@ function DynamicValueParser:parse_term()
 
 		elseif self.stream:skip( TOKEN_SYMBOL, "[" ) then
 			while self.stream:skip( TOKEN_WHITESPACE ) do end
-			local index = self:parse_expression() or error "TODO: fix this error"
+			local index = self:parse_expression() or Exception.throw( DynamicParserException.expected_expression( "for index", self.stream:peek().position ) )
 			while self.stream:skip( TOKEN_WHITESPACE ) do end
 
 			if not self.stream:skip( TOKEN_SYMBOL, "]" ) then
-				error "TODO: fix this error"
+				Exception.throw( DynamicParserException.expected_closing( "]", self.stream:peek().position ) )
 			end
 
 			term = { type = DVALUE_INDEX, value = term, index = index }
@@ -161,7 +168,7 @@ function DynamicValueParser:parse_term()
 			if self.flags.enable_queries then
 				self.stream:next()
 			else
-				error "TODO: fix this error"
+				Exception.throw( DynamicParserException.disabled_queries( self.stream:peek().position ) )
 			end
 
 			local dynamic = not self.stream:skip( TOKEN_SYMBOL, "$" )
@@ -172,7 +179,7 @@ function DynamicValueParser:parse_term()
 			if self.flags.enable_percentages then
 				self.stream:next()
 			else
-				error "TODO: fix this error"
+				Exception.throw( DynamicParserException.disabled_percentages( self.stream:peek().position ) )
 			end
 
 			term = { type = DVALUE_PERCENTAGE, value = term }
@@ -218,7 +225,8 @@ function DynamicValueParser:parse_expression()
 
 		while self.stream:skip( TOKEN_WHITESPACE ) do end
 
-		operand_stack[#operand_stack + 1] = self:parse_term() or error "TODO: fix this"
+		operand_stack[#operand_stack + 1] = self:parse_term()
+			or Exception.throw( DynamicParserException.expected_expression( "after operator '" .. op .. "'", self.stream:peek().position ) )
 		operator_stack[#operator_stack + 1] = lua_operators[op] or op
 		precedences[#precedences + 1] = prec
 
@@ -248,39 +256,47 @@ function DynamicValueParser:parse_query_term( in_dynamic_value )
 		negation_count = negation_count + 1
 	end
 
-	if self.stream:test( TOKEN_IDENTIFIER ) or self.stream:skip( TOKEN_SYMBOL, "#" ) then -- ID
-		obj = { type = QUERY_ID, value = parse_name( self.stream ) or error "TODO: fix this error" }
-		ID_parsed = true
+	if self.stream:test( TOKEN_IDENTIFIER ) then -- ID
+		local name = self.stream:next().value
+
+		if self.stream:skip( TOKEN_SYMBOL, "?" ) then
+			obj = { type = QUERY_CLASS, value = name }
+			self.stream:skip( TOKEN_WHITESPACE )
+		else
+			obj = { type = QUERY_ID, value = name }
+		end
 	elseif self.stream:skip( TOKEN_SYMBOL, "*" ) then
 		obj = { type = QUERY_ANY }
-	elseif self.stream:skip( TOKEN_SYMBOL, "?" ) then
-		obj = { type = QUERY_CLASS, value = parse_name( self.stream ) or error "TODO: fix this error" }
 	elseif self.stream:skip( TOKEN_SYMBOL, "(" ) then
 		print( self.stream:peek().value )
 		obj = self:parse_query()
 
 		if not self.stream:skip( TOKEN_SYMBOL, ")" ) then
-			error "TODO: fix this error"
+			Exception.throw( DynamicParserException.expected_closing( ")", self.stream:skip().position ) )
 		end
 	end
 
 	local tags = {}
 
-	while (not in_dynamic_value or not obj) and self.stream:skip( TOKEN_SYMBOL, "." ) do -- tags
-		local tag = { type = QUERY_TAG, value = parse_name( self.stream ) or error "TODO: fix this error" }
+	while (not in_dynamic_value or not obj) and self.stream:skip( TOKEN_SYMBOL, "#" ) do -- tags
+		local tag = { type = QUERY_TAG, value = parse_name( self.stream ) or self.stream:skip_value( TOKEN_KEYWORD ) or Exception.throw( DynamicParserException.invalid_tagname( self.stream:peek() ) ) }
 
 		if obj then
 			obj = { type = QUERY_OPERATOR, operator = "&", lvalue = obj, rvalue = tag }
 		else
 			obj = tag
 		end
+
+		self.stream:skip( TOKEN_WHITESPACE )
 	end
 
 	if self.stream:skip( TOKEN_SYMBOL, "[" ) then
 		local attributes = {}
 
 		repeat
-			local name = parse_name( self.stream ) or error "TODO: fix this error"
+			while self.stream:skip( TOKEN_WHITESPACE ) do end
+
+			local name = parse_name( self.stream ) or Exception.throw( DynamicParserException.invalid_property( self.stream:peek() ) )
 
 			while self.stream:skip( TOKEN_WHITESPACE ) do end
 
@@ -291,11 +307,13 @@ function DynamicValueParser:parse_query_term( in_dynamic_value )
 			   or self.stream:skip_value( TOKEN_SYMBOL, ">=" )
 			   or self.stream:skip_value( TOKEN_SYMBOL, "<=" )
 			   or self.stream:skip_value( TOKEN_SYMBOL, "!=" )
-			   or error "TODO: fix this"
+			   or Exception.throw( DynamicParserException.invalid_comparison( self.stream:peek().position ) )
 
 			while self.stream:skip( TOKEN_WHITESPACE ) do end
 
-			local value = self:parse_expression() or error "TODO: fix this error"
+			local value = self:parse_expression() or Exception.throw( DynamicParserException.expected_expression( "after comparison '" .. comparison .. "'", self.stream:peek().position ) )
+
+			while self.stream:skip( TOKEN_WHITESPACE ) do end
 
 			attributes[#attributes + 1] = {
 				name = name;
@@ -304,8 +322,10 @@ function DynamicValueParser:parse_query_term( in_dynamic_value )
 			}
 		until not self.stream:skip( TOKEN_SYMBOL, "," )
 
+		while self.stream:skip( TOKEN_WHITESPACE ) do end
+
 		if not self.stream:skip( TOKEN_SYMBOL, "]" ) then
-			error "TODO: fix this error"
+			Exception.throw( DynamicParserException.expected_closing( "]", self.stream:peek().position ) )
 		end
 
 		obj = obj and {
@@ -317,7 +337,7 @@ function DynamicValueParser:parse_query_term( in_dynamic_value )
 	end
 
 	if not obj then
-		error "TODO: fix this error"
+		Exception.throw( DynamicParserException.expected_query_term( self.stream:peek().position ) )
 	end
 
 	if negation_count % 2 == 1 then
@@ -334,10 +354,10 @@ function DynamicValueParser:parse_query( in_dynamic_value )
 	while self.stream:skip( TOKEN_WHITESPACE ) do end
 
 	while self.stream:test( TOKEN_SYMBOL ) do
-		local prec = operator_list[self.stream:peek().value]
+		local prec = query_operator_list[self.stream:peek().value]
 
 		if prec then
-			while operators[1] and operator_list[operators[#operators]] >= prec do -- assumming left associativity for all operators
+			while operators[1] and query_operator_list[operators[#operators]] >= prec do -- assumming left associativity for all operators
 				operands[#operands - 1] = {
 					type = QUERY_OPERATOR;
 					lvalue = operands[#operands - 1];
