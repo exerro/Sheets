@@ -88,7 +88,7 @@ function Stream:consume_string()
 		elseif char == close then
 			self.position = i + 1
 			return { type = TOKEN_STRING, value = table.concat( str ), position = {
-				character = char, line = sline; source = self.source; strline = self.strline;
+				character = schar, line = sline; source = self.source; strline = sstrline;
 			} }
 		else
 			str[#str + 1] = char
