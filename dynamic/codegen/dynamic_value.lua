@@ -163,6 +163,17 @@ local function dynamic_value_internal( value, state )
 		return t
 
 	elseif value.type == DVALUE_BINEXPR then
+		local is_comparison = false
+		local prev_transitions
+
+		if value.operator == ">=" or value.operator == ">"
+		or value.operator == "<=" or value.operator == "<"
+		or value.operator == "==" or value.operator == "~=" then
+			is_comparison = true
+			prev_transitions = state.transitions
+			state.transitions = false
+		end
+
 		local lvalue = dynamic_value_internal( value.lvalue, state )
 		local rvalue = dynamic_value_internal( value.rvalue, state )
 		local n = #state.names + 1
@@ -173,6 +184,10 @@ local function dynamic_value_internal( value, state )
 			-- or value.operator == "~=" and "" -- potentially $abc != $def == true if one is undefined and false if both are undefined
 			or (lvalue.value .. " ~= nil and " .. rvalue.value .. " ~= nil and " .. lvalue.value .. " " .. value.operator .. " " .. rvalue.value .. " or nil")
 	 	) )
+
+		if is_comparison then
+			state.transitions = prev_transitions
+		end
 
 		t.dependencies = { lvalue, rvalue };
 		state.names[n] = "n" .. n
@@ -186,7 +201,7 @@ local function dynamic_value_internal( value, state )
 		local nr = #state.names + 1
 		local nu = #state.names + 2
 		local t = {
-			value = ValueHandler.properties[value.index].transitionable
+			value = ValueHandler.properties[value.index].transitionable and state.transitions
 				and "(n" .. nr .. " and n" .. nr .. ".values:get_final_property_value('" .. value.index .. "'))"
 				 or "(n" .. nr .. " and n" .. nr .. "." .. value.index .. ")";
 			complex = true;
@@ -333,7 +348,7 @@ local function dynamic_value_internal( value, state )
 	end
 end
 
-function dynamic_value_codegen( parsed_value, lifetime, env, obj, updater )
+function dynamic_value_codegen( parsed_value, lifetime, env, obj, updater, transitions )
 	local names = {}
 	local functions = {}
 	local inputs = {}
@@ -343,6 +358,7 @@ function dynamic_value_codegen( parsed_value, lifetime, env, obj, updater )
 		names = names;
 		functions = functions;
 		inputs = inputs;
+		transitions = transitions;
 	}
 	local return_value = dynamic_value_internal( parsed_value, state )
 

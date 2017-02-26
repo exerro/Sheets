@@ -107,6 +107,7 @@ function dynamic_property_setter_codegen( property, options, environment )
 		:gsub( "AST_MODIFICATION", function() return s3 end )
 		:gsub( "CASTING_RAW", function() return rawcaster end )
 		:gsub( "CASTING", function() return caster end )
+		:gsub( "TRANSITIONS", function() return ValueHandler.properties[property].transitionable and "true" or "false" end )
 	local env = setmetatable( { Typechecking = Typechecking, Type = Type, dynamic_value_codegen = dynamic_value_codegen, DynamicValueParser = DynamicValueParser, surface = surface, Stream = Stream, lifetimelib = lifetimelib }, { __index = _ENV or getfenv() } )
 	local f = assert( (load or loadstring)( str, "property setter '" .. property .. "'", nil, env ) )
 
@@ -291,7 +292,7 @@ return function( self, value, dont_set )
 		error "TODO: fix this error"
 	end
 
-	setter_f, initialiser_f = dynamic_value_codegen( value_parsed, lifetime, environment, self, update )
+	setter_f, initialiser_f = dynamic_value_codegen( value_parsed, lifetime, environment, self, update, TRANSITIONS )
 
 	initialiser_f()
 	update()

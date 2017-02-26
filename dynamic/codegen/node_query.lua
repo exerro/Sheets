@@ -86,10 +86,9 @@ function node_query_codegen( parsed_query, lifetime, updater )
 		init_localised[tl + i] = "i" .. i
 		val_names[i] = "v" .. i
 		initialise_code[i] = "f" .. i .. ", i" .. i .. " = dynamic_value_codegen( n" .. i .. ", lifetime, env, n, function()\n"
-		initialise_code[i] = "f" .. i .. ", i" .. i .. " = dynamic_value_codegen( n" .. i .. ", lifetime, env, n, function()\n"
 		                  .. "\tv" .. i .. " = f" .. i .. "()\n"
 						  .. "\treturn updater()\n"
-						  .. "end )"
+						  .. "end, false )"
 	end
 
 	for i = 1, tl do
