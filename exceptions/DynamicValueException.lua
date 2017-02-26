@@ -51,3 +51,19 @@ end
 function DynamicValueException.invalid_tag_object( type, position )
 	return DynamicValueException( "invalid object to test tag (type " .. type:tostring() .. ")", position )
 end
+
+function DynamicValueException.cast_failure( type, expected, position )
+	return DynamicValueException( "cannot cast type " .. type:tostring() .. " to " .. expected:type(), position )
+end
+
+function DynamicValueException.invalid_colour_value( value, position )
+	return DynamicValueException( "invalid colour value '" .. value .. "'", position )
+end
+
+function DynamicValueException.invalid_alignment_value( value, position )
+	return DynamicValueException( "invalid alignment value '" .. value .. "'", position )
+end
+
+function DynamicValueException.expected_eof( position )
+	return DynamicValueException( "expected eof", position )
+end
