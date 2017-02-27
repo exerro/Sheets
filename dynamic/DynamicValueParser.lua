@@ -126,29 +126,34 @@ function DynamicValueParser:parse_term()
 	local term = self:parse_primary_expression()
 
 	while term do
-		local position = self.stream:peek().position
-
 		if self.stream:skip( TOKEN_SYMBOL, "." ) then
-			local index = parse_name( self.stream )
-			           or self.stream:skip_value( TOKEN_KEYWORD, "parent" )
-		   			   or self.stream:skip_value( TOKEN_KEYWORD, "application" )
+			local index = self.stream:skip( TOKEN_IDENTIFIER )
+			           or self.stream:skip( TOKEN_KEYWORD, "parent" )
+		   			   or self.stream:skip( TOKEN_KEYWORD, "application" )
 			           or Exception.throw( DynamicParserException.invalid_dotindex( self.stream:peek() ) )
+			local pos = { source = term.position.source, lines = term.position.lines;
+		 		start = term.position.start, finish = index.position.finish }
 
-			term = { type = DVALUE_DOTINDEX, value = term, index = index, position = position }
+			term = { type = DVALUE_DOTINDEX, value = term, index = index.value, position = pos }
 
 		elseif self.stream:skip( TOKEN_SYMBOL, "#" ) then
-			local tag = parse_name( self.stream )
-			         or self.stream:skip_value( TOKEN_KEYWORD )
+			local tag = self.stream:skip( TOKEN_IDENTIFIER )
+			         or self.stream:skip( TOKEN_KEYWORD )
 					 or Exception.throw( DynamicParserException.invalid_tagname( self.stream:peek() ) )
+			local pos = { source = term.position.source, lines = term.position.lines;
+				start = term.position.start, finish = tag.position.finish }
 
-			term = { type = DVALUE_TAG_CHECK, value = term, tag = tag, position = position }
+			term = { type = DVALUE_TAG_CHECK, value = term, tag = tag.value, position = pos }
 
 		elseif self.stream:skip( TOKEN_SYMBOL, "(" ) then
 			local parameters = {}
+			local closing_brace
 
 			while self.stream:skip( TOKEN_WHITESPACE ) do end
 
-			if not self.stream:skip( TOKEN_SYMBOL, ")" ) then
+			closing_brace = self.stream:skip( TOKEN_SYMBOL, ")" )
+
+			if not closing_brace then
 				repeat
 					while self.stream:skip( TOKEN_WHITESPACE ) do end
 					parameters[#parameters + 1] = self:parse_expression()
@@ -156,23 +161,34 @@ function DynamicValueParser:parse_term()
 					while self.stream:skip( TOKEN_WHITESPACE ) do end
 				until not self.stream:skip( TOKEN_SYMBOL, "," )
 
-				if not self.stream:skip( TOKEN_SYMBOL, ")" ) then
+				closing_brace = self.stream:skip( TOKEN_SYMBOL, ")" )
+
+				if not closing_brace then
 					Exception.throw( DynamicParserException.expected_closing( ")", self.stream:peek().position ) )
 				end
 			end
 
-			term = { type = DVALUE_CALL, value = term, parameters = parameters, position = position }
+			local pos = { source = term.position.source, lines = term.position.lines;
+				start = term.position.start, finish = closing_brace.position.finish }
+
+			term = { type = DVALUE_CALL, value = term, parameters = parameters, position = pos }
 
 		elseif self.stream:skip( TOKEN_SYMBOL, "[" ) then
+			local closing_brace
 			while self.stream:skip( TOKEN_WHITESPACE ) do end
 			local index = self:parse_expression() or Exception.throw( DynamicParserException.expected_expression( "for index", self.stream:peek().position ) )
 			while self.stream:skip( TOKEN_WHITESPACE ) do end
 
-			if not self.stream:skip( TOKEN_SYMBOL, "]" ) then
+			closing_brace = self.stream:skip( TOKEN_SYMBOL, "]" )
+
+			if not closing_brace then
 				Exception.throw( DynamicParserException.expected_closing( "]", self.stream:peek().position ) )
 			end
 
-			term = { type = DVALUE_INDEX, value = term, index = index, position = position }
+			local pos = { source = term.position.source, lines = term.position.lines;
+				start = term.position.start, finish = closing_brace.position.finish }
+
+			term = { type = DVALUE_INDEX, value = term, index = index, position = pos }
 
 		elseif self.stream:test( TOKEN_SYMBOL, "$" ) then
 			if self.flags.enable_queries then
@@ -183,23 +199,29 @@ function DynamicValueParser:parse_term()
 
 			local dynamic = not self.stream:skip( TOKEN_SYMBOL, "$" )
 			local query = self:parse_query_term( true )
+			local pos = { source = term.position.source, lines = term.position.lines;
+				start = term.position.start, finish = query.position.finish }
 
-			term = { type = dynamic and DVALUE_DQUERY or DVALUE_QUERY, query = query, source = term, position = position }
+			term = { type = dynamic and DVALUE_DQUERY or DVALUE_QUERY, query = query, source = term, position = pos }
 		elseif self.stream:test( TOKEN_SYMBOL, "%" ) then
 			if self.flags.enable_percentages then
-				self.stream:next()
+				local percent = self.stream:next()
+				local pos = { source = term.position.source, lines = term.position.lines;
+					start = term.position.start, finish = percent.position.finish }
+
+				term = { type = DVALUE_PERCENTAGE, value = term, position = pos }
 			else
 				Exception.throw( DynamicParserException.disabled_percentages( self.stream:peek().position ) )
 			end
-
-			term = { type = DVALUE_PERCENTAGE, value = term, position = position }
 		else
 			break
 		end
 	end
 
 	for i = #operators, 1, -1 do
-		term = term and { type = DVALUE_UNEXPR, value = term, operator = operators[i], position = op_positions[i] }
+		term = term and { type = DVALUE_UNEXPR, value = term, operator = operators[i], position = {
+			source = term.position.source, lines = term.position.lines;
+			start = op_positions[i].start, finish = term.position.finish } }
 	end
 
 	return term
@@ -232,7 +254,8 @@ function DynamicValueParser:parse_expression()
 				operator = table.remove( operator_stack, #operator_stack );
 				lvalue = operand_stack[#operand_stack];
 				rvalue = rvalue;
-				position = table.remove( positions, #positions );
+				position = { source = rvalue.position.source, lines = rvalue.position.lines;
+					start = operand_stack[#operand_stack].position.start, finish = rvalue.position.finish };
 			}
 		end
 
@@ -257,7 +280,8 @@ function DynamicValueParser:parse_expression()
 			operator = table.remove( operator_stack, #operator_stack );
 			lvalue = operand_stack[#operand_stack];
 			rvalue = rvalue;
-			position = table.remove( positions, #positions );
+			position = { source = rvalue.position.source, lines = rvalue.position.lines;
+				start = operand_stack[#operand_stack].position.start, finish = rvalue.position.finish };
 		}
 	end
 
@@ -266,38 +290,56 @@ end
 
 function DynamicValueParser:parse_query_term( in_dynamic_value )
 	local negation_count, obj = 0
+	local start_position = self.stream:peek().position
 
 	while self.stream:skip( TOKEN_SYMBOL, "!" ) do
 		negation_count = negation_count + 1
 	end
 
 	if self.stream:test( TOKEN_IDENTIFIER ) then -- ID
+		local pos = self.stream:peek().position
 		local name = self.stream:next().value
 
 		if self.stream:skip( TOKEN_SYMBOL, "?" ) then
-			obj = { type = QUERY_CLASS, value = name }
+			obj = { type = QUERY_CLASS, value = name, position = pos }
 			self.stream:skip( TOKEN_WHITESPACE )
 		else
-			obj = { type = QUERY_ID, value = name }
+			obj = { type = QUERY_ID, value = name, position = pos }
 		end
-	elseif self.stream:skip( TOKEN_SYMBOL, "*" ) then
-		obj = { type = QUERY_ANY }
-	elseif self.stream:skip( TOKEN_SYMBOL, "(" ) then
-		print( self.stream:peek().value )
+	elseif self.stream:test( TOKEN_SYMBOL, "*" ) then
+		obj = { type = QUERY_ANY, position = self.stream:next().position }
+	elseif self.stream:test( TOKEN_SYMBOL, "(" ) then
+		local spos = self.stream:next().position
+
 		obj = self:parse_query()
 
-		if not self.stream:skip( TOKEN_SYMBOL, ")" ) then
+		if not self.stream:test( TOKEN_SYMBOL, ")" ) then
 			Exception.throw( DynamicParserException.expected_closing( ")", self.stream:skip().position ) )
 		end
+
+		obj.position = {
+			source = spos.source, lines = spos.lines;
+			start = spos.start, finish = self.stream:next().position.finish
+		}
 	end
 
 	local tags = {}
 
-	while (not in_dynamic_value or not obj) and self.stream:skip( TOKEN_SYMBOL, "#" ) do -- tags
-		local tag = { type = QUERY_TAG, value = parse_name( self.stream ) or self.stream:skip_value( TOKEN_KEYWORD ) or Exception.throw( DynamicParserException.invalid_tagname( self.stream:peek() ) ) }
+	while (not in_dynamic_value or not obj) and self.stream:test( TOKEN_SYMBOL, "#" ) do -- tags
+		local spos = self.stream:next().position
+		local tag_token = self.stream:skip( TOKEN_IDENTIFIER )
+		               or self.stream:skip( TOKEN_KEYWORD )
+					   or Exception.throw( DynamicParserException.invalid_tagname( self.stream:peek() ) )
+		local tag = { type = QUERY_TAG, value = tag_token.value, position = {
+			source = spos.source, lines = spos.lines;
+			start = spos.start, finish = tag_token.position.finish;
+		} }
 
 		if obj then
-			obj = { type = QUERY_OPERATOR, operator = "&", lvalue = obj, rvalue = tag }
+			obj = { type = QUERY_OPERATOR, operator = "&", lvalue = obj, rvalue = tag, position = {
+				source = tag.position.source, lines = tag.position.lines;
+				start = obj.position.start, finish = tag.position.finish;
+			} }
 		else
 			obj = tag
 		end
@@ -305,7 +347,8 @@ function DynamicValueParser:parse_query_term( in_dynamic_value )
 		self.stream:skip( TOKEN_WHITESPACE )
 	end
 
-	if self.stream:skip( TOKEN_SYMBOL, "[" ) then
+	if self.stream:test( TOKEN_SYMBOL, "[" ) then
+		local spos = self.stream:next().position
 		local attributes = {}
 
 		repeat
@@ -339,7 +382,7 @@ function DynamicValueParser:parse_query_term( in_dynamic_value )
 
 		while self.stream:skip( TOKEN_WHITESPACE ) do end
 
-		if not self.stream:skip( TOKEN_SYMBOL, "]" ) then
+		if not self.stream:test( TOKEN_SYMBOL, "]" ) then
 			Exception.throw( DynamicParserException.expected_closing( "]", self.stream:peek().position ) )
 		end
 
@@ -348,6 +391,10 @@ function DynamicValueParser:parse_query_term( in_dynamic_value )
 			rvalue = obj;
 			lvalue = { type = QUERY_ATTRIBUTES, attributes = attributes };
 			operator = "&";
+			position = {
+				source = spos.source, lines = spos.lines;
+				start = spos, finish = self.stream:next().position.finish;
+			}
 		} or { type = QUERY_ATTRIBUTES, attributes = attributes }
 	end
 
@@ -356,7 +403,12 @@ function DynamicValueParser:parse_query_term( in_dynamic_value )
 	end
 
 	if negation_count % 2 == 1 then
-		obj = { type = QUERY_NEGATE, value = obj }
+		obj = { type = QUERY_NEGATE, value = obj, position = {
+			source = start_position.source, lines = start_position.lines;
+			start = start_position, finish = obj.position.finish;
+		} }
+	else
+		obj.position.start = start_position;
 	end
 
 	return obj
@@ -373,11 +425,18 @@ function DynamicValueParser:parse_query( in_dynamic_value )
 
 		if prec then
 			while operators[1] and query_operator_list[operators[#operators]] >= prec do -- assumming left associativity for all operators
+				local lvalue = operands[#operands - 1]
+				local rvalue = table.remove( operands, #operands )
+
 				operands[#operands - 1] = {
 					type = QUERY_OPERATOR;
-					lvalue = operands[#operands - 1];
-					rvalue = table.remove( operands, #operands );
+					lvalue = lvalue;
+					rvalue = rvalue;
 					operator = table.remove( operators, #operators );
+					position = {
+						source = lvalue.position.source, lines = lvalue.position.lines;
+						start = lvalue.position.start, finish = rvalue.position.finish;
+					}
 				}
 			end
 
@@ -394,11 +453,18 @@ function DynamicValueParser:parse_query( in_dynamic_value )
 	end
 
 	while operators[1] do
+		local lvalue = operands[#operands - 1]
+		local rvalue = table.remove( operands, #operands )
+		
 		operands[#operands - 1] = {
 			type = QUERY_OPERATOR;
-			lvalue = operands[#operands - 1];
-			rvalue = table.remove( operands, #operands );
+			lvalue = lvalue;
+			rvalue = rvalue;
 			operator = table.remove( operators, #operators );
+			position = {
+				source = lvalue.position.source, lines = lvalue.position.lines;
+				start = lvalue.position.start, finish = rvalue.position.finish;
+			}
 		}
 	end
 

@@ -3,6 +3,7 @@
  -- @include codegen.node_query
  -- @include exceptions.Exception
  -- @include exceptions.DynamicValueException
+ -- @include exceptions.DynamicCastException
 
  -- @print including(dynamic.codegen.dynamic_setter)
 
@@ -111,7 +112,7 @@ function dynamic_property_setter_codegen( property, options, environment )
 		:gsub( "CASTING_RAW", function() return rawcaster end )
 		:gsub( "CASTING", function() return caster end )
 		:gsub( "TRANSITIONS", function() return ValueHandler.properties[property].transitionable and "true" or "false" end )
-	local env = setmetatable( { Typechecking = Typechecking, Type = Type, dynamic_value_codegen = dynamic_value_codegen, DynamicValueParser = DynamicValueParser, surface = surface, Stream = Stream, lifetimelib = lifetimelib, Exception = Exception, DynamicValueException = DynamicValueException }, { __index = _ENV or getfenv() } )
+	local env = setmetatable( { Typechecking = Typechecking, Type = Type, dynamic_value_codegen = dynamic_value_codegen, DynamicValueParser = DynamicValueParser, surface = surface, Stream = Stream, lifetimelib = lifetimelib, Exception = Exception, DynamicValueException = DynamicValueException, DynamicCastException = DynamicCastException }, { __index = _ENV or getfenv() } )
 	local f = assert( (load or loadstring)( str, "property setter " .. ("%q"):format( property ) .. " ", nil, env ) )
 
 	-- @if DEBUG
@@ -162,7 +163,7 @@ if value_type == Type.primitive.integer or value_type == Type.primitive.number o
 		value = value_parsed;
 	}
 else
-	Exception.throw( DynamicValueException.cast_failure( value_type, Type.primitive.string, value_parsed.position ) )
+	Exception.throw( DynamicCastException( value_type, Type.primitive.string, value_parsed.position ) )
 end
 ]]
 
@@ -170,7 +171,7 @@ RAW_STRING_CASTING = [[
 if value_type == Type.primitive.integer or value_type == Type.primitive.number or value_type == Type.primitive.boolean then
 	value = tostring( value )
 else
-	Exception.throw( DynamicValueException.cast_failure( value_type, Type.primitive.string, value_parsed.position ) )
+	Exception.throw( DynamicCastException( value_type, Type.primitive.string, value_parsed.position ) )
 end
 ]]
 
@@ -181,7 +182,7 @@ if value_type == Type.primitive.number then
 		value = value_parsed;
 	}
 else
-	Exception.throw( DynamicValueException.cast_failure( value_type, Type.primitive.integer, value_parsed.position ) )
+	Exception.throw( DynamicCastException( value_type, Type.primitive.integer, value_parsed.position ) )
 end
 ]]
 
@@ -189,20 +190,20 @@ RAW_INTEGER_CASTING = [[
 if value_type == Type.primitive.number then
 	value = math.floor( value )
 else
-	Exception.throw( DynamicValueException.cast_failure( value_type, Type.primitive.integer, value_parsed.position ) )
+	Exception.throw( DynamicCastException( value_type, Type.primitive.integer, value_parsed.position ) )
 end
 ]]
 
 NUMBER_CASTING = [[
 if not (value_type == Type.primitive.integer) then
-	Exception.throw( DynamicValueException.cast_failure( value_type, Type.primitive.number, value_parsed.position ) )
+	Exception.throw( DynamicCastException( value_type, Type.primitive.number, value_parsed.position ) )
 end
 ]]
 
 RAW_NUMBER_CASTING = NUMBER_CASTING
 
 COLOUR_CASTING = [[
-Exception.throw( DynamicValueException.cast_failure( value_type, Type.sheets.colour, value_parsed.position ) )
+Exception.throw( DynamicCastException( value_type, Type.sheets.colour, value_parsed.position ) )
 ]]
 
 RAW_COLOUR_CASTING = [[
@@ -211,12 +212,12 @@ if value_type == Type.primitive.integer then
 		Exception.throw( DynamicValueException.invalid_colour_value( value, value_parsed.position ) )
 	end
 else
-	Exception.throw( DynamicValueException.cast_failure( value_type, Type.sheets.colour, value_parsed.position ) )
+	Exception.throw( DynamicCastException( value_type, Type.sheets.colour, value_parsed.position ) )
 end
 ]]
 
 ALIGNMENT_CASTING = [[
-Exception.throw( DynamicValueException.cast_failure( value_type, Type.sheets.alignment, value_parsed.position ) )
+Exception.throw( DynamicCastException( value_type, Type.sheets.alignment, value_parsed.position ) )
 ]]
 
 RAW_ALIGNMENT_CASTING = [[
@@ -225,12 +226,12 @@ if value_type == Type.primitive.integer then
 		Exception.throw( DynamicValueException.invalid_alignment_value( value_type, Type.sheets.colour, value_parsed.position ) )
 	end
 else
-	Exception.throw( DynamicValueException.cast_failure( value_type, Type.sheets.alignment, value_parsed.position ) )
+	Exception.throw( DynamicCastException( value_type, Type.sheets.alignment, value_parsed.position ) )
 end
 ]]
 
 ERR_CASTING = [[
-Exception.throw( DynamicValueException.cast_failure( value_type, rtype, value_parsed.position ) )
+Exception.throw( DynamicCastException( value_type, rtype, value_parsed.position ) )
 ]]
 
 GENERIC_SETTER = [[

@@ -103,7 +103,7 @@ function Typechecking.check_type( ast, state )
 
 		if ast.operator == "#" then
 			if not (type == ListType( Type.any ) or type == Type.primitive.string) then
-				Exception.throw( DynamicValueException.invalid_type_len( type, ast.position ) )
+				Exception.throw( DynamicValueException.invalid_type_len( type, ast.value.position ) )
 			end
 
 			type = Type.primitive.integer
@@ -111,7 +111,7 @@ function Typechecking.check_type( ast, state )
 			-- any type is fine
 		elseif ast.operator == "-" or ast.operator == "+" then
 			if not (type == Type.primitive.integer or type == Type.primitive.number) then
-				Exception.throw( DynamicValueException.invalid_type_unmp( type, ast.operator, ast.position ) )
+				Exception.throw( DynamicValueException.invalid_type_unmp( type, ast.operator, ast.value.position ) )
 			end
 		end
 
@@ -173,6 +173,8 @@ function Typechecking.check_type( ast, state )
 				end
 
 				ast.operator = ".."
+
+				return ast, Type.primitive.string
 			elseif lvalue_type == Type.primitive.integer then
 				if rvalue_type == Type.primitive.integer then
 					return ast, Type.primitive.integer

@@ -41,19 +41,15 @@ function DynamicValueException.invalid_index_dotindex( idx, position )
 end
 
 function DynamicValueException.invalid_rvalue_type( op, type, expected, position )
-	return DynamicValueException( "invalid rvalue type for operator '" .. op .. "' (expected " .. expected:tostring() .. ", got " .. type:tostring() .. ")", position )
+	return DynamicValueException( "invalid rhs type for operator '" .. op .. "' (expected " .. expected:tostring() .. ", got " .. type:tostring() .. ")", position )
 end
 
 function DynamicValueException.invalid_lvalue_type( op, type, expected, position )
-	return DynamicValueException( "invalid lvalue type for operator '" .. op .. "' (expected " .. expected:tostring() .. ", got " .. type:tostring() .. ")", position )
+	return DynamicValueException( "invalid lhs type for operator '" .. op .. "' (expected " .. expected:tostring() .. ", got " .. type:tostring() .. ")", position )
 end
 
 function DynamicValueException.invalid_tag_object( type, position )
 	return DynamicValueException( "invalid object to test tag (expected type Sheet|Screen, got " .. type:tostring() .. ")", position )
-end
-
-function DynamicValueException.cast_failure( type, expected, position )
-	return DynamicValueException( "cannot cast type " .. type:tostring() .. " to " .. expected:tostring(), position )
 end
 
 function DynamicValueException.invalid_colour_value( value, position )
