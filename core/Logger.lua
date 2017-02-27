@@ -11,6 +11,7 @@ local active = {}
 }
 
 function Logger:Logger( path )
+	parameters.check_constructor( self.class, 1, "path", "string", path )
 	self.path = path
 
 	local h = io.open( path, "w" )
@@ -25,8 +26,9 @@ function Logger:Logger( path )
 end
 
 function Logger:write( data )
+	parameters.check( 1, "data", "string", data )
+
 	local logs = self == Logger and active or { self }
-	--local time = ccemux and math.floor( ccemux.milliTime() / 10 + 0.5 ) / 100 or os.clock()
 	local time = os.clock()
 	local timefmt = "[" .. tostring( time ) .. (time % 1 == 0 and ".00" or time % 0.1 == 0 and "0" or "") .. "] "
 
@@ -57,6 +59,7 @@ function Logger:warn( data, userspace )
 end
 
 function Logger:error( exception )
+	parameters.check( 1, "exception", Exception, exception )
 	self:write( "FATAL :: " .. exception:tostring() )
 	return Exception.throw( exception )
 end
