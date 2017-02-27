@@ -19,7 +19,7 @@ function Logger:Logger( path )
 	if h then
 		h:close()
 	else
-		Exception.throw( LoggerException.file_open_failed( path ) )
+		Exception.throw( LoggerException.file_open_failed( path, 3 ) )
 	end
 
 	active[#active + 1] = self
@@ -39,7 +39,7 @@ function Logger:write( data )
 			h:write( timefmt .. data .. "\n" )
 			h:close()
 		else
-			Exception.throw( LoggerException.file_open_failed( logs[i].path ) )
+			return Exception.throw( LoggerException.file_open_failed( logs[i].path, 1 ) )
 		end
 	end
 end

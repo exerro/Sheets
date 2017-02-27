@@ -91,7 +91,6 @@ function Exception.default( handler )
 	return { default = true, handler = handler }
 end
 
-
 function Exception.traceback( level, count, userspace )
 	local trace = {}
 
