@@ -6,6 +6,6 @@
 
 }
 
-function ResourceLoadException:ResourceLoadException( data, level )
-	return self:Exception( "ResourceLoadException", data, level )
+function ResourceLoadException:ResourceLoadException( ... )
+	return self:Exception( self:type(), ... )
 end

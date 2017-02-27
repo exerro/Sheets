@@ -21,42 +21,7 @@ end
 function Exception:Exception( name, data, level, userspace )
 	self.name = name
 	self.data = data
-	self.trace = {}
-
-	level = ( level or 1 ) + 2
-
-	if level > 2 then
-		local i = 1
-
-		while #self.trace < 5 do
-			local src = select( 2, pcall( error, "", level + i ) ):gsub( ": $", "" )
-
-			if src == "pcall" or src == "" then
-				break
-			else
-				local src_and_line
-
-				if __get_src_and_line then
-					local line, msg = src:match( "^" .. (select(2,pcall(error,"@",2)):match"^(.*):%d+: @$") .. ":(%d+)$" )
-
-					if line then
-						src, line = __get_src_and_line( tonumber( line ) )
-						src_and_line = src .. "[" .. line .. "]"
-					else
-						src_and_line = ("%s[%s]"):format( src:match "(.+):(%d+)" )
-					end
-				else
-					src_and_line = ("%s[%s]"):format( src:match "(.+):(%d+)" )
-				end
-
-				if not (userspace and src:find "^sheets%.") then
-					userspace = false
-					self.trace[#self.trace + 1] = src_and_line
-				end
-			end
-			i = i + 1
-		end
-	end
+	self.trace = Exception.traceback( ( level or 1 ) + 2, 5, userspace )
 end
 
 function Exception:get_traceback( initial, delimiter )
@@ -124,4 +89,46 @@ end
 
 function Exception.default( handler )
 	return { default = true, handler = handler }
+end
+
+
+function Exception.traceback( level, count, userspace )
+	local trace = {}
+
+	level = (level or 1) + 1
+
+	if level > 2 then
+		local i = 1
+
+		while #trace < count do
+			local src = select( 2, pcall( error, "", level + i ) ):gsub( ": $", "" )
+
+			if src == "pcall" or src == "" then
+				break
+			else
+				local src_and_line
+
+				if __get_src_and_line then
+					local line, msg = src:match( "^" .. (select(2,pcall(error,"@",2)):match"^(.*):%d+: @$") .. ":(%d+)$" )
+
+					if line then
+						src, line = __get_src_and_line( tonumber( line ) )
+						src_and_line = src .. "[" .. line .. "]"
+					else
+						src_and_line = ("%s[%s]"):format( src:match "(.+):(%d+)" )
+					end
+				else
+					src_and_line = ("%s[%s]"):format( src:match "(.+):(%d+)" )
+				end
+
+				if not (userspace and src:find "^sheets%.") then
+					userspace = false
+					trace[#trace + 1] = src_and_line
+				end
+			end
+			i = i + 1
+		end
+	end
+
+	return trace
 end

@@ -6,10 +6,10 @@
 	thread = nil;
 }
 
-function ThreadRuntimeException:ThreadRuntimeException( thread, data, level )
+function ThreadRuntimeException:ThreadRuntimeException( thread, ... )
 	self.thread = thread
 
-	return self:Exception( "ThreadRuntimeException", data, level )
+	return self:Exception( self:type(), ... )
 end
 
 function ThreadRuntimeException:get_thread()

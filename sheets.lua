@@ -84,6 +84,7 @@ colour = {
  -- @include core.Application
  -- @include core.Screen
  -- @include core.Sheet
+ -- @include core.Logger
 
  -- @if THREADING
      -- @include core.Thread

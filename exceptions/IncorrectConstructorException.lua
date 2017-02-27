@@ -6,6 +6,6 @@
 
 }
 
-function IncorrectConstructorException:IncorrectConstructorException( data, level )
-	return self:Exception( "IncorrectConstructorException", data, level )
+function IncorrectConstructorException:IncorrectConstructorException( ... )
+	return self:Exception( self:type(), ... )
 end
