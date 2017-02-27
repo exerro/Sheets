@@ -19,6 +19,9 @@ local function add_data_t( res, changed, data, lookup, src )
 	for i = 1, #data do
 		if data[i].type == "property" or data[i].type == "getter" or data[i].type == "setter" then
 			if res[data[i].property] then
+				for k, v in pairs( res[data[i].property] ) do
+					print( k, tostring( v ) )
+				end
 				error( "conflicting property name '" .. data[i].property .. "' from components '" .. src.property .. "' and '" .. res[data[i].property].from.property .. "'" )
 			else
 				res[data[i].property] = { type = data[i].type, from = src, name = data[i].property, environment = {}, default = data[i].default, options = data[i].options }

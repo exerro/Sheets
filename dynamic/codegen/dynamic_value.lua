@@ -1,5 +1,6 @@
 
  -- @include codegen.node_query
+ -- @include exceptions.DynamicValueException
 
  -- @print including(dynamic.codegen.dynamic_value)
 
@@ -18,7 +19,6 @@ local function basic_value( value, update )
 end
 
 local function dynamic_value_internal( value, state )
-	if not value then return error "here" end
 	if value.type == DVALUE_INTEGER
 	or value.type == DVALUE_FLOAT
 	or value.type == DVALUE_BOOLEAN then
@@ -32,7 +32,7 @@ local function dynamic_value_internal( value, state )
 
 	elseif value.type == DVALUE_PARENT then
 		if state.object:type_of( Application ) then
-			error "TODO: fix this error"
+			Exception.throw( DynamicValueException.app_no_parent( value.position ) )
 		else
 			local nr = #state.names + 1
 			local nu = #state.names + 2
@@ -82,15 +82,13 @@ local function dynamic_value_internal( value, state )
 		end
 
 	elseif value.type == DVALUE_IDENTIFIER then
-		if state.environment[value.value] ~= nil then
-			state.inputs[#state.inputs + 1] = state.environment[value.value].value;
-			return basic_value( "i" .. #state.inputs )
-		else
-			error "TODO: fix this error"
-		end
+		-- will have been resolved at the Typechecking stage, so no checking required
+		state.inputs[#state.inputs + 1] = state.environment[value.value].value;
+
+		return basic_value( "i" .. #state.inputs )
 
 	-- elseif value.type == DVALUE_PERCENTAGE then
-	-- percentages will be resolved at the Typechecking stage
+	-- percentages will have been resolved at the Typechecking stage
 
 	elseif value.type == DVALUE_UNEXPR then
 		local val = dynamic_value_internal( value.value, state )
@@ -342,12 +340,14 @@ local function dynamic_value_internal( value, state )
 		return t
 
 	else
-		-- TODO: every other type of node
-		error "TODO: fix this error"
+		-- just incase a new dvalue expression type is added
+		return error( "Sheets bug: please report '" .. value.type .. "' dynamic value codegen not being implemented", 0 )
 	end
 end
 
- -- @private
+ -- @ifn DEBUG
+ 	-- @private
+ -- @endif
  -- @localise dynamic_value_codegen
 function dynamic_value_codegen( parsed_value, lifetime, env, obj, updater, transitions )
 	local names = {}

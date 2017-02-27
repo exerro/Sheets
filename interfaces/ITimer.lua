@@ -1,7 +1,7 @@
 
  -- @print including(interfaces.ITimer)
 
-local clockf = clockf
+local clockf = os.clock
 
 if ccemux then
 	local milliTime = ccemux.milliTime

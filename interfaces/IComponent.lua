@@ -77,7 +77,7 @@ function IComponent:add_components( ... )
 
 	for property in pairs( changed ) do
 		if not ValueHandler.properties[property] then
-			error "TODO: fix this error"
+			error( "undefined property '" .. property .. "' from component '" .. properties[property].from.property .. "'", 2 )
 		end
 
 		local v = properties[property]
@@ -92,7 +92,7 @@ function IComponent:add_components( ... )
 			elseif type( options ) == "function" then
 				setter_function = options
 			else
-				error "TODO: fix this error"
+				error( "invalid options type (" .. type( options ) .. ") for property '" .. property .. "' of component '" .. properties[property].from.property .. "'" )
 			end
 
 			unsetter_function = function( self )
@@ -129,7 +129,7 @@ function copy_prop( t )
 		environment[k] = v
 	end
 
-	return { type = t.type, options = options, environment = environment, default = t.default }
+	return { type = t.type, options = options, environment = environment, default = t.default, from = t.from }
 end
 
 function get_transition_function( name )

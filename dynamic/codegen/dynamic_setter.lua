@@ -1,6 +1,9 @@
 
  -- @include codegen.dynamic_value
  -- @include codegen.node_query
+ -- @include exceptions.Exception
+ -- @include exceptions.DynamicValueException
+ -- @include exceptions.DynamicCastException
 
  -- @print including(dynamic.codegen.dynamic_setter)
 
@@ -109,8 +112,8 @@ function dynamic_property_setter_codegen( property, options, environment )
 		:gsub( "CASTING_RAW", function() return rawcaster end )
 		:gsub( "CASTING", function() return caster end )
 		:gsub( "TRANSITIONS", function() return ValueHandler.properties[property].transitionable and "true" or "false" end )
-	local env = setmetatable( { Typechecking = Typechecking, Type = Type, dynamic_value_codegen = dynamic_value_codegen, DynamicValueParser = DynamicValueParser, surface = surface, Stream = Stream, lifetimelib = lifetimelib }, { __index = _ENV or getfenv() } )
-	local f = assert( (load or loadstring)( str, "property setter '" .. property .. "'", nil, env ) )
+	local env = setmetatable( { Typechecking = Typechecking, Type = Type, dynamic_value_codegen = dynamic_value_codegen, DynamicValueParser = DynamicValueParser, surface = surface, Stream = Stream, lifetimelib = lifetimelib, Exception = Exception, DynamicValueException = DynamicValueException, DynamicCastException = DynamicCastException, DynamicParserException = DynamicParserException }, { __index = _ENV or getfenv() } )
+	local f = assert( (load or loadstring)( str, "property setter " .. ("%q"):format( property ) .. " ", nil, env ) )
 
 	-- @if DEBUG
 		local h = fs.open( ".sheets_debug/property_" .. property .. ".lua", "w" ) or error( property )
@@ -160,7 +163,7 @@ if value_type == Type.primitive.integer or value_type == Type.primitive.number o
 		value = value_parsed;
 	}
 else
-	error "TODO: fix this error"
+	Exception.throw( DynamicCastException( value_type, Type.primitive.string, value_parsed.position ) )
 end
 ]]
 
@@ -168,7 +171,7 @@ RAW_STRING_CASTING = [[
 if value_type == Type.primitive.integer or value_type == Type.primitive.number or value_type == Type.primitive.boolean then
 	value = tostring( value )
 else
-	error "TODO: fix this error"
+	Exception.throw( DynamicCastException( value_type, Type.primitive.string, value_parsed.position ) )
 end
 ]]
 
@@ -179,58 +182,56 @@ if value_type == Type.primitive.number then
 		value = value_parsed;
 	}
 else
-	error "TODO: fix this error"
+	Exception.throw( DynamicCastException( value_type, Type.primitive.integer, value_parsed.position ) )
 end
 ]]
-
-
 
 RAW_INTEGER_CASTING = [[
 if value_type == Type.primitive.number then
 	value = math.floor( value )
 else
-	error "TODO: fix this error"
+	Exception.throw( DynamicCastException( value_type, Type.primitive.integer, value_parsed.position ) )
 end
 ]]
 
 NUMBER_CASTING = [[
 if not (value_type == Type.primitive.integer) then
-	error "TODO: fix this error"
+	Exception.throw( DynamicCastException( value_type, Type.primitive.number, value_parsed.position ) )
 end
 ]]
 
 RAW_NUMBER_CASTING = NUMBER_CASTING
 
 COLOUR_CASTING = [[
-error "TODO: fix this error"
+Exception.throw( DynamicCastException( value_type, Type.sheets.colour, value_parsed.position ) )
 ]]
 
 RAW_COLOUR_CASTING = [[
 if value_type == Type.primitive.integer then
 	if value ~= TRANSPARENT and (math.log( value ) / math.log( 2 ) % 1 ~= 0 or value < 1 or value > 2 ^ 15) then
-		error "TODO: fix this error"
+		Exception.throw( DynamicValueException.invalid_colour_value( value, value_parsed.position ) )
 	end
 else
-	error "TODO: fix this error"
+	Exception.throw( DynamicCastException( value_type, Type.sheets.colour, value_parsed.position ) )
 end
 ]]
 
 ALIGNMENT_CASTING = [[
-error "TODO: fix this error"
+Exception.throw( DynamicCastException( value_type, Type.sheets.alignment, value_parsed.position ) )
 ]]
 
 RAW_ALIGNMENT_CASTING = [[
 if value_type == Type.primitive.integer then
 	if value ~= ALIGNMENT_LEFT and value ~= ALIGNMENT_RIGHT and value ~= ALIGNMENT_TOP and value ~= ALIGNMENT_BOTTOM and value ~= ALIGNMENT_CENTRE then
-		error "TODO: fix this error"
+		Exception.throw( DynamicValueException.invalid_alignment_value( value_type, Type.sheets.colour, value_parsed.position ) )
 	end
 else
-	error "TODO: fix this error"
+	Exception.throw( DynamicCastException( value_type, Type.sheets.alignment, value_parsed.position ) )
 end
 ]]
 
 ERR_CASTING = [[
-error "TODO: fix this error"
+Exception.throw( DynamicCastException( value_type, rtype, value_parsed.position ) )
 ]]
 
 GENERIC_SETTER = [[
@@ -255,14 +256,18 @@ return function( self, value, dont_set )
 
 	VALUE_MODIFICATION
 
-	local parser = DynamicValueParser( Stream( value ) )
+	local parser = DynamicValueParser( Stream( value, 'property PROPERTY_QUOTED ', 0 ) )
 
 	parser.flags.enable_queries = true
 
 	ENV_MODIFICATION
 
 	local value_parsed = parser:parse_expression()
-		or "TODO: fix this error"
+		or Exception.throw( DynamicParserException.expected_expression( "for property value", parser.stream:peek().position ) )
+
+	if not parser.stream:is_EOF() then
+		Exception.throw( DynamicParserException.expected_eof( parser.stream:peek().position ) )
+	end
 
 	AST_MODIFICATION
 
@@ -287,10 +292,6 @@ return function( self, value, dont_set )
 
 			self[DEFINED_PROPERTY] = not dont_set
 		end
-	end
-
-	if not parser.stream:is_EOF() then
-		error "TODO: fix this error"
 	end
 
 	setter_f, initialiser_f = dynamic_value_codegen( value_parsed, lifetime, environment, self, update, TRANSITIONS )

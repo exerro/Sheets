@@ -1,4 +1,5 @@
 
+ -- @include exceptions.StreamException
  -- @print including(dynamic.Stream)
 
 local escape_chars = {
@@ -33,16 +34,39 @@ local keywords = {
 	["parent"] = true;
 }
 
-@private
+@ifn DEBUG
+	@private
+@endif
 @class Stream {
 	position = 1;
 	line = 1;
 	character = 1;
 	text = "";
+	source = "stream";
+	strline = "";
+	lines = {}
 }
 
-function Stream:Stream( text )
+function Stream:Stream( text, source, line )
 	self.text = text
+	self.source = source
+	self.strline = text:match "(.-)\n" or text
+	self.lines = {}
+
+	while text do
+		self.lines[#self.lines + 1] = text:match "^(.-)\n" or text
+		text = text:match "^.-\n(.*)$"
+	end
+end
+
+function Stream:get_strline()
+	local text = self.text
+
+	for i = 1, self.line - 1 do
+		text = text:gsub( ".-\n", "" )
+	end
+
+	self.strline = text:match "(.-)\n" or text
 end
 
 function Stream:consume_string()
@@ -51,6 +75,10 @@ function Stream:consume_string()
 	local escaped = false
 	local sub = string.sub
 	local str = {}
+	local schar, sline = self.character, self.line
+	local sstrline = self.strline
+
+	self.character = self.character + 1
 
 	for i = self.position + 1, #text do
 		local char = sub( text, i, i )
@@ -58,6 +86,7 @@ function Stream:consume_string()
 		if char == "\n" then
 			self.line = self.line + 1
 			self.character = 0
+			self:get_strline()
 		end
 
 		if escaped then
@@ -66,8 +95,12 @@ function Stream:consume_string()
 			escaped = true
 		elseif char == close then
 			self.position = i + 1
+			self.character = self.character + 1
 			return { type = TOKEN_STRING, value = table.concat( str ), position = {
-				character = char, line = line;
+				source = self.source;
+				start = { character = schar, line = sline };
+				finish = { character = self.character - 1, line = self.line };
+				lines = self.lines;
 			} }
 		else
 			str[#str + 1] = char
@@ -76,7 +109,11 @@ function Stream:consume_string()
 		self.character = self.character + 1
 	end
 
-	error( "TODO: fix this error" )
+	Exception.throw( StreamException.unfinished_string {
+		source = self.source, lines = self.lines;
+		start = { character = schar, line = sline };
+		finish = { character = self.character, line = self.line };
+	} )
 end
 
 function Stream:consume_identifier()
@@ -90,7 +127,10 @@ function Stream:consume_identifier()
 	self.character = self.character + #word
 
 	return { type = type, value = word, position = {
-		character = char, line = self.line;
+		source = self.source;
+		start = { character = char, line = self.line };
+		finish = { character = char + #word - 1, line = self.line };
+		lines = self.lines;
 	} }
 end
 
@@ -105,7 +145,10 @@ function Stream:consume_number()
 	self.character = self.character + #num
 
 	return { type = type, value = num, position = {
-		character = char, line = line;
+		source = self.source;
+		start = { character = char, line = self.line };
+		finish = { character = char + #num - 1, line = self.line };
+		lines = self.lines;
 	} }
 end
 
@@ -119,6 +162,7 @@ function Stream:consume_whitespace()
 		self.position = self.position + 1
 		self.character = 1
 		type = TOKEN_NEWLINE
+		self:get_strline()
 	else
 		local n = #self.text:match( "^[^%S\n]+", self.position )
 
@@ -128,7 +172,10 @@ function Stream:consume_whitespace()
 	end
 
 	return { type = type, value = value, position = {
-		character = char, line = line;
+		source = self.source;
+		start = { character = char, line = self.line };
+		finish = { character = self.character - 1, line = self.line };
+		lines = self.lines;
 	} }
 end
 
@@ -147,22 +194,30 @@ function Stream:consume_symbol()
 	elseif symbols[s2] then
 		value = s2
 	elseif not symbols[s1] then
-		print( s1, s2, s3 )
-		error( "TODO: fix this error" )
+		Exception.throw( StreamException.unexpected_symbol( s1, {
+			source = self.source, lines = self.lines;
+			start = { character = self.character, line = self.line };
+			finish = { character = self.character, line = self.line };
+		} ) )
 	end
 
 	self.character = self.character + #value
 	self.position = self.position + #value
 
 	return { type = TOKEN_SYMBOL, value = value, position = {
-		character = char, line = self.line;
+		source = self.source;
+		start = { character = char, line = self.line };
+		finish = { character = char + #value - 1, line = self.line };
+		lines = self.lines;
 	} }
 end
 
 function Stream:consume()
 	if self.position > #self.text then
 		return { type = TOKEN_EOF, value = "", position = {
-			character = self.character, line = self.line;
+			source = self.source; lines = self.lines;
+			start = { character = self.character, line = self.line };
+			finish = { character = self.character, line = self.line };
 		} }
 	end
 

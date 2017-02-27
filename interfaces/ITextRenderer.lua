@@ -7,7 +7,7 @@ local wrapline, wrap
 
 @private
 @interface ITextRenderer {
-
+	text_lines = {}
 }
 
 function ITextRenderer:ITextRenderer()
