@@ -44,13 +44,19 @@ local keywords = {
 	text = "";
 	source = "stream";
 	strline = "";
+	lines = {}
 }
 
 function Stream:Stream( text, source, line )
 	self.text = text
 	self.source = source
 	self.strline = text:match "(.-)\n" or text
-	self.line = line
+	self.lines = {}
+
+	while text do
+		self.lines[#self.lines + 1] = text:match "^(.-)\n" or text
+		text = text:match "^.-\n(.*)$"
+	end
 end
 
 function Stream:get_strline()
@@ -72,6 +78,8 @@ function Stream:consume_string()
 	local schar, sline = self.character, self.line
 	local sstrline = self.strline
 
+	self.character = self.character + 1
+
 	for i = self.position + 1, #text do
 		local char = sub( text, i, i )
 
@@ -87,8 +95,12 @@ function Stream:consume_string()
 			escaped = true
 		elseif char == close then
 			self.position = i + 1
+			self.character = self.character + 1
 			return { type = TOKEN_STRING, value = table.concat( str ), position = {
-				character = schar, line = sline; source = self.source; strline = sstrline;
+				source = self.source;
+				start = { character = schar, line = sline };
+				finish = { character = self.character - 1, line = self.line };
+				lines = self.lines;
 			} }
 		else
 			str[#str + 1] = char
@@ -111,7 +123,10 @@ function Stream:consume_identifier()
 	self.character = self.character + #word
 
 	return { type = type, value = word, position = {
-		character = char, line = self.line; source = self.source; strline = self.strline;
+		source = self.source;
+		start = { character = char, line = self.line };
+		finish = { character = char + #word - 1, line = self.line };
+		lines = self.lines;
 	} }
 end
 
@@ -126,7 +141,10 @@ function Stream:consume_number()
 	self.character = self.character + #num
 
 	return { type = type, value = num, position = {
-		character = char, line = self.line; source = self.source; strline = self.strline;
+		source = self.source;
+		start = { character = char, line = self.line };
+		finish = { character = char + #num - 1, line = self.line };
+		lines = self.lines;
 	} }
 end
 
@@ -150,7 +168,10 @@ function Stream:consume_whitespace()
 	end
 
 	return { type = type, value = value, position = {
-		character = char, line = self.line; source = self.source; strline = self.strline;
+		source = self.source;
+		start = { character = char, line = self.line };
+		finish = { character = self.character - 1, line = self.line };
+		lines = self.lines;
 	} }
 end
 
@@ -176,7 +197,10 @@ function Stream:consume_symbol()
 	self.position = self.position + #value
 
 	return { type = TOKEN_SYMBOL, value = value, position = {
-		character = char, line = self.line; source = self.source; strline = self.strline;
+		source = self.source;
+		start = { character = char, line = self.line };
+		finish = { character = char + #value - 1, line = self.line };
+		lines = self.lines;
 	} }
 end
 

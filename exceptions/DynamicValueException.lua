@@ -25,31 +25,31 @@ function DynamicValueException.undefined_reference( ref, position )
 end
 
 function DynamicValueException.invalid_type_len( type, position )
-	return DynamicValueException( "invalid type (" .. type:tostring() .. ") to get length of", position )
+	return DynamicValueException( "invalid type to get length of (expected Any[]|String, got " .. type:tostring() .. ")", position )
 end
 
 function DynamicValueException.invalid_type_unmp( type, op, position )
-	return DynamicValueException( "invalid type (" .. type:tostring() .. ") for unary operator '" .. op .. "'", position )
+	return DynamicValueException( "invalid type for unary operator '" .. op .. "' (" .. type:tostring() .. ")", position )
 end
 
 function DynamicValueException.invalid_type_dotindex( type, position )
-	return DynamicValueException( "invalid type (" .. type:tostring() .. ") to index", position )
+	return DynamicValueException( "invalid type to index (expected Sheet|Screen|Application, got " .. type:tostring() .. ")", position )
 end
 
 function DynamicValueException.invalid_index_dotindex( idx, position )
-	return DynamicValueException( "invalid index '" .. idx .. "'", position )
+	return DynamicValueException( "undefined index '" .. idx .. "'", position )
 end
 
-function DynamicValueException.invalid_rvalue_type( op, type, position )
-	return DynamicValueException( "invalid rvalue type (" .. type:tostring() .. ") for operator '" .. op .. "'", position )
+function DynamicValueException.invalid_rvalue_type( op, type, expected, position )
+	return DynamicValueException( "invalid rvalue type for operator '" .. op .. "' (expected " .. expected:tostring() .. ", got " .. type:tostring() .. ")", position )
 end
 
-function DynamicValueException.invalid_lvalue_type( op, type, position )
-	return DynamicValueException( "invalid lvalue type (" .. type:tostring() .. ") for operator '" .. op .. "'", position )
+function DynamicValueException.invalid_lvalue_type( op, type, expected, position )
+	return DynamicValueException( "invalid lvalue type for operator '" .. op .. "' (expected " .. expected:tostring() .. ", got " .. type:tostring() .. ")", position )
 end
 
 function DynamicValueException.invalid_tag_object( type, position )
-	return DynamicValueException( "invalid object to test tag (type " .. type:tostring() .. ")", position )
+	return DynamicValueException( "invalid object to test tag (expected type Sheet|Screen, got " .. type:tostring() .. ")", position )
 end
 
 function DynamicValueException.cast_failure( type, expected, position )

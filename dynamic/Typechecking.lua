@@ -179,16 +179,16 @@ function Typechecking.check_type( ast, state )
 				elseif rvalue_type == Type.primitive.number then
 					return ast, Type.primitive.number
 				else
-					Exception.throw( DynamicValueException.invalid_rvalue_type( ast.operator, rvalue_type, rvalue_ast.position ) )
+					Exception.throw( DynamicValueException.invalid_rvalue_type( ast.operator, rvalue_type, Type.primitive.integer / Type.primitive.number, rvalue_ast.position ) )
 				end
 			elseif lvalue_type == Type.primitive.number then
 				if rvalue_type == Type.primitive.integer or rvalue_type == Type.primitive.number then
 					return ast, Type.primitive.number
 				else
-					Exception.throw( DynamicValueException.invalid_rvalue_type( ast.operator, rvalue_type, rvalue_ast.position ) )
+					Exception.throw( DynamicValueException.invalid_rvalue_type( ast.operator, rvalue_type, Type.primitive.integer / Type.primitive.number, rvalue_ast.position ) )
 				end
 			else
-				Exception.throw( DynamicValueException.invalid_lvalue_type( ast.operator, lvalue_type, lvalue_ast.position ) )
+				Exception.throw( DynamicValueException.invalid_lvalue_type( ast.operator, lvalue_type, Type.primitive.integer / Type.primitive.number, lvalue_ast.position ) )
 			end
 
 		elseif ast.operator == "-" or ast.operator == "*" or ast.operator == "^" then
@@ -198,16 +198,16 @@ function Typechecking.check_type( ast, state )
 				elseif rvalue_type == Type.primitive.number then
 					return ast, Type.primitive.number
 				else
-					Exception.throw( DynamicValueException.invalid_rvalue_type( ast.operator, rvalue_type, rvalue_ast.position ) )
+					Exception.throw( DynamicValueException.invalid_rvalue_type( ast.operator, rvalue_type, Type.primitive.integer / Type.primitive.number, rvalue_ast.position ) )
 				end
 			elseif lvalue_type == Type.primitive.number then
 				if rvalue_type == Type.primitive.integer or rvalue_type == Type.primitive.number then
 					return ast, Type.primitive.number
 				else
-					Exception.throw( DynamicValueException.invalid_rvalue_type( ast.operator, rvalue_type, rvalue_ast.position ) )
+					Exception.throw( DynamicValueException.invalid_rvalue_type( ast.operator, rvalue_type, Type.primitive.integer / Type.primitive.number, rvalue_ast.position ) )
 				end
 			else
-				Exception.throw( DynamicValueException.invalid_lvalue_type( ast.operator, lvalue_type, lvalue_ast.position ) )
+				Exception.throw( DynamicValueException.invalid_lvalue_type( ast.operator, lvalue_type, Type.primitive.integer / Type.primitive.number, lvalue_ast.position ) )
 			end
 
 		elseif ast.operator == "/" then
@@ -215,10 +215,10 @@ function Typechecking.check_type( ast, state )
 			 	if rvalue_type == Type.primitive.integer / Type.primitive.number then
 					return ast, Type.primitive.number
 				else
-					Exception.throw( DynamicValueException.invalid_rvalue_type( ast.operator, rvalue_type, rvalue_ast.position ) )
+					Exception.throw( DynamicValueException.invalid_rvalue_type( ast.operator, rvalue_type, Type.primitive.integer / Type.primitive.number, rvalue_ast.position ) )
 				end
 			else
-				Exception.throw( DynamicValueException.invalid_lvalue_type( ast.operator, lvalue_type, lvalue_ast.position ) )
+				Exception.throw( DynamicValueException.invalid_lvalue_type( ast.operator, lvalue_type, Type.primitive.integer / Type.primitive.number, lvalue_ast.position ) )
 			end
 
 		elseif ast.operator == "%" then
@@ -226,10 +226,10 @@ function Typechecking.check_type( ast, state )
 				if rvalue_type == Type.primitive.integer then
 					return ast, Type.primitive.number
 				else
-					Exception.throw( DynamicValueException.invalid_rvalue_type( ast.operator, rvalue_type, rvalue_ast.position ) )
+					Exception.throw( DynamicValueException.invalid_rvalue_type( ast.operator, rvalue_type, Type.primitive.integer, rvalue_ast.position ) )
 				end
 			else
-				Exception.throw( DynamicValueException.invalid_lvalue_type( ast.operator, lvalue_type, lvalue_ast.position ) )
+				Exception.throw( DynamicValueException.invalid_lvalue_type( ast.operator, lvalue_type, Type.primitive.integer, lvalue_ast.position ) )
 			end
 
 		elseif ast.operator == "and" then
@@ -281,10 +281,10 @@ function Typechecking.check_type( ast, state )
 				if rvalue_type == Type.primitive.integer / Type.primitive.number then
 					return ast, Type.primitive.boolean
 				else
-					Exception.throw( DynamicValueException.invalid_rvalue_type( ast.operator, rvalue_type, rvalue_ast.position ) )
+					Exception.throw( DynamicValueException.invalid_rvalue_type( ast.operator, rvalue_type, Type.primitive.integer / Type.primitive.number, rvalue_ast.position ) )
 				end
 			else
-				Exception.throw( DynamicValueException.invalid_lvalue_type( ast.operator, lvalue_type, lvalue_ast.position ) )
+				Exception.throw( DynamicValueException.invalid_lvalue_type( ast.operator, lvalue_type, Type.primitive.integer / Type.primitive.number, lvalue_ast.position ) )
 			end
 
 		elseif ast.operator == "~=" or ast.operator == "==" then

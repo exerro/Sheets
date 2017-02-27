@@ -19,9 +19,17 @@ function SourceCodeException:SourceCodeException( data, position )
 end
 
 function SourceCodeException:get_data( indent )
-	local srcstr = self.position.line ~= 0
-	           and self.position.source .. "[" .. self.position.line .. ", " .. self.position.character .. "]: "
-	            or self.position.source .. "[" .. self.position.character .. "]: "
-	local posptr = (" "):rep( self.position.character - 1 ) .. "^"
-	return srcstr .. self.data .. "\n" .. self.position.strline:gsub( "\t", " " ) .. "\n" .. posptr
+	local strline
+
+	if self.position.start.line == self.position.finish.line then
+		strline = self.position.lines[self.position.finish.line]:gsub( "\t", " " ) .. "\n"
+		       .. (" "):rep( self.position.start.character - 1 ) .. ("^"):rep( self.position.finish.character - self.position.start.character + 1 ) .. " @ " .. self.position.source .. "[" .. self.position.start.line .. ", " .. self.position.start.character .. "]\n"
+	else
+		strline = "from " .. self.position.lines[self.position.start.line]:gsub( "\t", " " ) .. "\n"
+		       .. (" "):rep( self.position.start.character + 4 ) .. ("^"):rep( #self.position.lines[self.position.start.line] - self.position.start.character + 1 ) .. " @ " .. self.position.source .. "[" .. self.position.start.line .. ", " .. self.position.start.character .. "]\n"
+			   .. "  to " .. self.position.lines[self.position.finish.line]:gsub( "\t", " " ) .. "\n"
+		       .. (" "):rep( self.position.start.character + 4 ) .. ("^"):rep( self.position.finish.character - self.position.start.character + 1 ) .. " @ " .. self.position.source .. "[" .. self.position.finish.line .. ", " .. self.position.finish.character .. "]\n"
+	end
+
+	return self.data .. "\n" .. strline
 end
