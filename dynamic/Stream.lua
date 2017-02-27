@@ -109,7 +109,11 @@ function Stream:consume_string()
 		self.character = self.character + 1
 	end
 
-	Exception.throw( StreamException.unfinished_string( self.source, schar, sstrline, sline ) )
+	Exception.throw( StreamException.unfinished_string {
+		source = self.source, lines = self.lines;
+		start = { character = schar, line = sline };
+		finish = { character = self.character, line = self.line };
+	} )
 end
 
 function Stream:consume_identifier()
@@ -190,7 +194,11 @@ function Stream:consume_symbol()
 	elseif symbols[s2] then
 		value = s2
 	elseif not symbols[s1] then
-		Exception.throw( StreamException.unexpected_symbol( s1, self.source, self.character, self.strline, self.line ) )
+		Exception.throw( StreamException.unexpected_symbol( s1, {
+			source = self.source, lines = self.lines;
+			start = { character = self.character, line = self.line };
+			finish = { character = self.character, line = self.line };
+		} ) )
 	end
 
 	self.character = self.character + #value
@@ -207,7 +215,9 @@ end
 function Stream:consume()
 	if self.position > #self.text then
 		return { type = TOKEN_EOF, value = "", position = {
-			character = self.character, line = self.line; source = self.source; strline = self.strline;
+			source = self.source; lines = self.lines;
+			start = { character = self.character, line = self.line };
+			finish = { character = self.character, line = self.line };
 		} }
 	end
 

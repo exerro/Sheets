@@ -218,6 +218,10 @@ function DynamicValueParser:parse_term()
 		end
 	end
 
+	if not term and #operators > 0 then
+		Exception.throw( DynamicParserException.expected_expression( "after unary operator '" .. operators[#operators] .. "'", self.stream:peek().position ) )
+	end
+
 	for i = #operators, 1, -1 do
 		term = term and { type = DVALUE_UNEXPR, value = term, operator = operators[i], position = {
 			source = term.position.source, lines = term.position.lines;
@@ -262,7 +266,7 @@ function DynamicValueParser:parse_expression()
 		while self.stream:skip( TOKEN_WHITESPACE ) do end
 
 		operand_stack[#operand_stack + 1] = self:parse_term()
-			or Exception.throw( DynamicParserException.expected_expression( "after operator '" .. op .. "'", pos ) )
+			or Exception.throw( DynamicParserException.expected_expression( "after binary operator '" .. op .. "'", pos ) )
 		operator_stack[#operator_stack + 1] = lua_operators[op] or op
 		precedences[#precedences + 1] = prec
 		positions[#positions + 1] = pos
@@ -455,7 +459,7 @@ function DynamicValueParser:parse_query( in_dynamic_value )
 	while operators[1] do
 		local lvalue = operands[#operands - 1]
 		local rvalue = table.remove( operands, #operands )
-		
+
 		operands[#operands - 1] = {
 			type = QUERY_OPERATOR;
 			lvalue = lvalue;

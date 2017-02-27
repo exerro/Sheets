@@ -47,3 +47,7 @@ end
 function DynamicParserException.expected_query_term( position )
 	return DynamicParserException( "expected query term", position )
 end
+
+function DynamicParserException.expected_eof( position )
+	return DynamicParserException( "expected end of expression, got unexpected token", position )
+end

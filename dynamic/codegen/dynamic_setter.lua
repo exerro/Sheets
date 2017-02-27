@@ -112,7 +112,7 @@ function dynamic_property_setter_codegen( property, options, environment )
 		:gsub( "CASTING_RAW", function() return rawcaster end )
 		:gsub( "CASTING", function() return caster end )
 		:gsub( "TRANSITIONS", function() return ValueHandler.properties[property].transitionable and "true" or "false" end )
-	local env = setmetatable( { Typechecking = Typechecking, Type = Type, dynamic_value_codegen = dynamic_value_codegen, DynamicValueParser = DynamicValueParser, surface = surface, Stream = Stream, lifetimelib = lifetimelib, Exception = Exception, DynamicValueException = DynamicValueException, DynamicCastException = DynamicCastException }, { __index = _ENV or getfenv() } )
+	local env = setmetatable( { Typechecking = Typechecking, Type = Type, dynamic_value_codegen = dynamic_value_codegen, DynamicValueParser = DynamicValueParser, surface = surface, Stream = Stream, lifetimelib = lifetimelib, Exception = Exception, DynamicValueException = DynamicValueException, DynamicCastException = DynamicCastException, DynamicParserException = DynamicParserException }, { __index = _ENV or getfenv() } )
 	local f = assert( (load or loadstring)( str, "property setter " .. ("%q"):format( property ) .. " ", nil, env ) )
 
 	-- @if DEBUG
@@ -263,7 +263,11 @@ return function( self, value, dont_set )
 	ENV_MODIFICATION
 
 	local value_parsed = parser:parse_expression()
-		or "TODO: fix this error"
+		or Exception.throw( DynamicParserException.expected_expression( "for property value", parser.stream:peek().position ) )
+
+	if not parser.stream:is_EOF() then
+		Exception.throw( DynamicParserException.expected_eof( parser.stream:peek().position ) )
+	end
 
 	AST_MODIFICATION
 
@@ -288,10 +292,6 @@ return function( self, value, dont_set )
 
 			self[DEFINED_PROPERTY] = not dont_set
 		end
-	end
-
-	if not parser.stream:is_EOF() then
-		Exception.throw( DynamicValueException.expected_eof( parser.stream:peek().position ) )
 	end
 
 	setter_f, initialiser_f = dynamic_value_codegen( value_parsed, lifetime, environment, self, update, TRANSITIONS )

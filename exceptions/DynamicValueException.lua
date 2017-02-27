@@ -59,7 +59,3 @@ end
 function DynamicValueException.invalid_alignment_value( value, position )
 	return DynamicValueException( "invalid alignment value '" .. value .. "'", position )
 end
-
-function DynamicValueException.expected_eof( position )
-	return DynamicValueException( "expected eof", position )
-end
