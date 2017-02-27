@@ -46,6 +46,11 @@ function Logger:log( data )
 	return self:write( "INFO :: " .. tostring( data ) )
 end
 
+function Logger:note( data, userspace )
+	local trace = Exception.traceback( 2, 1, userspace )
+	return self:write( "NOTICE :: " .. tostring( data ) .. "\n\tin " .. table.concat( trace, "\n\tin " ) )
+end
+
 function Logger:warn( data, userspace )
 	local trace = Exception.traceback( 2, 3, userspace )
 	return self:write( "WARNING :: " .. tostring( data ) .. "\n\tin " .. table.concat( trace, "\n\tin " ) )
@@ -54,4 +59,16 @@ end
 function Logger:error( exception )
 	self:write( "FATAL :: " .. exception:tostring() )
 	return Exception.throw( exception )
+end
+
+function Logger:close()
+	if self == Logger then
+		active = {}
+	else
+		for i = 1, #active do
+			if active[i] == self then
+				return table.remove( active, i )
+			end
+		end
+	end
 end
