@@ -33,15 +33,14 @@ local files = {
 	"bin/cmd/debug.lua";
 	"bin/cmd/help.lua";
 	"bin/cmd/init.lua";
+	"bin/cmd/list.lua";
 	"bin/cmd/open.lua";
 	"bin/cmd/remove.lua";
 	"bin/cmd/status.lua";
 	"bin/cmd/version.lua";
-	"lib/class.lua";
 	"lib/config.lua";
 	"lib/json.lua";
 	"lib/param.lua";
-	"lib/preprocess.lua";
 	"versions.txt";
 }
 
