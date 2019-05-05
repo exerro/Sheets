@@ -27,7 +27,7 @@ function ITextRenderer:wrap_text()
 	if self.width <= 0 then
 		self.text_lines = {}
 	else
-		self.text_lines = wrap( self.active and self.active_text or self.text, self.width )
+		self.text_lines = wrap( self.text, self.width )
 	end
 	self:set_changed()
 
@@ -62,7 +62,7 @@ function ITextRenderer:draw_text( surface, x, y )
 			x_offset = self.width - #lines[i]
 		end
 
-		surface:drawString( x + x_offset, y + offset + i - 1, lines[i], nil, self.active and self.active_text_colour or self.text_colour )
+		surface:drawString( x + x_offset, y + offset + i - 1, lines[i], nil, self.text_colour )
 	end
 end
 

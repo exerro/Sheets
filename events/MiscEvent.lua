@@ -1,6 +1,7 @@
 
  -- @print including(events.MiscEvent)
 
+@private
 @class MiscEvent extends Event {
 	event = "MiscEvent";
 	parameters = {};

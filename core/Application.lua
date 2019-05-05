@@ -1,4 +1,6 @@
 
+ -- @include Theme
+
  -- @print including(core.Application)
 
 local function exception_handler( e )
@@ -15,6 +17,8 @@ local handle_event
 	running = true;
 
 	screen = nil;
+
+	theme = nil;
 
 	-- internal
 	screens = {};
@@ -34,6 +38,7 @@ local handle_event
 function Application:Application( name, path )
 	self.name = name
 	self.path = path or name
+	self.theme = Theme( self )
 
 	self.screens = {}
 	self.resource_loaders = {}
@@ -43,12 +48,18 @@ function Application:Application( name, path )
 	 -- @endif
 	self.keys = {}
 
-	self:ICollatedChildren()
 	self:IQueryable()
 	self:ITimer()
 
 	self.screens[1] = Screen( self, term.getSize() ):add_terminal( term )
 	self.screen = self.screens[1]
+	-- no need for `self.theme:apply()` as theme will have no rules
+end
+
+function Application:set_theme( theme )
+	self.theme:unapply()
+	self.theme = theme
+	self.theme:apply()
 end
 
 function Application:register_resource_loader( type, loader )
@@ -256,7 +267,7 @@ function Application:run()
 		while self.running do
 			local event = { coroutine.yield() }
 			if event[1] == "timer" and event[2] == t then
-				t = os.startTimer( .05 )
+				t = os.startTimer( 1/FPS )
 			elseif event[1] == "terminate" and self.terminateable then
 				self:stop()
 			else

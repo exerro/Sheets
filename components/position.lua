@@ -33,6 +33,7 @@ COMPONENT(position) {
 	};
 	PROPERTY(y, 0) {
 		custom_value_modification_code = "if value > self.max_y then\nvalue = self.max_y\nend\nif value < self.min_y then\nvalue = self.min_y\nend";
+	PROPERTY(y, 0) {
 		ENABLE_PERCENTAGES({type=DVALUE_DOTINDEX;value={type=DVALUE_PARENT};index='height'});
 	};
 	ENVIRONMENT(y) {

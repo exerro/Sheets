@@ -1,7 +1,13 @@
 
+ -- @include interfaces.IComponent
+ -- @include components.parent
+ -- @include components.position
+ -- @include components.size
+ -- @include interfaces.IThemed
+
  -- @print including(core.Sheet)
 
-@class Sheet implements ITagged, ISize {
+@class Sheet implements IComponent, ITagged, IThemed {
 	x = 0;
 	y = 0;
 	z = 0;
@@ -21,33 +27,17 @@
 	values = nil;
 }
 
+Sheet:add_components( 'parent', 'position', 'size' )
+
 function Sheet:Sheet( x, y, width, height )
+	self:initialise_properties()
+	self:ITagged()
+	self:IThemed()
+
 	if x ~= nil then self:set_x( x ) end
 	if y ~= nil then self:set_y( y ) end
 	if width ~= nil then self:set_width( width ) end
 	if height ~= nil then self:set_height( height ) end
-end
-
-function Sheet:initialise()
-	self.values = ValueHandler( self )
-
-	self:ITagged()
-	self:ISize()
-
-	self.values:add( "x", 0 )
-	self.values:add( "y", 0 )
-	self.values:add( "z", 0, { custom_update_code = "if self.parent then self.parent:reposition_child_z_index( self ) end" } )
-	self.values:add( "parent", nil, function( self, parent )
-		if parent and not class.type_of( parent, Sheet ) and not class.type_of( parent, Screen ) then
-			Exception.throw( IncorrectParameterException( "expected Sheet or Screen parent, got " .. class.type( parent ), 2 ) )
-		end
-
-		if parent then
-			return parent:add_child( self )
-		else
-			return self:remove()
-		end
-	end )
 end
 
 function Sheet:remove()

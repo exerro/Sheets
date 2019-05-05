@@ -1,6 +1,14 @@
 
  -- @print including(interfaces.ITimer)
 
+local clockf = os.clock
+
+if ccemux then
+	local milliTime = ccemux.milliTime
+	clockf = function()return milliTime()/1000 end
+end
+
+@private
 @interface ITimer {
 	timerID = 0;
 	time = nil;
@@ -9,9 +17,11 @@
 }
 
 function ITimer:ITimer()
-	self.time = os.clock()
+	self.time = clockf()
 	self.timers = {}
 	self:step_timer()
+
+	function self:ITimer() end
 end
 
 function ITimer:new_timer( n )
@@ -51,7 +61,7 @@ end
 
 function ITimer:step_timer()
 	self.lt = self.time
-	self.time = os.clock()
+	self.time = clockf()
 
 	return self
 end

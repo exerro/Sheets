@@ -1,26 +1,20 @@
 
+ -- @include components.colour
+ -- @include components.offset
+
  -- @print including(elements.Container)
 
--- needs to update to new exception system
-
-@class Container extends Sheet implements IChildContainer, IColoured {
-	colour = nil;
-	x_offset = 0;
-	y_offset = 0;
-
+@class Container extends Sheet implements IChildContainer {
 	on_pre_draw = nil;
 	on_post_draw = nil;
 }
 
+Container:add_components( 'colour', 'offset' )
+
 function Container:Container( x, y, w, h )
-	self:initialise()
 	self:ICollatedChildren()
 	self:IQueryable()
 	self:IChildContainer()
-	self:IColoured()
-
-	self.values:add( "x_offset", 0 )
-	self.values:add( "y_offset", 0 )
 
 	return self:Sheet( x, y, w, h )
 end

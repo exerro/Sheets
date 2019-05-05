@@ -19,7 +19,7 @@ function Thread:Thread( f, ... )
 	self.f = f
 	self.co = coroutine.create( f )
 
-	self:resume( ... )
+	return self:resume( ... )
 end
 
 function Thread:stop()
@@ -46,9 +46,9 @@ function Thread:resume( event, ... )
 		self.filter = data
 	else
 		if data == EXCEPTION_ERROR then
-			return Exception.throw( Exception.thrown() )
+			data = Exception.thrown()
 		end
 
-		return Exception.throw( ThreadRuntimeException, data, 0 )
+		return Exception.throw( ThreadRuntimeException( self, data, 0 ) )
 	end
 end

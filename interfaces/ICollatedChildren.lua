@@ -1,12 +1,15 @@
 
  -- @print including(interfaces.ICollatedChildren)
 
+@private
 @interface ICollatedChildren {
 	collated_children = {}
 }
 
 function ICollatedChildren:ICollatedChildren()
 	self.collated_children = {}
+
+	function self:ICollatedChildren() end
 end
 
 function ICollatedChildren:update_collated( mode, child, data )

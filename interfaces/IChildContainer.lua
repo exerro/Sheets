@@ -1,6 +1,7 @@
 
  -- @print including(interfaces.IChildContainer)
 
+@private
 @interface IChildContainer implements ICollatedChildren, IQueryable {
 	children = {};
 	application = nil;
@@ -15,6 +16,11 @@ function IChildContainer:IChildContainer()
 		self:add_child( child )
 		return self
 	end
+
+	function self:IChildContainer() end
+
+	self:ICollatedChildren()
+	self:IQueryable()
 end
 
 function IChildContainer:child_value_changed( child )

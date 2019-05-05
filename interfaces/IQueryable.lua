@@ -1,14 +1,22 @@
 
+ -- @include lib.lifetime
+ -- @include dynamic.codegen.node_query
+
  -- @print including(interfaces.IQueryable)
 
 local setf, addtag, remtag, query_raw
 
+@private
 @interface IQueryable implements ICollatedChildren {
 	query_tracker = nil;
 }
 
 function IQueryable:IQueryable()
 	self.query_tracker = QueryTracker( self )
+
+	function self:IQueryable() end
+
+	self:ICollatedChildren()
 end
 
 function IQueryable:iquery( query )
@@ -98,7 +106,7 @@ function query_raw( self, query, lifetime, track, parsed )
 		end
 	end
 
-	query_f, init_f = Codegen.node_query( query, lifetime, updater )
+	query_f, init_f = node_query_codegen( query, lifetime, updater )
 
 	init_f( self )
 
@@ -111,23 +119,12 @@ function query_raw( self, query, lifetime, track, parsed )
 
 	if track then
 		ID = self.query_tracker:track( query_f, matches )
-
 		self.query_tracker.lifetimes[ID] = lifetime
 
 		return matches, ID
 	else
 		if not parsed then
-			for i = #lifetime, 1, -1 do
-				local l = lifetime[i]
-				lifetime[i] = nil
-				if l[1] == "value" then
-					l[2].values:unsubscribe( l[3], l[4] )
-				elseif l[1] == "query" then
-					l[2]:unsubscribe( l[3], l[4] )
-				elseif l[1] == "tag" then
-					l[2]:unsubscribe_from_tag( l[3], l[4] )
-				end
-			end
+			lifetimelib.destroy( lifetime )
 		end
 
 		return matches

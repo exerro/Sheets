@@ -18,24 +18,10 @@ end
 	trace = {};
 }
 
-function Exception:Exception( name, data, level )
+function Exception:Exception( name, data, level, userspace )
 	self.name = name
 	self.data = data
-	self.trace = {}
-
-	level = ( level or 1 ) + 2
-
-	if level > 2 then
-		for i = 1, 5 do
-			local src = select( 2, pcall( error, "", level + i ) ):gsub( ": $", "" )
-
-			if src == "pcall" or src == "" then
-				break
-			else
-				self.trace[i] = src
-			end
-		end
-	end
+	self.trace = Exception.traceback( ( level or 1 ) + 2, 5, userspace )
 end
 
 function Exception:get_traceback( initial, delimiter )
@@ -59,12 +45,14 @@ end
 
 function Exception:get_data_and_traceback( indent )
 	parameters.check( 1, "indent", "number", indent or 1 )
+	indent = math.max( indent or 1, 1 )
 
-	return self:get_data() .. self:get_traceback( "\n" .. (" "):rep( indent or 1 ) .. "in ", "\n" .. (" "):rep( indent or 1 ) .. "in " )
+	return (" "):rep( indent * 4 - 2 ) .. self:get_data():gsub( "\n", "\n" .. (" "):rep( indent * 4 - 2 ) )
+	    .. self:get_traceback( "\n" .. (" "):rep( indent * 4 ) .. "in ", "\n" .. (" "):rep( indent * 4 ) .. "in " )
 end
 
 function Exception:tostring()
-	return tostring( self.name ) .. " exception:\n  " .. self:get_data_and_traceback( 4 )
+	return tostring( self.name ) .. ":\n" .. self:get_data_and_traceback( 1 )
 end
 
 function Exception.thrown()
@@ -101,4 +89,45 @@ end
 
 function Exception.default( handler )
 	return { default = true, handler = handler }
+end
+
+function Exception.traceback( level, count, userspace )
+	local trace = {}
+
+	level = (level or 1) + 1
+
+	if level > 2 then
+		local i = 1
+
+		while #trace < count do
+			local src = select( 2, pcall( error, "", level + i ) ):gsub( ": $", "" )
+
+			if src == "pcall" or src == "" then
+				break
+			else
+				local src_and_line
+
+				if __get_src_and_line then
+					local line, msg = src:match( "^" .. (select(2,pcall(error,"@",2)):match"^(.*):%d+: @$") .. ":(%d+)$" )
+
+					if line then
+						src, line = __get_src_and_line( tonumber( line ) )
+						src_and_line = src .. "[" .. line .. "]"
+					else
+						src_and_line = ("%s[%s]"):format( src:match "(.+):(%d+)" )
+					end
+				else
+					src_and_line = ("%s[%s]"):format( src:match "(.+):(%d+)" )
+				end
+
+				if not (userspace and src:find "^sheets%.") then
+					userspace = false
+					trace[#trace + 1] = src_and_line
+				end
+			end
+			i = i + 1
+		end
+	end
+
+	return trace
 end

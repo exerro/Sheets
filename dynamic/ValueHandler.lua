@@ -1,12 +1,14 @@
 
+ -- @include lib.lifetime
+
  -- @print including(dynamic.ValueHandler)
 
 local floor = math.floor
-local get_transition_function
 local TRANSITION_FUNCTION_CODE
 local tfcache = {}
 local setf
 
+@private
 @class ValueHandler {
 	object = nil;
 	lifetimes = {};
@@ -29,26 +31,12 @@ function ValueHandler:ValueHandler( object )
 	self.removed_lifetimes = {}
 	self.transitions = {}
 	self.transitions_lookup = {}
-
-	object.set = setf
 end
 
-function ValueHandler:add( name, default, options )
-	if not ValueHandler.properties[name] then
-		error "TODO: fix this error"
-	end
-
-	self.object["set_" .. name] = type( options ) == "function" and options or Codegen.dynamic_property_setter( name, options )
-	self.object["raw_" .. name] = default
-	self.object[name] = default
+function ValueHandler:add( name, default )
 	self.values[#self.values + 1] = name
 	self.defaults[name] = default
 	self.lifetimes[name] = {}
-
-	if ValueHandler.properties[name].transitionable then
-		self.object["set_" .. name .. "_transition"] = get_transition_function( name )
-		self.object[name .. "_transition"] = Transition.none
-	end
 end
 
 function ValueHandler:remove( name )
@@ -72,26 +60,13 @@ function ValueHandler:trigger( name )
 end
 
 function ValueHandler:respawn( name )
-	local t = self.lifetimes[name]
-
-	for i = #t, 1, -1 do
-		local l = t[i]
-		t[i] = nil
-		if l[1] == "value" then
-			l[2].values:unsubscribe( l[3], l[4] )
-		elseif l[1] == "query" then
-			l[2]:unsubscribe( l[3], l[4] )
-		elseif l[1] == "tag" then
-			l[2]:unsubscribe_from_tag( l[3], l[4] )
-		end
-	end
-
+	lifetimelib.destroy( self.lifetimes[name] )
 	self.lifetimes[name] = {}
 end
 
 function ValueHandler:subscribe( name, lifetime, callback )
 	self.subscriptions[name] = self.subscriptions[name] or {}
-	lifetime[#lifetime + 1] = { "value", self.object, name, callback }
+	lifetime[#lifetime + 1] = { "value", self, name, callback }
 
 	local t = self.subscriptions[name]
 
@@ -135,9 +110,23 @@ function ValueHandler:child_inserted()
 	self.removed_lifetimes = {}
 end
 
-function ValueHandler:transition( property, final, transition, custom_update )
+function ValueHandler:is_transitioning( property )
+	return self.transitions_lookup[property] ~= nil
+end
+
+function ValueHandler:get_final_property_value( property )
+	local trans = self.transitions[self.transitions_lookup[property]]
+	return trans and trans.final or self.object[property]
+end
+
+function ValueHandler:get_transition_timeout( property )
+	local trans = self.transitions[self.transitions_lookup[property]]
+	return trans.duration - trans.clock
+end
+
+function ValueHandler:transition( property, final, transition, custom_update, dt_scale )
 	local index = self.transitions_lookup[property] or #self.transitions + 1
-	local floored = false -- TODO: make this respect the property
+	local floored = false
 	local ptype = ValueHandler.properties[property].type
 
 	if ptype == Type.primitive.integer then
@@ -161,6 +150,7 @@ function ValueHandler:transition( property, final, transition, custom_update )
 			floored = floored;
 			change = ValueHandler.properties[property].change;
 			custom_update = custom_update;
+			dt_scale = dt_scale;
 		}
 	else
 		if self.object[property] ~= final then
@@ -184,14 +174,18 @@ end
 function ValueHandler:update( dt )
 	for i = #self.transitions, 1, -1 do
 		local trans = self.transitions[i]
-		trans.clock = trans.clock + dt
+		trans.clock = trans.clock + dt * trans.dt_scale
 
 		if trans.clock >= trans.duration then
 			self.object[trans.property] = trans.final
 			table.remove( self.transitions, i )
 			self.transitions_lookup[trans.property] = nil
+
+			for n = i, #self.transitions do
+				self.transitions_lookup[self.transitions[i].property] = n
+			end
 		else
-			local eased = trans.easing( trans.initial, trans.diff, trans.clock / trans.duration )
+			local eased = trans.initial + trans.diff * trans.easing( trans.clock / trans.duration )
 			self.object[trans.property] = trans.floored and floor( eased + 0.5 ) or eased
 		end
 
@@ -220,35 +214,18 @@ ValueHandler.properties.width = { type = Type.primitive.integer, change = "self"
 ValueHandler.properties.height = { type = Type.primitive.integer, change = "self", transitionable = true }
 
 ValueHandler.properties.text = { type = Type.primitive.string, change = "self", transitionable = false }
+ValueHandler.properties.line_count = { type = Type.primitive.integer, change = "none", transitionable = false }
 
 ValueHandler.properties.horizontal_alignment = { type = Type.sheets.alignment, change = "self", transitionable = false }
 ValueHandler.properties.vertical_alignment = { type = Type.sheets.alignment, change = "self", transitionable = false }
 
 ValueHandler.properties.colour = { type = Type.sheets.colour, change = "self", transitionable = false }
 ValueHandler.properties.text_colour = { type = Type.sheets.colour, change = "self", transitionable = false }
+
+ValueHandler.properties.active = { type = Type.primitive.boolean, change = "self", transitionable = false }
 ValueHandler.properties.active_colour = { type = Type.sheets.colour, change = "self", transitionable = false }
 
 ValueHandler.properties.parent = { type = Type.sheets.optional_Sheet, change = "parent", transitionable = false }
-
-function get_transition_function( name )
-	if not tfcache[name] then
-		tfcache[name] = (load or loadstring)( TRANSITION_FUNCTION_CODE:gsub( "PROPERTY", name ) )()
-	end
-
-	return tfcache[name]
-end
-
-function setf( self, t )
-	for k, v in pairs( t ) do
-		if self["set_" .. k] then
-			self["set_" .. k]( self, v )
-		else
-			-- TODO: error or just ignore?
-		end
-	end
-
-	return self
-end
 
 TRANSITION_FUNCTION_CODE = [[
 return function( self, value )

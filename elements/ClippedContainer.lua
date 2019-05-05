@@ -3,7 +3,6 @@
 
 @class ClippedContainer extends Container {
 	surface = nil;
-	colour = nil;
 }
 
 function ClippedContainer:ClippedContainer( ... )

@@ -2,7 +2,6 @@
  -- @include Exception
 
  -- @print including(exceptions.DynamicCastException)
- -- @print including(exceptions.DynamicCastException)
 
 @private
 @class DynamicCastException extends Exception {
@@ -11,8 +10,6 @@
 
 function DynamicCastException:DynamicCastException( type, expected, position )
 	local lines = {}
-
-	Logger:warn "here"
 
 	for i = 1, #position.lines do
 		lines[i] = ("%q"):format( position.lines[i] )

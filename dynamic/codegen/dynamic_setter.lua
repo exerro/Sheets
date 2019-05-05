@@ -82,6 +82,8 @@ function dynamic_property_setter_codegen( property, options, environment )
 		if s4 ~= "" then
 			change_code = change_code
 				:gsub( "CUSTOM_UPDATE", "function( self )\n" .. s4 .. "\nend" )
+				:gsub( "PROPERTY_TRANSITION_QUOTED", ("%q"):format( property .. "_transition" ) )
+				:gsub( "PROCESS_VALUE", s5 )
 		end
 	else
 		change_code = CHANGECODE_NO_TRANSITION
@@ -114,7 +116,7 @@ function dynamic_property_setter_codegen( property, options, environment )
 		:gsub( "CASTING", function() return caster end )
 		:gsub( "TRANSITIONS", function() return ValueHandler.properties[property].transitionable and "true" or "false" end )
 	local env = setmetatable( { Typechecking = Typechecking, Type = Type, dynamic_value_codegen = dynamic_value_codegen, DynamicValueParser = DynamicValueParser, surface = surface, Stream = Stream, lifetimelib = lifetimelib, Exception = Exception, DynamicValueException = DynamicValueException, DynamicCastException = DynamicCastException, DynamicParserException = DynamicParserException }, { __index = _ENV or getfenv() } )
-	local f, err = (load or loadstring)( str, "property setter " .. ("%q"):format( property ) .. " ", nil, env )
+	local f = assert( (load or loadstring)( str, "property setter " .. ("%q"):format( property ) .. " ", nil, env ) )
 
 	-- @if DEBUG
 		local h = fs.open( ".sheets_debug/property_" .. property .. ".lua", "w" ) or error( property )
@@ -126,7 +128,6 @@ function dynamic_property_setter_codegen( property, options, environment )
 	if not f then
 		error( err, 0 )
 	end
-
 	if setfenv then
 		setfenv( f, env )
 	end
@@ -163,18 +164,26 @@ if self.values:get_final_property_value PROPERTY_QUOTED ~= value then
 end]]
 
 STRING_CASTING = [[
-value_parsed = {
-	type = DVALUE_TOSTRING;
-	value = value_parsed;
-}
+if value_type == Type.primitive.integer or value_type == Type.primitive.number or value_type == Type.primitive.boolean then
+	value_parsed = {
+		type = DVALUE_TOSTRING;
+		value = value_parsed;
+	}
+else
+	Exception.throw( DynamicCastException( value_type, Type.primitive.string, value_parsed.position ) )
+end
 ]]
 
 RAW_STRING_CASTING = [[
-value = tostring( value )
+if value_type == Type.primitive.integer or value_type == Type.primitive.number or value_type == Type.primitive.boolean then
+	value = tostring( value )
+else
+	Exception.throw( DynamicCastException( value_type, Type.primitive.string, value_parsed.position ) )
+end
 ]]
 
 INTEGER_CASTING = [[
-if value_type == Type.primitive.number / Type.primitive.integer then
+if value_type == Type.primitive.number then
 	value_parsed = {
 		type = DVALUE_FLOOR;
 		value = value_parsed;

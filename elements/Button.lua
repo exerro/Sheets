@@ -1,24 +1,26 @@
 
+ -- @include interfaces.ITextRenderer
+ -- @include components.active
+ -- @include components.colour
+ -- @include components.text
+
  -- @print including(elements.Button)
 
-@class Button extends Sheet implements IHasText, IColoured {
+@class Button extends Sheet implements ITextRenderer {
 	down = false;
-	colour = nil;
-	active_colour = nil;
-	horizontal_alignment = ALIGNMENT_CENTRE;
-	vertical_alignment = ALIGNMENT_CENTRE;
 }
 
+Button:add_components( 'active', 'colour', 'text' )
+
 function Button:Button( x, y, width, height, text )
-	self:initialise()
-	self:IHasText()
-	self:IColoured()
-	self.values:add( "active_colour", LIGHTBLUE )
 	self:Sheet( x, y, width, height )
 
-	self:set_colour( CYAN )
-	self:set_horizontal_alignment( ALIGNMENT_CENTRE )
-	self:set_vertical_alignment( ALIGNMENT_CENTRE )
+	self:ITextRenderer()
+
+	self:set_colour( CYAN, true )
+	self:set_active_colour( LIGHTBLUE, true )
+	self:set_horizontal_alignment( ALIGNMENT_CENTRE, true )
+	self:set_vertical_alignment( ALIGNMENT_CENTRE, true )
 
 	if text then
 		self:set_text( text )

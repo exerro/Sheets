@@ -1,7 +1,12 @@
 
+ -- @include interfaces.IComponent
+ -- @include components.component
+ -- @include components.parent
+ -- @include components.size
+
  -- @print including(core.Screen)
 
-@class Screen implements IChildContainer, ITagged, ISize {
+@class Screen implements IChildContainer, IComponent, ITagged {
 	parent = nil;
 
 	-- internal
@@ -13,19 +18,18 @@
 	values = nil;
 }
 
+Screen:add_components( 'parent', 'size' )
+
 function Screen:Screen( application, width, height )
-	self.parent = application
+	self:initialise_properties()
 	self.terminals = {}
 	self.monitors = {}
 	self.surface = surface.create( 0, 0 )
 	self.application = application
-	self.values = ValueHandler( self )
+	self.parent = application
 
-	self:ICollatedChildren()
-	self:IQueryable()
 	self:IChildContainer()
 	self:ITagged()
-	self:ISize()
 
 	self:set_width( width )
 	self:set_height( height )

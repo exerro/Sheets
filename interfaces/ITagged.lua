@@ -1,6 +1,7 @@
 
  -- @print including(interfaces.ITagged)
 
+@private
 @interface ITagged {
 	tags = {};
 	subscriptions = {};
@@ -10,6 +11,8 @@
 function ITagged:ITagged()
 	self.tags = {}
 	self.subscriptions = {}
+
+	function self:ITagged() end
 end
 
 function ITagged:add_tag( tag )

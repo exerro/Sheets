@@ -1,6 +1,7 @@
 
  -- @print including(events.Event)
 
+@private
 @class Event {
 	event = "Event";
 }

@@ -1,6 +1,7 @@
 
  -- @print including(events.KeyboardEvent)
 
+@private
 @class KeyboardEvent extends Event {
 	event = "KeyboardEvent";
 	key = 0;

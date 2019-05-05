@@ -1,19 +1,23 @@
 
  -- @print including(dynamic.Type)
 
+@private
 @class Type {
 	name = "";
 }
 
+@private
 @class UnionType extends Type {
 	lvalue = nil;
 	rvalue = nil;
 }
 
+@private
 @class ListType extends Type {
 	value = nil;
 }
 
+@private
 @class TableType extends Type {
 	index = nil;
 	value = nil;
@@ -50,7 +54,7 @@ function Type:tostring()
 end
 
 function UnionType:tostring()
-	return self.lvalue:tostring() .. " | " .. self.rvalue:tostring()
+	return self.lvalue:tostring() .. "|" .. self.rvalue:tostring()
 end
 
 function ListType:tostring()

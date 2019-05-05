@@ -10,7 +10,7 @@
 function KeyHandler:KeyHandler()
 	self.actions = {}
 	self.shortcuts = {}
-	self:initialise()
+
 	return self:Sheet( 0, 0, 0, 0 )
 end
 
@@ -27,6 +27,8 @@ function KeyHandler:add_action( name, callback, ... )
 		parameters = { ... };
 		keybindings = {};
 	}
+
+	return self
 end
 
 function KeyHandler:remove_action( name )
@@ -45,18 +47,20 @@ function KeyHandler:set_callback( action, callback )
 	for i = 1, #self.actions do
 		if self.actions[i].name == action then
 			self.actions[i].callback = callback
-			return
+			return self
 		end
 	end
+	return self
 end
 
 function KeyHandler:set_parameters( action, parameters )
 	for i = 1, #self.actions do
 		if self.actions[i].name == action then
 			self.actions[i].parameters = parameters
-			return
+			return self
 		end
 	end
+	return self
 end
 
 function KeyHandler:bind_key( key, action )
@@ -68,7 +72,7 @@ function KeyHandler:bind_key( key, action )
 		if self.actions[i].name == action then
 			self.actions[i].keybindings[#self.actions[i].keybindings + 1] = key
 			self.shortcuts[key] = action
-			return
+			return self
 		end
 	end
 
@@ -92,9 +96,11 @@ function KeyHandler:unbind_key( key )
 			end
 
 			self.shortcuts[key] = nil
-			return
+			return self
 		end
 	end
+	
+	return self
 end
 
 function KeyHandler:on_keyboard_event( event )

@@ -36,7 +36,6 @@ local function add_data_t( res, changed, data, lookup, src )
 						data[i].options[n] = nil
 					end
 				end
-
 				res[data[i].property] = { type = data[i].type, from = src, name = data[i].property, environment = {}, default = data[i].default, options = data[i].options }
 				changed[data[i].property] = true
 			end
